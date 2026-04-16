@@ -1,0 +1,191 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.054902, 0.0666667, 0.0745098, 1)
+
+[node name="MenuScreen" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="MenuScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="MenuScreen/CenterContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(420, 0)
+
+[node name="PanelMargin" type="MarginContainer" parent="MenuScreen/CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBox" type="VBoxContainer" parent="MenuScreen/CenterContainer/Panel/PanelMargin"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Goblin Game"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Landscape mobile menu scaffold"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 72)
+text = "Start Game"
+
+[node name="ContinueButton" type="Button" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 72)
+text = "Continue"
+
+[node name="SettingsButton" type="Button" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 72)
+text = "Settings"
+
+[node name="SettingsScreen" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsBackground" type="ColorRect" parent="SettingsScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0705882, 0.0823529, 0.0941176, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="SettingsScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 28
+
+[node name="ContentVBox" type="VBoxContainer" parent="SettingsScreen/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="HeaderBar" type="HBoxContainer" parent="SettingsScreen/MarginContainer/ContentVBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BackButton" type="Button" parent="SettingsScreen/MarginContainer/ContentVBox/HeaderBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 56)
+text = "Back"
+
+[node name="HeaderTitle" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/HeaderBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 32
+text = "Settings"
+vertical_alignment = 1
+
+[node name="SettingsCard" type="PanelContainer" parent="SettingsScreen/MarginContainer/ContentVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SettingsMargin" type="MarginContainer" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="SettingsVBox" type="VBoxContainer" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SettingsHint" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "This replaces the entire screen on mobile, so it feels like a proper page instead of a popup."
+
+[node name="MusicLabel" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+text = "Music Volume"
+
+[node name="MusicSlider" type="HSlider" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+max_value = 100.0
+value = 70.0
+
+[node name="SfxLabel" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+text = "SFX Volume"
+
+[node name="SfxSlider" type="HSlider" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+max_value = 100.0
+value = 80.0
+
+[node name="VibrationCheck" type="CheckButton" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+button_pressed = true
+text = "Vibration"
+
+[node name="NotificationsCheck" type="CheckButton" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+text = "Daily Notifications"
+
+[node name="SettingsSummary" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Settings preview"
+
+[connection signal="pressed" from="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/ContinueButton" to="." method="_on_continue_button_pressed"]
+[connection signal="pressed" from="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="SettingsScreen/MarginContainer/ContentVBox/HeaderBar/BackButton" to="." method="_on_close_settings_button_pressed"]
+[connection signal="value_changed" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/MusicSlider" to="." method="_on_music_slider_value_changed"]
+[connection signal="value_changed" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/SfxSlider" to="." method="_on_sfx_slider_value_changed"]
+[connection signal="toggled" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/VibrationCheck" to="." method="_on_vibration_check_toggled"]
+[connection signal="toggled" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/NotificationsCheck" to="." method="_on_notifications_check_toggled"]
