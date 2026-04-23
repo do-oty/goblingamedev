@@ -199,9 +199,9 @@ height = 24.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=646582384]
 sprite_frames = SubResource("SpriteFrames_vadtu")
-animation = &"right_attack"
+animation = &"enemy_left"
 frame = 1
-frame_progress = 0.99753976
+frame_progress = 0.4683775
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1495953491]
 position = Vector2(1, 4)
