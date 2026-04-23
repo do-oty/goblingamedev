@@ -5,6 +5,9 @@ const SPEED = 200.0
 var last_direction := Vector2.DOWN
 var is_attacking := false
 
+func _ready():
+	add_to_group("player")
+	
 func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
 
@@ -67,6 +70,13 @@ func start_attack():
 	is_attacking = true
 	velocity = Vector2.ZERO
 
+	# --- KNOCKBACK: hit nearby enemies ---
+	var enemies = get_tree().get_nodes_in_group("enemy")
+	for enemy in enemies:
+		var distance = global_position.distance_to(enemy.global_position)
+		if distance < 60.0:   # attack reach distance
+			enemy.take_knockback(global_position)
+	# ------------------------------------
 	if abs(last_direction.x) > abs(last_direction.y):
 		if last_direction.x > 0:
 			$AnimatedSprite2D.play("attack_right")

@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dwans6d8wxhkw"]
 
 [ext_resource type="Texture2D" uid="uid://dgot1tc7up8r2" path="res://assets/characters/enemy.png" id="1_1a4b3"]
+[ext_resource type="Script" uid="uid://dhec2weptapkq" path="res://scripts/enemy.gd" id="1_nbma8"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1a4b3"]
 atlas = ExtResource("1_1a4b3")
@@ -196,12 +197,11 @@ animations = [{
 height = 24.0
 
 [node name="enemy" type="CharacterBody2D" unique_id=921811942]
+script = ExtResource("1_nbma8")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=646582384]
 sprite_frames = SubResource("SpriteFrames_vadtu")
-animation = &"enemy_left"
-frame = 1
-frame_progress = 0.4683775
+animation = &"enemy_back"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1495953491]
 position = Vector2(1, 4)
