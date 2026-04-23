@@ -1,8 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bvpp3rbmcrrpv"]
 
-[ext_resource type="Script" path="res://scripts/GameRoot.gd" id="1"]
+[ext_resource type="Script" uid="uid://cas23h4uysrk0" path="res://scripts/GameRoot.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://m8d1e3t1dw60" path="res://assets/characters/player.tscn" id="2_lkoyb"]
 
-[node name="GameRoot" type="Control"]
+[node name="GameRoot" type="Control" unique_id=100418363]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=1417115170]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +21,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.101961, 0.129412, 0.0980392, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=606691124]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,46 +29,49 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="CenterContainer"]
-layout_mode = 2
+[node name="Panel" type="PanelContainer" parent="CenterContainer" unique_id=1100180057]
 custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
 
-[node name="Margin" type="MarginContainer" parent="CenterContainer/Panel"]
+[node name="Margin" type="MarginContainer" parent="CenterContainer/Panel" unique_id=579913104]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 36
 
-[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel/Margin" unique_id=1769391218]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Title" type="Label" parent="CenterContainer/Panel/Margin/VBox"]
+[node name="Title" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=990416420]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "Gameplay Placeholder"
 horizontal_alignment = 1
 
-[node name="Description" type="Label" parent="CenterContainer/Panel/Margin/VBox"]
+[node name="Description" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=1424140853]
 layout_mode = 2
-autowrap_mode = 3
 text = "Swap this for your first mobile gameplay screen. The save button below creates placeholder progress so the menu can show Continue."
-
-[node name="SaveStatusLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_name_in_owner=true]
-layout_mode = 2
 autowrap_mode = 3
-text = "Save status"
 
-[node name="SaveButton" type="Button" parent="CenterContainer/Panel/Margin/VBox"]
+[node name="SaveStatusLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox" unique_id=1281904021]
 layout_mode = 2
+text = "Save status"
+autowrap_mode = 3
+
+[node name="SaveButton" type="Button" parent="CenterContainer/Panel/Margin/VBox" unique_id=68587247]
 custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
 text = "Save Checkpoint"
 
-[node name="BackToMenuButton" type="Button" parent="CenterContainer/Panel/Margin/VBox"]
-layout_mode = 2
+[node name="BackToMenuButton" type="Button" parent="CenterContainer/Panel/Margin/VBox" unique_id=1247677119]
 custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
 text = "Return To Menu"
+
+[node name="player" parent="." unique_id=2005688080 instance=ExtResource("2_lkoyb")]
+position = Vector2(225, 259)
 
 [connection signal="pressed" from="CenterContainer/Panel/Margin/VBox/SaveButton" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Panel/Margin/VBox/BackToMenuButton" to="." method="_on_back_to_menu_button_pressed"]
