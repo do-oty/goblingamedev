@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bic38ky4e0wl2"]
 
-[ext_resource type="Script" path="res://scripts/WelcomeScreen.gd" id="1"]
+[ext_resource type="Script" uid="uid://bgt0fg426hfrg" path="res://scripts/WelcomeScreen.gd" id="1"]
 
-[node name="WelcomeScreen" type="Control"]
+[node name="WelcomeScreen" type="Control" unique_id=469114217]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,7 +12,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=2137907529]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,7 +21,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0823529, 0.109804, 0.137255, 1)
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1865931583]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,54 +33,53 @@ theme_override_constants/margin_top = 60
 theme_override_constants/margin_right = 60
 theme_override_constants/margin_bottom = 60
 
-[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBox" type="VBoxContainer" parent="MarginContainer" unique_id=2133905780]
 layout_mode = 2
-alignment = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 24
+alignment = 1
 
-[node name="Header" type="Label" parent="MarginContainer/VBox"]
+[node name="Header" type="Label" parent="MarginContainer/VBox" unique_id=463887926]
 layout_mode = 2
 text = "Studio Intro"
 horizontal_alignment = 1
 
-[node name="LogoPanel" type="PanelContainer" parent="MarginContainer/VBox" unique_name_in_owner=true]
-layout_mode = 2
+[node name="LogoPanel" type="PanelContainer" parent="MarginContainer/VBox" unique_id=802567799]
 custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
 size_flags_vertical = 3
-scale = Vector2(0.92, 0.92)
 
-[node name="SlideMargin" type="MarginContainer" parent="MarginContainer/VBox/LogoPanel"]
+[node name="SlideMargin" type="MarginContainer" parent="MarginContainer/VBox/LogoPanel" unique_id=1426091875]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="SlideVBox" type="VBoxContainer" parent="MarginContainer/VBox/LogoPanel/SlideMargin"]
+[node name="SlideVBox" type="VBoxContainer" parent="MarginContainer/VBox/LogoPanel/SlideMargin" unique_id=1079260190]
 layout_mode = 2
-alignment = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 16
+alignment = 1
 
-[node name="TitleLabel" type="Label" parent="MarginContainer/VBox/LogoPanel/SlideMargin/SlideVBox"]
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBox/LogoPanel/SlideMargin/SlideVBox" unique_id=984126074]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "GOBLIN GAME"
 horizontal_alignment = 1
 
-[node name="SubtitleLabel" type="Label" parent="MarginContainer/VBox/LogoPanel/SlideMargin/SlideVBox" unique_name_in_owner=true]
-layout_mode = 2
-autowrap_mode = 3
+[node name="SubtitleLabel" type="Label" parent="MarginContainer/VBox/LogoPanel/SlideMargin/SlideVBox" unique_id=403799841]
 modulate = Color(1, 1, 1, 0)
+layout_mode = 2
 text = "Logo / intro animation placeholder"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/VBox" unique_name_in_owner=true]
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/VBox" unique_id=1555389912]
 layout_mode = 2
 show_percentage = false
 
-[node name="SplashTimer" type="Timer" parent="." unique_name_in_owner=true]
+[node name="SplashTimer" type="Timer" parent="." unique_id=1470270599]
 one_shot = true
 
 [connection signal="timeout" from="SplashTimer" to="." method="_on_splash_timer_timeout"]
