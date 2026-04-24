@@ -12,7 +12,7 @@ config_version=5
 
 config/name="goblinGame"
 run/main_scene="res://scenes/WelcomeScreen.tscn"
-config/features=PackedStringArray("4.6", "Mobile")
+config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
