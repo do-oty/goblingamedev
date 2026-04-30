@@ -1,0 +1,153 @@
+[gd_scene format=3 uid="uid://dmuexcp6ypj3y"]
+
+[ext_resource type="Script" uid="uid://ccg0idhpv1hf4" path="res://scripts/vfx/BlinkTeleportVfx.gd" id="1_blink_tp_script"]
+[ext_resource type="Texture2D" uid="uid://dateh064cfxut" path="res://assets/vfx/teleport.png" id="2_5uw1q"]
+[ext_resource type="Texture2D" uid="uid://c48gfigs6bjyg" path="res://assets/vfx/smokeTp.png" id="2_xbh2l"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xbh2l"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a34wd"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ed5al"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u0a6g"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hkawu"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0rxv8"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(0, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lts8j"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(128, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7ylwk"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(256, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5uw1q"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(384, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0dj4g"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(512, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jmtc5"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(0, 256, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0o8iy"]
+atlas = ExtResource("2_5uw1q")
+region = Rect2(128, 256, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lunbb"]
+atlas = ExtResource("2_xbh2l")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_omwfq"]
+atlas = ExtResource("2_xbh2l")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3vjib"]
+atlas = ExtResource("2_xbh2l")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l653s"]
+atlas = ExtResource("2_xbh2l")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qq36i"]
+atlas = ExtResource("2_xbh2l")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ak8pi"]
+atlas = ExtResource("2_xbh2l")
+region = Rect2(640, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_blink_tp"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xbh2l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a34wd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ed5al")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u0a6g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hkawu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0rxv8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lts8j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7ylwk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5uw1q")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0dj4g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jmtc5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0o8iy")
+}],
+"loop": false,
+"name": &"blink_tp",
+"speed": 24.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lunbb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_omwfq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3vjib")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l653s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qq36i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ak8pi")
+}],
+"loop": false,
+"name": &"blink_tpold",
+"speed": 24.0
+}]
+
+[node name="BlinkTeleportVfx" type="Node2D" unique_id=268070229]
+script = ExtResource("1_blink_tp_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1706719331]
+sprite_frames = SubResource("SpriteFrames_blink_tp")
+animation = &"blink_tp"
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

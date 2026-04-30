@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://b0dgan8g5iglc"]
+
+[ext_resource type="Script" uid="uid://bm2ma2kteowy3" path="res://scripts/vfx/SwordSlashSpriteVfx.gd" id="1_vfx_script"]
+[ext_resource type="Texture2D" uid="uid://dkem6jtdn6504" path="res://assets/vfx/swordSlash2.png" id="3_obc1l"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jkw14"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(0, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_obc1l"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(128, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mlsnv"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(256, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_46xn5"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(384, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3tvnv"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ac6ja"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l1lbt"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kqxmi"]
+atlas = ExtResource("3_obc1l")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_3tvnv"]
+animations = [{
+"frames": [],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jkw14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_obc1l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mlsnv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_46xn5")
+}],
+"loop": false,
+"name": &"slash_down",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3tvnv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ac6ja")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l1lbt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kqxmi")
+}],
+"loop": false,
+"name": &"slash_up",
+"speed": 12.0
+}]
+
+[node name="SwordSlashSpriteVfx" type="Node2D" unique_id=186255828]
+script = ExtResource("1_vfx_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1171210616]
+sprite_frames = SubResource("SpriteFrames_3tvnv")
+animation = &"slash_up"

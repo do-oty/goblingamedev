@@ -2,7 +2,6 @@ extends Control
 
 @onready var menu_screen: Control = $MenuScreen
 @onready var settings_screen: Control = $SettingsScreen
-@onready var continue_button: Button = $"MenuScreen/CenterContainer/Panel/PanelMargin/VBox/ContinueButton"
 @onready var music_slider: HSlider = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/MusicSlider"
 @onready var sfx_slider: HSlider = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/SfxSlider"
 @onready var vibration_check: CheckButton = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/VibrationCheck"
@@ -11,7 +10,6 @@ extends Control
 
 
 func _ready() -> void:
-	continue_button.visible = GameState.has_save()
 	menu_screen.visible = true
 	settings_screen.visible = false
 	vibration_check.button_pressed = true
@@ -21,10 +19,6 @@ func _ready() -> void:
 
 func _on_start_button_pressed() -> void:
 	GameState.start_new_game()
-
-
-func _on_continue_button_pressed() -> void:
-	GameState.continue_game()
 
 
 func _on_settings_button_pressed() -> void:
