@@ -68,7 +68,9 @@ Current build is a Vampire Survivors-style prototype with a lobby -> portal -> r
 | Dash Distance | 165 base |
 | Dash I-frames | 0.18s base |
 
-### Enemy Base (Grunt)
+### Enemies
+
+#### Grunt Goblin (`enemy.gd`)
 
 | Stat | Value |
 |---|---:|
@@ -78,6 +80,69 @@ Current build is a Vampire Survivors-style prototype with a lobby -> portal -> r
 | Contact Damage | 9 |
 | Contact Cooldown | 0.75s |
 | XP Reward | 1 (blue tier) |
+
+#### Sword Goblin (`goblin_sword.gd`)
+
+| Stat | Value |
+|---|---:|
+| HP Multiplier | 1.55x |
+| Speed Multiplier | 1.20x |
+| Damage Multiplier | 1.35x |
+| Contact Cooldown Multiplier | 0.78x |
+| Knockback Taken Multiplier | 0.42x |
+| Visual Scale | 1.08x |
+| XP Reward | 2 (green tier) |
+
+#### Fire Mage Goblin (`goblin_mage.gd`)
+
+| Stat | Value |
+|---|---:|
+| HP Multiplier | 1.25x |
+| Speed Multiplier | 0.90x |
+| Damage Multiplier | 1.15x |
+| Cast Cooldown | 2.9s to 4.1s |
+| Channel Time | 1.85s |
+| Volley Count | 2 |
+| AOE Radius | 56 |
+| AOE Damage Multiplier | 1.30x |
+| Cast Range | 140 to 520 |
+| Chase Distance Threshold | 250 |
+| XP Reward | 2 (green tier) |
+
+#### Electric Mage Goblin (`goblin_electric_mage.gd`)
+
+| Stat | Value |
+|---|---:|
+| HP Multiplier | 1.20x |
+| Speed Multiplier | 0.92x |
+| Damage Multiplier | 1.12x |
+| Cast Cooldown | 3.2s to 4.6s |
+| Channel Time | 1.55s |
+| Segment Count | 7 |
+| Segment Length | 72 |
+| Segment Half Width | 24 |
+| Segment Damage Multiplier | 1.15x |
+| Cast Range | 150 to 560 |
+| Chase Distance Threshold | 260 |
+| XP Reward | 2 (green tier) |
+
+#### Elite Modifiers (`enemy.gd`)
+
+| Stat | Value |
+|---|---:|
+| Elite HP Multiplier | 3.0x to 4.3x (time-scaled) |
+| Elite Damage Multiplier | 1.8x to 2.15x (time-scaled) |
+| Elite Speed Multiplier | 0.82x to 0.94x (time-scaled) |
+| Elite XP Multiplier | 6x |
+| Elite XP Tier | red |
+
+#### Elite Type Extras
+
+| Type | Extra Effects |
+|---|---|
+| Brute | +35% HP, +15% damage, charge ability, lower knockback taken |
+| Blink | Slightly lower speed, periodic blink teleport, blink-specific VFX |
+| Tank | +85% HP, -5% damage, extra size, lower speed |
 
 ## Weapon and Leveling
 
