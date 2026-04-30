@@ -1,163 +1,148 @@
-# Goblin Game - Combat Loop Scaffold
+# Goblin Game - Current State
 
-This project now contains a first-pass Vampire Survivors style run loop scaffold:
+Current build is a Vampire Survivors-style prototype with a lobby -> portal -> run loop.
 
-- 20-minute survival run (`GameRoot`)
-- Knight starter loadout
-- Auto-targeting Sword Slash weapon
-- Curved slash AOE effect generated in code
-- Time-scaled enemy spawning
-- Enemy XP orb drops and pickup magnet
-- Level-up item choices every level
-- Talent choices every 5 levels
-- Struct-like item/talent data catalog
+## Core Flow
 
-## Current Gameplay Loop
+1. Start game from main menu (no continue button).
+2. Spawn in `LobbyMap`, move around, use NPC upgrades, pick a portal.
+3. Enter `ForestMap`, `DesertMap`, or `SnowMap` run.
+4. Survive for `15:00` or die.
+5. Earn coins from drops and spend them in lobby for permanent upgrades.
 
-1. Start run as `Knight`.
-2. Knight auto-attacks nearest enemy with `Sword Slash`.
-3. Enemies spawn over time with increasing pressure.
-4. Defeat enemies and collect dropped XP orbs.
-5. Every level-up: choose 1 of 3 item choices.
-6. Every 5 levels: choose 1 of 3 talent choices.
-7. Picking duplicate `Sword Slash` levels up the weapon (AOE growth focus).
-8. Survive until `20:00` or die and retry.
+## Active Scenes
 
-## Systems and File Map
+- `scenes/maps/LobbyMap.tscn` - lobby, 3 portals, upgrade NPC.
+- `scenes/maps/ForestMap.tscn` - main run scene + HUD + debug.
+- `scenes/maps/DesertMap.tscn` - placeholder map scene (currently based on Forest).
+- `scenes/maps/SnowMap.tscn` - placeholder map scene (currently based on Forest).
 
-- `scenes/maps/ForestMap.tscn` - run scene, HUD, game over panel, level-up panel.
-- `scripts/GameRoot.gd` - run timer, spawner scaling, XP/leveling, item/talent choice flow.
-- `scripts/player.gd` - movement, cursor aim, auto-attack, sword runtime stats, curved slash VFX.
-- `scripts/enemy.gd` - chase AI, contact damage, death + orb-drop signal.
-- `scripts/XpOrb.gd` - magnetized XP orb pickup behavior.
-- `scenes/XpOrb.tscn` - XP orb scene.
-- `scripts/data/ItemCatalog.gd` - item/talent definitions and stat structures.
-- `scripts/data/CharacterCatalog.gd` - base character stat definitions (Knight scaffold).
+## Main Systems
 
-## Stats Reference
+- `scripts/GameRoot.gd` - run timer, enemy spawning, XP/leveling, drops, debug panel.
+- `scripts/player.gd` - movement, dash, auto attack, sword progression, lobby mode toggle.
+- `scripts/enemy.gd` - enemy base behavior, elites, brute/blink/tank variants.
+- `scripts/goblin_mage.gd` - fire mage behavior.
+- `scripts/goblin_electric_mage.gd` - electric mage behavior.
+- `scripts/goblin_sword.gd` - sword goblin behavior.
+- `scripts/XpOrb.gd` - XP orb pickup and magnet behavior.
+- `scripts/PickupDrop.gd` - coin/health pickup behavior.
+- `scripts/GameState.gd` - save data, coins, permanent upgrades.
+- `scripts/data/ItemCatalog.gd` - item + talent data.
+- `scripts/data/CharacterCatalog.gd` - base character data.
 
-### Player Base
+## Current Balance Snapshot
 
-| Stat | Value | Notes |
-|---|---:|---|
-| Move Speed | 150 | Base Knight movement speed |
-| Max HP | 100 | Starting and max health |
-| Invulnerability on Hit | 0.45s | Damage grace window after being hit |
-| Auto-Attack Targeting Range | 160 | Finds nearest enemy in this range |
-| Pickup Radius | 24 | Orb is collected at this distance |
-| Magnet Range | 90 | Orb starts moving to player in this radius |
-| Magnet Strength | 220 | Orb magnet pull speed |
+### Run
 
-### Run / Spawn Scaling
+| Stat | Value |
+|---|---:|
+| Run Duration | 15:00 |
+| Spawn Interval | 2.45s -> 0.18s |
+| Max Enemies Alive | 18 -> 260 |
+| Min Enemies Floor | 1 -> 120 |
+| Horde Event Interval | 28s -> 44s |
+| Elite Start Time | 90s |
 
-| Stat | Start | End | Notes |
-|---|---:|---:|---|
-| Run Duration | 20:00 | 20:00 | Run win condition |
-| Spawn Interval | 2.5s | 0.6s | Interpolates over full run time |
-| Max Enemies Alive | 10 | 90 | Interpolates over full run time |
-| Spawn Distance Min | 340 | 340 | From player position |
-| Spawn Distance Max | 520 | 520 | From player position |
+### Enemy Unlock Timings
 
-### Enemy (Current Basic Goblin)
+| Enemy Type | Unlock Time |
+|---|---:|
+| Grunt | 0:00 |
+| Sword Goblin | 3:00 |
+| Fire Mage | 6:30 |
+| Electric Mage | 9:00 |
 
-| Stat | Value | Notes |
-|---|---:|---|
-| Move Speed | 62 | Constant chase speed |
-| Max HP | 30 | Dies at 0 |
-| Contact Damage | 6 | Damage to player on contact |
-| Contact Cooldown | 0.75s | Delay between contact hits |
-| XP Reward | 1 | Granted on defeat |
+### Player (Knight Base)
 
-### Progression / XP
+| Stat | Value |
+|---|---:|
+| Move Speed | 110 |
+| Max HP | 100 |
+| Pickup Radius | 20 |
+| Magnet Range | 26 |
+| Magnet Strength | 70 |
+| Luck | 0.0 |
+| Dash Cooldown | 3.2s base (modifiable) |
+| Dash Duration | 0.16s |
+| Dash Distance | 165 base |
+| Dash I-frames | 0.18s base |
 
-| Stat | Value | Notes |
-|---|---:|---|
-| Starting Level | 1 | Run starts at level 1 |
-| Starting XP | 0 | XP carried in run only |
-| XP to First Level-Up | 5 | Base threshold |
-| XP Growth Per Level | +3 | `next = 5 + (level-1)*3` |
-| XP Tier Source | Enemy-defined | Set per enemy variant (`XP_TIER`) |
-| Default Enemy Tier | Blue | Current base goblin uses blue tier |
-| XP Value Source | Enemy-defined | Set per enemy (`XP_REWARD`) |
-| Rainbow Tier | Reserved | Intended for miniboss/boss drops |
+### Enemy Base (Grunt)
 
-### Knight Starter Weapon - Sword Slash
+| Stat | Value |
+|---|---:|
+| Move Speed | 82 |
+| Horde Run Speed | 240 |
+| Max HP | 30 |
+| Contact Damage | 9 |
+| Contact Cooldown | 0.75s |
+| XP Reward | 1 (blue tier) |
+
+## Weapon and Leveling
+
+### Starter Weapon: Sword Slash
+
+Sword is data-driven in `ItemCatalog` and currently implemented to max level `8`.
+Milestones: `Lv5` adds +1 angled slash, `Lv8` adds +2 angled slashes total.
 
 | Level | Damage | AOE Radius | Cooldown |
 |---:|---:|---:|---:|
-| 1 | 12 | 80 | 0.65s |
-| 2 | 14 | 96 | 0.62s |
-| 3 | 16 | 116 | 0.58s |
-| 4 | 20 | 138 | 0.54s |
-| 5 | 24 | 165 | 0.48s |
+| 1 | 5 | 70 | 1.15s |
+| 2 | 8 | 84 | 1.00s |
+| 3 | 12 | 98 | 0.88s |
+| 4 | 17 | 116 | 0.76s |
+| 5 | 23 | 136 | 0.64s |
+| 6 | 30 | 152 | 0.58s |
+| 7 | 38 | 170 | 0.52s |
+| 8 | 48 | 192 | 0.46s |
 
-### Level-Up Choices
+### Item Pool
 
-| Type | Choice | Effect |
-|---|---|---|
-| Item | Sword Slash | Duplicate pickup -> +1 sword level |
-| Item | Hunter Bow (placeholder) | UI/data placeholder, not yet implemented |
-| Item | Arcane Wand (placeholder) | UI/data placeholder, not yet implemented |
-| Talent (every 5 levels) | Might | +20% weapon damage |
-| Talent (every 5 levels) | Reach | +20% sword AOE |
-| Talent (every 5 levels) | Haste | +15% attack speed |
+- `sword_slash` (implemented)
+- `bow_placeholder` (not yet implemented)
+- `wand_placeholder` (not yet implemented)
 
-## Item Structure (Struct-Like)
+### Talent Pool
 
-The code now uses struct-like Dictionaries in `scripts/data/ItemCatalog.gd`.
+- `might` (+20% weapon damage)
+- `reach` (+20% sword AOE)
+- `haste` (+15% attack speed)
+- `blade_fan` (+1 angled slash, max 2)
+- `dash_mastery` (-15% dash cooldown, +0.03s i-frames)
+- `longstep` (+45 dash distance)
 
-Item schema:
+## Drops and Meta Progression
 
-```gdscript
-{
-  "id": String,
-  "name": String,
-  "type": String, # weapon/passive/placeholder
-  "max_level": int,
-  "implemented": bool,
-  "description": String,
-  "stats_by_level": Array[Dictionary]
-}
-```
+### Enemy Drops
 
-Per-level stat schema:
+- XP orb always drops on enemy defeat.
+- Additional random drop chances:
+  - Coin drop chance: `0.18` (luck-scaled)
+  - Health drop chance: `0.012` (luck-scaled)
+  - Health pickup heal: `22`
 
-```gdscript
-{
-  "damage": int,
-  "aoe_radius": float,
-  "cooldown": float,
-  "projectiles": int,
-  "duration": float,
-  "crit_chance": float
-}
-```
+### Coins and Permanent Upgrades (Lobby NPC)
 
-Talent schema:
+Persistent save data stores:
+- `coins`
+- `permanent_upgrades`
 
-```gdscript
-{
-  "id": String,
-  "name": String,
-  "description": String,
-  "stats": {
-    "damage_multiplier": float,
-    "aoe_multiplier": float,
-    "attack_speed_multiplier": float
-  }
-}
-```
+Current permanent upgrade effects in `GameState`:
+- Max HP: `+8` per level
+- Move Speed: `+3` per level
+- Luck: `+0.08` per level
+- Dash cooldown reduction: `+0.03` per level
 
-## Design Notes
+## Debug Tools (Run Scene)
 
-- `Sword Slash +1` represents duplicate item pickup behavior.
-- Curved slash visual is code-generated, so no new art dependency is required.
-- Item/talent data is now centralized and expandable.
-- Weapon runtime currently supports `Sword Slash` and placeholder items.
+Current debug actions include:
+- Time skip (+60s)
+- Spawn horde
+- Spawn elite variants
+- Spawn enemy archetypes (normal + elite)
+- AOE increase
+- Level up
+- Full heal
 
-## Suggested Next Implementation Step
-
-1. Convert catalog Dictionaries to `.tres` resources for editor-driven balancing.
-2. Add true random weighted choice rolls and reroll/banish mechanics.
-3. Implement placeholder items (`Hunter Bow`, `Arcane Wand`) as real weapons.
-4. Add character catalog so each character has unique base stats + starting item.
+Debug panel position now respects editor-authored placement.
