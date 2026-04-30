@@ -68,11 +68,6 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 72)
 text = "Start Game"
 
-[node name="ContinueButton" type="Button" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 72)
-text = "Continue"
-
 [node name="SettingsButton" type="Button" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 72)
@@ -182,7 +177,6 @@ autowrap_mode = 3
 text = "Settings preview"
 
 [connection signal="pressed" from="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/StartButton" to="." method="_on_start_button_pressed"]
-[connection signal="pressed" from="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/ContinueButton" to="." method="_on_continue_button_pressed"]
 [connection signal="pressed" from="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/SettingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="SettingsScreen/MarginContainer/ContentVBox/HeaderBar/BackButton" to="." method="_on_close_settings_button_pressed"]
 [connection signal="value_changed" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/MusicSlider" to="." method="_on_music_slider_value_changed"]

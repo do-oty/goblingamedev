@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://b0k6jcla1o0e7"]
+
+[ext_resource type="Script" path="res://scripts/vfx/MageAoeMarkerVfx.gd" id="1_mage_aoe_script"]
+[ext_resource type="Texture2D" uid="uid://cyvbabuqsap8g" path="res://assets/vfx/fireExplode.png" id="2_88ofr"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c6uhr"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hbp37"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hi65g"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xxaiu"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rmgdl"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fgatf"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(640, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_01hhd"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(768, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p7v0r"]
+atlas = ExtResource("2_88ofr")
+region = Rect2(896, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_mage_aoe"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_c6uhr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hbp37")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hi65g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xxaiu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rmgdl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fgatf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_01hhd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p7v0r")
+}],
+"loop": false,
+"name": &"aoe_impact",
+"speed": 14.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"aoe_telegraph",
+"speed": 10.0
+}]
+
+[node name="MageAoeMarkerVfx" type="Node2D" unique_id=1081783668]
+script = ExtResource("1_mage_aoe_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1394788878]
+sprite_frames = SubResource("SpriteFrames_mage_aoe")
+animation = &"aoe_telegraph"
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

@@ -1,7 +1,19 @@
-[gd_scene load_steps=26 format=3 uid="uid://dwans6d8wxhkw"]
+[gd_scene format=3 uid="uid://dwans6d8wxhkw"]
 
 [ext_resource type="Texture2D" uid="uid://dgot1tc7up8r2" path="res://assets/characters/enemy.png" id="1_1a4b3"]
 [ext_resource type="Script" uid="uid://dhec2weptapkq" path="res://scripts/enemy.gd" id="1_nbma8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fxwma"]
+atlas = ExtResource("1_1a4b3")
+region = Rect2(0, 96, 22, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p8k52"]
+atlas = ExtResource("1_1a4b3")
+region = Rect2(22, 96, 22, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5o1n2"]
+atlas = ExtResource("1_1a4b3")
+region = Rect2(44, 96, 22, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1a4b3"]
 atlas = ExtResource("1_1a4b3")
@@ -89,6 +101,20 @@ region = Rect2(110, 64, 22, 32)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_vadtu"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fxwma")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p8k52")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5o1n2")
+}],
+"loop": true,
+"name": &"back_attack",
+"speed": 5.0
+}, {
 "frames": [],
 "loop": true,
 "name": &"default",
@@ -197,15 +223,15 @@ animations = [{
 radius = 6.0
 height = 14.0
 
-[node name="enemy" type="CharacterBody2D"]
+[node name="enemy" type="CharacterBody2D" unique_id=1491725651]
 script = ExtResource("1_nbma8")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1369071536]
 position = Vector2(-0.5, 1)
 scale = Vector2(0.95454544, 0.9375)
 sprite_frames = SubResource("SpriteFrames_vadtu")
-animation = &"enemy_back"
+animation = &"back_attack"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1519150205]
 position = Vector2(0, 2)
 shape = SubResource("CapsuleShape2D_fxwma")

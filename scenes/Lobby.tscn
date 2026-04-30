@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://c1gbc07ff4b1f"]
+
+[ext_resource type="PackedScene" path="res://scenes/maps/LobbyMap.tscn" id="1_lobby_map"]
+
+[node name="Lobby" unique_id=158751742 instance=ExtResource("1_lobby_map")]
+
+[node name="CoinLabel" parent="CanvasLayer/HUD" index="0"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 222.0
+offset_bottom = 24.0
+
+[node name="HintLabel" parent="CanvasLayer/HUD" index="1"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 232.0
+offset_bottom = 30.0
