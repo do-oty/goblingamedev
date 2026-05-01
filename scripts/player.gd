@@ -55,8 +55,15 @@ var dash_direction: Vector2 = Vector2.ZERO
 var is_dashing: bool = false
 var dash_buffer_remaining: float = 0.0
 var lobby_mode: bool = false
+var launch_velocity: Vector2 = Vector2.ZERO
+var launch_timer: float = 0.0
+var launch_duration: float = 0.0
+var launch_height: float = 0.0
+var ground_shadow: Polygon2D = null
 var sword_slash_sprite_vfx_scene: PackedScene = preload("res://scenes/vfx/SwordSlashSpriteVfx.tscn")
+@export var dash_start_smoke_vfx_scene: PackedScene
 @onready var body_collision: CollisionShape2D = $CollisionShape2D
+@onready var body_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 func _ready() -> void:
 	add_to_group("player")
@@ -64,6 +71,7 @@ func _ready() -> void:
 	sword_item_data = ItemCatalog.get_item_by_id("sword_slash")
 	sword_max_level = sword_item_data.get("max_level", 8)
 	_apply_sword_level_stats(sword_level)
+	_ensure_ground_shadow()
 	
 func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
@@ -72,6 +80,7 @@ func _physics_process(delta: float) -> void:
 	dash_cooldown_remaining = max(dash_cooldown_remaining - delta, 0.0)
 	dash_iframe_remaining = max(dash_iframe_remaining - delta, 0.0)
 	dash_buffer_remaining = max(dash_buffer_remaining - delta, 0.0)
+	launch_timer = max(launch_timer - delta, 0.0)
 	_update_aim_from_cursor()
 
 	# Allow movement at all times, including while attacking.
@@ -96,6 +105,13 @@ func _physics_process(delta: float) -> void:
 			if body_collision != null:
 				body_collision.set_deferred("disabled", false)
 			_show_dash_rematerialize()
+	elif launch_timer > 0.0:
+		var launch_progress: float = 1.0 - (launch_timer / max(launch_duration, 0.001))
+		var launch_arc: float = sin(launch_progress * PI)
+		if body_sprite != null:
+			body_sprite.position.y = -launch_height * launch_arc
+		velocity = launch_velocity
+		launch_velocity = launch_velocity.lerp(Vector2.ZERO, 7.5 * delta)
 	elif direction != Vector2.ZERO:
 		direction = direction.normalized()
 		velocity = direction * move_speed
@@ -108,6 +124,9 @@ func _physics_process(delta: float) -> void:
 
 	if not is_dashing and body_collision != null and body_collision.disabled:
 		body_collision.set_deferred("disabled", false)
+	if launch_timer <= 0.0 and body_sprite != null:
+		body_sprite.position.y = 0.0
+	_update_ground_shadow()
 
 	if not lobby_mode and attack_cooldown <= 0.0 and not is_attacking:
 		_try_auto_attack()
@@ -190,6 +209,18 @@ func receive_damage(amount: int) -> void:
 		died.emit()
 
 
+func apply_launch_force(from_world_pos: Vector2, push_strength: float = 280.0, air_height: float = 26.0, duration: float = 0.24) -> void:
+	if current_health <= 0 or is_dashing:
+		return
+	var away: Vector2 = (global_position - from_world_pos).normalized()
+	if away == Vector2.ZERO:
+		away = Vector2.RIGHT.rotated(randf() * TAU)
+	launch_velocity = away * max(push_strength, 0.0)
+	launch_duration = max(duration, 0.08)
+	launch_timer = launch_duration
+	launch_height = max(air_height, 0.0)
+
+
 func heal(amount: int) -> void:
 	if amount <= 0 or current_health <= 0:
 		return
@@ -206,7 +237,6 @@ func _try_auto_attack() -> void:
 	var slash_origin: Vector2 = global_position + (last_direction * (CURSOR_ATTACK_OFFSET * 0.45))
 	var attack_directions: Array[Vector2] = _get_slash_attack_directions()
 	for dir in attack_directions:
-		_spawn_slash_hit_indicator(slash_origin, dir)
 		_apply_sword_cone_damage(slash_origin, dir)
 
 
@@ -399,6 +429,16 @@ func get_luck() -> float:
 	return luck
 
 
+func add_screen_shake(amplitude: float = 10.0, duration: float = 0.18) -> void:
+	var camera: Camera2D = $Camera2D
+	if camera == null:
+		return
+	var base_offset: Vector2 = camera.offset
+	camera.offset = base_offset + Vector2(randf_range(-amplitude, amplitude), randf_range(-amplitude, amplitude))
+	var shake_tween: Tween = create_tween()
+	shake_tween.tween_property(camera, "offset", base_offset, max(duration, 0.01))
+
+
 func _load_character_stats(character_id: String) -> void:
 	character_data = CharacterCatalog.get_character(character_id)
 	var base_stats: Dictionary = character_data.get("base_stats", {})
@@ -422,12 +462,7 @@ func _show_player_hit_feedback() -> void:
 	var flash_tween: Tween = create_tween()
 	flash_tween.tween_property($AnimatedSprite2D, "modulate", Color(1, 1, 1, 1), 0.24)
 
-	var camera: Camera2D = $Camera2D
-	if camera != null:
-		var base_offset: Vector2 = camera.offset
-		camera.offset = base_offset + Vector2(randf_range(-10.0, 10.0), randf_range(-10.0, 10.0))
-		var shake_tween: Tween = create_tween()
-		shake_tween.tween_property(camera, "offset", base_offset, 0.18)
+	add_screen_shake(10.0, 0.18)
 
 	# Quick blood-like droplets to make collision hits feel impactful.
 	for i in range(8):
@@ -467,6 +502,7 @@ func _try_start_dash(move_input_direction: Vector2) -> bool:
 	dash_cooldown_remaining = _get_dash_cooldown()
 	if body_collision != null:
 		body_collision.set_deferred("disabled", true)
+	_spawn_dash_start_smoke()
 	_spawn_dash_blur()
 	return true
 
@@ -504,14 +540,32 @@ func _spawn_dash_blur() -> void:
 	ghost.scale = anim_sprite.global_scale
 	ghost.flip_h = anim_sprite.flip_h
 	ghost.flip_v = anim_sprite.flip_v
-	ghost.modulate = Color(0.78, 0.9, 1.0, 0.42)
-	ghost.z_index = anim_sprite.z_index - 1
+	ghost.modulate = Color(0.82, 0.94, 1.0, 0.58)
+	# Keep dash trail readable above world actors/effects on map scenes.
+	ghost.z_as_relative = false
+	ghost.z_index = 45
 	get_parent().add_child(ghost)
 
 	var ghost_tween: Tween = create_tween()
-	ghost_tween.tween_property(ghost, "modulate:a", 0.0, 0.16)
-	ghost_tween.parallel().tween_property(ghost, "scale", ghost.scale * 0.92, 0.16)
+	ghost_tween.tween_property(ghost, "modulate:a", 0.0, 0.2)
+	ghost_tween.parallel().tween_property(ghost, "scale", ghost.scale * 0.9, 0.2)
 	ghost_tween.tween_callback(ghost.queue_free)
+
+
+func _spawn_dash_start_smoke() -> void:
+	if dash_start_smoke_vfx_scene == null or get_parent() == null:
+		return
+	var smoke: Node2D = dash_start_smoke_vfx_scene.instantiate() as Node2D
+	if smoke == null:
+		return
+	smoke.global_position = global_position + Vector2(0.0, 6.0)
+	smoke.z_index = 42
+	smoke.scale = Vector2(0.72, 0.72)
+	get_parent().add_child(smoke)
+	if smoke.has_method("play_smoke"):
+		smoke.call("play_smoke")
+	if smoke is AnimatedSprite2D:
+		(smoke as AnimatedSprite2D).play()
 
 
 func _show_dash_rematerialize() -> void:
@@ -545,3 +599,34 @@ func apply_dash_talent(cooldown_reduction: float, iframe_bonus: float, distance_
 func set_lobby_mode(enabled: bool) -> void:
 	lobby_mode = enabled
 	is_attacking = false
+
+
+func _ensure_ground_shadow() -> void:
+	if ground_shadow != null:
+		return
+	ground_shadow = Polygon2D.new()
+	ground_shadow.polygon = _build_circle_polygon(11.0, 14)
+	ground_shadow.color = Color(0.0, 0.0, 0.0, 0.52)
+	ground_shadow.position = Vector2(0.0, 14.0)
+	ground_shadow.scale = Vector2(1.42, 0.62)
+	ground_shadow.show_behind_parent = true
+	ground_shadow.z_index = 0
+	add_child(ground_shadow)
+
+
+func _update_ground_shadow() -> void:
+	if ground_shadow == null or body_sprite == null:
+		return
+	var arc: float = clamp(-body_sprite.position.y / max(launch_height, 1.0), 0.0, 1.0)
+	ground_shadow.position = Vector2(0.0, 14.0)
+	ground_shadow.scale = Vector2(lerp(1.42, 0.9, arc), lerp(0.62, 0.38, arc))
+	ground_shadow.modulate.a = lerp(0.52, 0.24, arc)
+
+
+func _build_circle_polygon(radius: float, segments: int) -> PackedVector2Array:
+	var points: PackedVector2Array = PackedVector2Array()
+	for i in range(segments):
+		var t: float = float(i) / float(segments)
+		var angle: float = t * TAU
+		points.append(Vector2(cos(angle), sin(angle)) * radius)
+	return points

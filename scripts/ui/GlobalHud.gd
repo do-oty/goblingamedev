@@ -6,10 +6,10 @@ const LOW_HP_PULSE_THRESHOLD: float = 0.35
 const HP_HIT_FLASH_SECONDS: float = 0.22
 
 @onready var sprite_hud: Control = $SpriteHud
-@onready var top_bar: Control = $TopBar
+@onready var top_bar: Control = get_node_or_null("TopBar") as Control
 @onready var debug_panel: Control = $DebugPanel
-@onready var xp_bar: Control = $XpBar
-@onready var hp_bar: Control = $HpBar
+@onready var xp_bar: Control = get_node_or_null("XpBar") as Control
+@onready var hp_bar: Control = get_node_or_null("HpBar") as Control
 @onready var horde_warning: Control = $HordeWarning
 @onready var brute_warning: Control = $BruteChargeWarning
 @onready var bottom_bar: Control = get_node_or_null("BottomBar") as Control
@@ -20,6 +20,7 @@ const HP_HIT_FLASH_SECONDS: float = 0.22
 @onready var game_over_panel: PanelContainer = $GameOverPanel
 @onready var level_up_panel: PanelContainer = $LevelUpPanel
 @onready var top_bars: Control = $SpriteHud/TopBars
+@onready var dash_panel: Control = $SpriteHud/DashPanel
 @onready var hp_sprite_bar: ProgressBar = $SpriteHud/TopBars/HpSpriteBar
 @onready var xp_sprite_bar: ProgressBar = $SpriteHud/TopBars/XpSpriteBar
 @onready var dash_count_label: Label = $SpriteHud/DashPanel/DashCountLabel
@@ -99,21 +100,21 @@ func set_ui_mode(mode: String) -> void:
 	var combat_visible: bool = mode == MODE_COMBAT
 	combat_mode_active = combat_visible
 	if sprite_hud != null:
-		sprite_hud.visible = combat_visible
+		sprite_hud.visible = true
 	if top_bar != null:
-		top_bar.visible = combat_visible
+		top_bar.visible = false
 	if debug_panel != null:
 		debug_panel.visible = combat_visible
 	if xp_bar != null:
-		xp_bar.visible = combat_visible
+		xp_bar.visible = false
 	if hp_bar != null:
-		hp_bar.visible = combat_visible
+		hp_bar.visible = false
 	if horde_warning != null:
 		horde_warning.visible = false
 	if brute_warning != null:
 		brute_warning.visible = false
 	if bottom_bar != null:
-		bottom_bar.visible = combat_visible
+		bottom_bar.visible = false
 	if coin_label != null:
 		coin_label.visible = true
 	if hint_label != null:
@@ -128,6 +129,12 @@ func set_ui_mode(mode: String) -> void:
 		level_up_panel.visible = false
 	if status_frame != null:
 		status_frame.visible = false
+	if top_bars != null:
+		top_bars.visible = combat_visible
+	if dash_panel != null:
+		dash_panel.visible = true
+	if mobile_dash_button != null:
+		mobile_dash_button.visible = true
 	if quick_stats_label != null:
 		quick_stats_label.visible = false
 	if item_stacks_label != null:
@@ -138,6 +145,12 @@ func set_ui_mode(mode: String) -> void:
 		talents_modal.visible = false
 	if stats_modal_left != null:
 		stats_modal_left.visible = false
+	if items_toggle_button != null:
+		items_toggle_button.visible = combat_visible
+	if talents_toggle_button != null:
+		talents_toggle_button.visible = combat_visible
+	if stats_toggle_button_left != null:
+		stats_toggle_button_left.visible = combat_visible
 	if legacy_stats_toggle_button != null:
 		legacy_stats_toggle_button.visible = false
 	if legacy_stats_modal != null:
@@ -208,6 +221,7 @@ func update_combat_meta(
 		stats_modal_left_text.text = _format_stats_vertical(with_damage)
 	_rebuild_items_modal(item_entries)
 	_rebuild_talents_modal(talent_entries)
+	_request_modal_relayout()
 
 
 func _process(_delta: float) -> void:
@@ -219,10 +233,10 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if not combat_mode_active or top_bars == null:
 		return
-	var to_local: Transform2D = get_global_transform_with_canvas().affine_inverse()
-	var bars_rect_global: Rect2 = top_bars.get_global_rect()
-	var bars_origin_local: Vector2 = to_local * bars_rect_global.position
-	var bars_size: Vector2 = bars_rect_global.size
+	# Keep draw math in HUD-local space so camera/world transforms can't
+	# accidentally expand this draw over unrelated HUD elements (dash panel).
+	var bars_origin_local: Vector2 = top_bars.position
+	var bars_size: Vector2 = top_bars.size
 	if bars_size.y <= 2.0:
 		return
 
@@ -452,6 +466,7 @@ func _relayout_open_modals() -> void:
 		var panel: PanelContainer = opened[idx]
 		if panel == null:
 			continue
+		panel.reset_size()
 		panel.size = compact_size
 		panel.position = Vector2(x, y)
 		panel.move_to_front()

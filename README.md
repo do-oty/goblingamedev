@@ -2,6 +2,19 @@
 
 Current build is a Vampire Survivors-style prototype with a lobby -> portal -> run loop.
 
+## Recent Updates (May 2026)
+
+- Centralized HUD flow is now handled by `GlobalHud` and shared across lobby + run maps.
+- Added dedicated `Hobgoblin` enemy archetype (`scripts/hobgoblin.gd`, `assets/characters/hobgoblin.tscn`) with leap behavior and elite compatibility.
+- Enemy telegraphs were unified to a red layered style (more transparent, no white outline layer).
+- Added smoke VFX hooks for:
+  - dash start (`dash_start_smoke_vfx_scene`)
+  - brute charge windup start (`brute_charge_start_smoke_vfx_scene`)
+  - hobgoblin landing (`hobgoblin_landing_smoke_vfx_scene`)
+- Added lightweight dynamic ground shadows for player, enemies, pickups, and XP orbs.
+- Added run summary persistence + run history integration in lobby UI flow.
+- Added lobby historian interaction and portal sprite hook nodes for animated portal art.
+
 ## Core Flow
 
 1. Start game from main menu (no continue button).
@@ -16,20 +29,33 @@ Current build is a Vampire Survivors-style prototype with a lobby -> portal -> r
 - `scenes/maps/ForestMap.tscn` - main run scene + HUD + debug.
 - `scenes/maps/DesertMap.tscn` - placeholder map scene (currently based on Forest).
 - `scenes/maps/SnowMap.tscn` - placeholder map scene (currently based on Forest).
+- `scenes/ui/GlobalHud.tscn` - shared HUD used across lobby and combat maps.
 
 ## Main Systems
 
 - `scripts/GameRoot.gd` - run timer, enemy spawning, XP/leveling, drops, debug panel.
 - `scripts/player.gd` - movement, dash, auto attack, sword progression, lobby mode toggle.
-- `scripts/enemy.gd` - enemy base behavior, elites, brute/blink/tank variants.
+- `scripts/enemy.gd` - enemy base behavior, elites, brute/blink/tank variants, shared shadow + telegraph logic.
 - `scripts/goblin_mage.gd` - fire mage behavior.
 - `scripts/goblin_electric_mage.gd` - electric mage behavior.
 - `scripts/goblin_sword.gd` - sword goblin behavior.
+- `scripts/hobgoblin.gd` - hobgoblin leap archetype behavior.
 - `scripts/XpOrb.gd` - XP orb pickup and magnet behavior.
 - `scripts/PickupDrop.gd` - coin/health pickup behavior.
 - `scripts/GameState.gd` - save data, coins, permanent upgrades.
+- `scripts/ui/GlobalHud.gd` - centralized HUD logic (combat/lobby modes, modals, bars).
 - `scripts/data/ItemCatalog.gd` - item + talent data.
 - `scripts/data/CharacterCatalog.gd` - base character data.
+
+## VFX Hook Notes
+
+Smoke scenes are pre-created and wired:
+
+- `scenes/vfx/DashStartSmokeVfx.tscn`
+- `scenes/vfx/BruteChargeStartSmokeVfx.tscn`
+- `scenes/vfx/HobgoblinLandingSmokeVfx.tscn`
+
+You can replace their `AnimatedSprite2D` frames directly without code changes.
 
 ## Current Balance Snapshot
 

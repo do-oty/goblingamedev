@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://dybuwfdmbjnng"]
+
+[ext_resource type="Script" uid="uid://b8gie247wagp3" path="res://scripts/vfx/SmokePuffVfx.gd" id="1_smoke"]
+[ext_resource type="Texture2D" uid="uid://0nu3pjrvrwoo" path="res://assets/vfx/SMALL SMOKE.png" id="2_oq4jt"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v6ksa"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(0, 0, 15, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lq4pn"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(15, 0, 15, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0jvgr"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(30, 0, 15, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crsmi"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(45, 0, 15, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ogqys"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(60, 0, 15, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cqg26"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(75, 0, 15, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_db1yr"]
+atlas = ExtResource("2_oq4jt")
+region = Rect2(90, 0, 15, 11)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_h6kfj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v6ksa")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lq4pn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0jvgr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crsmi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ogqys")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cqg26")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_db1yr")
+}],
+"loop": true,
+"name": &"default",
+"speed": 24.0
+}]
+
+[node name="BruteChargeStartSmokeVfx" type="Node2D" unique_id=1791483234]
+script = ExtResource("1_smoke")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1117955127]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_h6kfj")
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

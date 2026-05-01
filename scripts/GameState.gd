@@ -7,7 +7,8 @@ const DEFAULT_SAVE_DATA := {
 	"created_at_unix": 0,
 	"coins": 0,
 	"permanent_upgrades": {},
-	"last_run_summary": {}
+	"last_run_summary": {},
+	"run_history": []
 }
 
 var latest_save_data: Dictionary = {}
@@ -136,7 +137,15 @@ func get_total_permanent_bonus() -> Dictionary:
 
 func record_last_run_summary(summary: Dictionary) -> void:
 	var save_data: Dictionary = _ensure_save_loaded()
-	save_data["last_run_summary"] = summary.duplicate(true)
+	var copy_summary: Dictionary = summary.duplicate(true)
+	save_data["last_run_summary"] = copy_summary
+	var run_history: Array = save_data.get("run_history", [])
+	if not (run_history is Array):
+		run_history = []
+	run_history.push_front(copy_summary)
+	while run_history.size() > 20:
+		run_history.pop_back()
+	save_data["run_history"] = run_history
 	save_game(save_data)
 
 
@@ -152,13 +161,44 @@ func get_last_run_summary_text() -> String:
 	var summary: Dictionary = get_last_run_summary()
 	if summary.is_empty():
 		return "No recent run summary."
-	return "Last Run: %s | Lv %d | Time %s | Run Coins %d | DMG Taken %d" % [
+	return "Last Run\nResult: %s\nLevel: %d\nTime: %s\nRun Coins: %d\nDamage Taken: %d" % [
 		summary.get("result", "Run"),
 		int(summary.get("level", 1)),
 		String(summary.get("time_text", "00:00")),
 		int(summary.get("run_coins", 0)),
 		int(summary.get("damage_taken", 0))
 	]
+
+
+func get_run_history_text(limit: int = 8) -> String:
+	var save_data: Dictionary = _ensure_save_loaded()
+	var run_history: Array = save_data.get("run_history", [])
+	if not (run_history is Array) or run_history.is_empty():
+		return "Run History\nNo completed runs yet.\n\nObjective Tip\nSurvive 2:00 and buy 1 upgrade."
+	var lines: Array[String] = []
+	lines.append("Run History")
+	var max_entries: int = min(limit, run_history.size())
+	for i in range(max_entries):
+		var entry: Variant = run_history[i]
+		if not (entry is Dictionary):
+			continue
+		var run: Dictionary = entry as Dictionary
+		lines.append(
+			"%d) %s | Lv %d | %s | Coins %d | DMG %d" % [
+				i + 1,
+				String(run.get("result", "Run")),
+				int(run.get("level", 1)),
+				String(run.get("time_text", "00:00")),
+				int(run.get("run_coins", 0)),
+				int(run.get("damage_taken", 0))
+			]
+		)
+	lines.append("")
+	lines.append("Objectives")
+	lines.append("- Survive 2:00")
+	lines.append("- Buy 1 permanent upgrade")
+	lines.append("- Reach Lv 5 in one run")
+	return "\n".join(lines)
 
 
 func _ensure_save_loaded() -> Dictionary:
@@ -177,4 +217,6 @@ func _with_defaults(data: Dictionary) -> Dictionary:
 		merged["permanent_upgrades"] = {}
 	if not (merged.get("last_run_summary", {}) is Dictionary):
 		merged["last_run_summary"] = {}
+	if not (merged.get("run_history", []) is Array):
+		merged["run_history"] = []
 	return merged

@@ -10,6 +10,7 @@ const SNOW_SCENE_PATH: String = "res://scenes/maps/SnowMap.tscn"
 @onready var desert_portal_area: Area2D = $PortalDesert/PortalArea
 @onready var snow_portal_area: Area2D = $PortalSnow/PortalArea
 @onready var npc_area: Area2D = $UpgradeNpc/NpcArea
+@onready var historian_area: Area2D = $HistorianNpc/NpcArea
 @onready var coin_label: Label = $"CanvasLayer/HUD/CoinLabel"
 @onready var hint_label: Label = $"CanvasLayer/HUD/HintLabel"
 @onready var panel: PanelContainer = $"CanvasLayer/HUD/UpgradePanel"
@@ -20,6 +21,8 @@ const SNOW_SCENE_PATH: String = "res://scenes/maps/SnowMap.tscn"
 @onready var button_dash: Button = $"CanvasLayer/HUD/UpgradePanel/Margin/VBox/DashButton"
 
 var player_in_npc_range: bool = false
+var player_in_historian_range: bool = false
+var history_panel_visible: bool = false
 
 
 func _ready() -> void:
@@ -37,6 +40,8 @@ func _ready() -> void:
 	snow_portal_area.body_entered.connect(_on_portal_body_entered.bind(SNOW_SCENE_PATH))
 	npc_area.body_entered.connect(_on_npc_body_entered)
 	npc_area.body_exited.connect(_on_npc_body_exited)
+	historian_area.body_entered.connect(_on_historian_body_entered)
+	historian_area.body_exited.connect(_on_historian_body_exited)
 	button_hp.pressed.connect(_on_hp_upgrade_pressed)
 	button_speed.pressed.connect(_on_speed_upgrade_pressed)
 	button_luck.pressed.connect(_on_luck_upgrade_pressed)
@@ -45,12 +50,16 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if player_in_npc_range and not panel.visible:
+	if player_in_historian_range:
+		hint_label.visible = true
+		hint_label.text = "Press E to view run history"
+	elif player_in_npc_range and not panel.visible:
 		hint_label.visible = true
 		hint_label.text = "Press E to talk"
 	else:
 		hint_label.visible = false
 	_refresh_coins()
+	_refresh_lobby_dash_ui()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -58,6 +67,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key_event: InputEventKey = event as InputEventKey
 	if key_event == null or not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode == KEY_E and player_in_historian_range:
+		history_panel_visible = not history_panel_visible
+		if global_hud != null and global_hud.has_method("set_lobby_last_run_text"):
+			if history_panel_visible:
+				global_hud.call("set_lobby_last_run_text", GameState.get_run_history_text())
+			else:
+				global_hud.call("set_lobby_last_run_text", GameState.get_last_run_summary_text())
+		get_viewport().set_input_as_handled()
 		return
 	if key_event.keycode == KEY_E and player_in_npc_range:
 		_set_upgrade_panel_visible(not panel.visible)
@@ -82,6 +100,21 @@ func _on_npc_body_exited(body: Node) -> void:
 		return
 	player_in_npc_range = false
 	_set_upgrade_panel_visible(false)
+
+
+func _on_historian_body_entered(body: Node) -> void:
+	if body != player:
+		return
+	player_in_historian_range = true
+
+
+func _on_historian_body_exited(body: Node) -> void:
+	if body != player:
+		return
+	player_in_historian_range = false
+	history_panel_visible = false
+	if global_hud != null and global_hud.has_method("set_lobby_last_run_text"):
+		global_hud.call("set_lobby_last_run_text", GameState.get_last_run_summary_text())
 
 
 func _on_hp_upgrade_pressed() -> void:
@@ -127,6 +160,26 @@ func _refresh_ui() -> void:
 
 func _refresh_coins() -> void:
 	coin_label.text = "Coins: %d" % GameState.get_coins()
+
+
+func _refresh_lobby_dash_ui() -> void:
+	if global_hud == null or not global_hud.has_method("update_combat_bars") or player == null:
+		return
+	var dash_cd_left: float = player.get_dash_cooldown_remaining() if player.has_method("get_dash_cooldown_remaining") else 0.0
+	var dash_cd_total: float = player.get_dash_cooldown_total() if player.has_method("get_dash_cooldown_total") else 1.0
+	var dash_ready_count: int = 1 if dash_cd_left <= 0.01 else 0
+	global_hud.call(
+		"update_combat_bars",
+		1,
+		1,
+		0,
+		1,
+		dash_ready_count,
+		1,
+		dash_cd_left,
+		dash_cd_total,
+		""
+	)
 
 
 func _set_upgrade_panel_visible(is_open: bool) -> void:

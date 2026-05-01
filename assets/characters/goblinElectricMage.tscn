@@ -6,17 +6,17 @@
 [ext_resource type="Texture2D" uid="uid://c5wjg7u5cd0i5" path="res://assets/vfx/elecProj.png" id="4_pkdf7"]
 [ext_resource type="Texture2D" uid="uid://d5dk2glfnldh" path="res://assets/vfx/elecExplosion2.png" id="5_e4frs"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_jv2xl"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_4b40p"]
 atlas = ExtResource("2_adfbs")
-region = Rect2(66, 96, 22, 32)
+region = Rect2(72, 105, 24, 35)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_oxv0r"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_ri20b"]
 atlas = ExtResource("2_adfbs")
-region = Rect2(88, 96, 22, 32)
+region = Rect2(96, 105, 24, 35)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_s0yqh"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_18cc3"]
 atlas = ExtResource("2_adfbs")
-region = Rect2(110, 96, 22, 32)
+region = Rect2(120, 105, 24, 35)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3wwfo"]
 atlas = ExtResource("2_adfbs")
@@ -106,13 +106,13 @@ region = Rect2(110, 64, 22, 32)
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_jv2xl")
+"texture": SubResource("AtlasTexture_4b40p")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_oxv0r")
+"texture": SubResource("AtlasTexture_ri20b")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_s0yqh")
+"texture": SubResource("AtlasTexture_18cc3")
 }],
 "loop": true,
 "name": &"back_attack",
@@ -367,16 +367,18 @@ animations = [{
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_fxwma"]
 radius = 6.0
-height = 14.0
+height = 24.0
 
 [node name="enemy" type="CharacterBody2D" unique_id=310589185]
 script = ExtResource("1_nbma8")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=194907630]
+texture_filter = 1
 position = Vector2(-0.5, 1)
 scale = Vector2(0.95454544, 0.9375)
 sprite_frames = SubResource("SpriteFrames_vadtu")
-animation = &"back_attack"
+animation = &"right_attack"
+frame_progress = 0.14116451
 
 [node name="IncantationSprite" type="AnimatedSprite2D" parent="." unique_id=657023650]
 visible = false
