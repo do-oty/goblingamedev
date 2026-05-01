@@ -6,7 +6,7 @@ const MAGE_DAMAGE_MULT: float = 1.15
 const MAGE_CAST_COOLDOWN_MIN: float = 2.9
 const MAGE_CAST_COOLDOWN_MAX: float = 4.1
 const MAGE_CHANNEL_TIME: float = 1.85
-const MAGE_VOLLEY_COUNT: int = 2
+const MAGE_VOLLEY_COUNT: int = 4
 const MAGE_AOE_RADIUS: float = 56.0
 const MAGE_AOE_DAMAGE_MULT: float = 1.3
 const MAGE_MIN_CAST_RANGE: float = 140.0
@@ -18,9 +18,11 @@ const MAGE_INCANTATION_BASE_SCALE: float = 0.58
 const MAGE_PROJECTILE_BASE_SCALE: float = 0.28
 const MAGE_ELITE_INCANTATION_SCALE: float = 1.12
 const MAGE_ELITE_AOE_RADIUS_MULT: float = 1.22
-const MAGE_TELEGRAPH_COLOR: Color = Color(1.0, 0.18, 0.18, 0.18)
-const MAGE_TELEGRAPH_ALPHA_MIN: float = 0.14
-const MAGE_TELEGRAPH_ALPHA_MAX: float = 0.62
+const MAGE_TELEGRAPH_COLOR: Color = Color(0.58, 0.04, 0.04, 0.12)
+const MAGE_TELEGRAPH_ALPHA_MIN: float = 0.08
+const MAGE_TELEGRAPH_ALPHA_MAX: float = 0.24
+const MAGE_TELEGRAPH_INNER_COLOR: Color = Color(0.74, 0.13, 0.13, 0.1)
+const MAGE_TELEGRAPH_OUTLINE_RED: Color = Color(0.58, 0.04, 0.04, 0.8)
 const MAGE_EXPLOSION_Y_OFFSET: float = 8.0
 
 var cast_cooldown: float = 0.0
@@ -181,23 +183,35 @@ func _schedule_mage_volley() -> void:
 		telegraph_outer.polygon = _build_circle_polygon(aoe_radius, 32)
 		telegraph_outer.color = MAGE_TELEGRAPH_COLOR
 		telegraph_outer.global_position = target_pos
-		telegraph_outer.z_index = -1
+		telegraph_outer.z_index = -2
 		get_parent().add_child(telegraph_outer)
 
 		var telegraph_inner: Polygon2D = Polygon2D.new()
 		telegraph_inner.polygon = _build_circle_polygon(aoe_radius * 0.58, 24)
-		telegraph_inner.color = Color(1.0, 0.28, 0.28, 0.14)
+		telegraph_inner.color = MAGE_TELEGRAPH_INNER_COLOR
 		telegraph_inner.global_position = target_pos
-		telegraph_inner.z_index = -1
+		telegraph_inner.z_index = -2
 		get_parent().add_child(telegraph_inner)
+		var telegraph_outline_red: Line2D = Line2D.new()
+		telegraph_outline_red.points = telegraph_outer.polygon
+		telegraph_outline_red.closed = true
+		telegraph_outline_red.width = 1.2
+		telegraph_outline_red.default_color = MAGE_TELEGRAPH_OUTLINE_RED
+		telegraph_outline_red.joint_mode = Line2D.LINE_JOINT_ROUND
+		telegraph_outline_red.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		telegraph_outline_red.end_cap_mode = Line2D.LINE_CAP_ROUND
+		telegraph_outline_red.global_position = target_pos
+		telegraph_outline_red.z_index = 0
+		get_parent().add_child(telegraph_outline_red)
 
-		var impact_delay: float = 1.45 + (float(i) * 0.55)
+		var impact_delay: float = 1.05 + (float(i) * 0.32)
 		impact_events.append({
 			"time_left": impact_delay,
 			"impact_total": impact_delay,
 			"target_pos": target_pos,
 			"telegraph_outer": telegraph_outer,
-			"telegraph_inner": telegraph_inner
+			"telegraph_inner": telegraph_inner,
+			"telegraph_outline_red": telegraph_outline_red
 		})
 
 
@@ -213,17 +227,22 @@ func _update_mage_impacts(delta: float) -> void:
 
 		var telegraph_outer: Polygon2D = evt.get("telegraph_outer", null) as Polygon2D
 		var telegraph_inner: Polygon2D = evt.get("telegraph_inner", null) as Polygon2D
+		var telegraph_outline_red: Line2D = evt.get("telegraph_outline_red", null) as Line2D
 		if telegraph_outer != null:
 			var total: float = max(float(evt.get("impact_total", 0.01)), 0.01)
 			var progress: float = clamp(1.0 - (time_left / total), 0.0, 1.0)
-			var pulse_speed: float = lerp(1.6, 10.0, progress)
+			var pulse_speed: float = lerp(1.2, 4.0, progress)
 			var pulse: float = 0.5 + (0.5 * sin(Time.get_ticks_msec() * 0.001 * pulse_speed))
 			telegraph_outer.modulate.a = lerp(MAGE_TELEGRAPH_ALPHA_MIN, MAGE_TELEGRAPH_ALPHA_MAX, pulse)
+			var alpha: float = telegraph_outer.modulate.a
 			var ring_scale: float = lerp(0.98, 1.08, pulse * 0.5)
 			telegraph_outer.scale = Vector2(ring_scale, ring_scale)
 			if telegraph_inner != null:
 				telegraph_inner.modulate.a = lerp(MAGE_TELEGRAPH_ALPHA_MIN * 0.8, MAGE_TELEGRAPH_ALPHA_MAX * 0.85, pulse)
 				telegraph_inner.scale = Vector2(ring_scale * 1.02, ring_scale * 1.02)
+			if telegraph_outline_red != null:
+				telegraph_outline_red.default_color = Color(0.58, 0.04, 0.04, clamp(0.22 + alpha, 0.2, 0.82))
+				telegraph_outline_red.scale = Vector2(ring_scale, ring_scale)
 
 		if time_left > 0.0:
 			continue
@@ -233,16 +252,34 @@ func _update_mage_impacts(delta: float) -> void:
 			telegraph_outer.queue_free()
 		if telegraph_inner != null:
 			telegraph_inner.queue_free()
+		if telegraph_outline_red != null:
+			telegraph_outline_red.queue_free()
 		impact_events.remove_at(i)
 
 	if impact_events.is_empty():
 		_hide_cast_projectile()
 
 
+func _exit_tree() -> void:
+	for evt in impact_events:
+		var telegraph_outer: Polygon2D = evt.get("telegraph_outer", null) as Polygon2D
+		var telegraph_inner: Polygon2D = evt.get("telegraph_inner", null) as Polygon2D
+		var telegraph_outline_red: Line2D = evt.get("telegraph_outline_red", null) as Line2D
+		if telegraph_outer != null:
+			telegraph_outer.queue_free()
+		if telegraph_inner != null:
+			telegraph_inner.queue_free()
+		if telegraph_outline_red != null:
+			telegraph_outline_red.queue_free()
+	impact_events.clear()
+
+
 func _apply_mage_impact(evt: Dictionary) -> void:
 	var pos: Vector2 = evt.get("target_pos", global_position)
 	var aoe_radius: float = _get_mage_aoe_radius()
 	_spawn_explosion_vfx(pos, aoe_radius)
+	if target_player != null and is_instance_valid(target_player) and target_player.has_method("add_screen_shake"):
+		target_player.call("add_screen_shake", 6.0, 0.12)
 
 	if target_player == null or not is_instance_valid(target_player) or not target_player.has_method("receive_damage"):
 		return

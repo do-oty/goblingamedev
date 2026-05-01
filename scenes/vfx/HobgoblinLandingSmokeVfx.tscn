@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://dg7n38u2qgyls"]
+
+[ext_resource type="Script" uid="uid://b8gie247wagp3" path="res://scripts/vfx/SmokePuffVfx.gd" id="1_smoke"]
+[ext_resource type="Texture2D" uid="uid://bxmmufy537vhy" path="res://assets/vfx/BIG IMPACT SMOKE.png" id="2_2rcbs"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8vnun"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(0, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uj7m2"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(176, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_38lv4"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(352, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u5011"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(528, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8je2e"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(704, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xaqdx"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(880, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l4yrd"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(1056, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_32wp0"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(1232, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x4c1t"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(1408, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d2myj"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(1584, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fm8tn"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(1760, 0, 176, 61)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j8eot"]
+atlas = ExtResource("2_2rcbs")
+region = Rect2(1936, 0, 176, 61)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_smoke"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8vnun")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uj7m2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_38lv4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u5011")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8je2e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xaqdx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l4yrd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_32wp0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x4c1t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d2myj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fm8tn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j8eot")
+}],
+"loop": false,
+"name": &"default",
+"speed": 24.0
+}]
+
+[node name="HobgoblinLandingSmokeVfx" type="Node2D" unique_id=1011498001]
+script = ExtResource("1_smoke")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=632733955]
+z_index = -1
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_smoke")
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

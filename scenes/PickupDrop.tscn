@@ -16,3 +16,9 @@ shape = SubResource("CircleShape2D_3f2n8")
 [node name="Body" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(0, -7, 6, -3, 5, 4, 0, 7, -5, 4, -6, -3)
 color = Color(1, 0.86, 0.26, 0.95)
+
+[node name="Outline" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -7, 6, -3, 5, 4, 0, 7, -5, 4, -6, -3)
+color = Color(0, 0, 0, 0.92)
+scale = Vector2(1.18, 1.18)
+z_index = -1

@@ -8,7 +8,10 @@ signal collected(xp_value: int)
 var target_player: Node2D = null
 var body_sprite: Polygon2D = null
 var core_sprite: Polygon2D = null
+var outline_sprite: Polygon2D = null
+var ground_shadow: Polygon2D = null
 var visual_time: float = 0.0
+var core_base_scale: Vector2 = Vector2(0.72, 0.72)
 
 
 func _ready() -> void:
@@ -16,6 +19,8 @@ func _ready() -> void:
 	target_player = get_tree().get_first_node_in_group("player") as Node2D
 	body_sprite = $Polygon2D
 	core_sprite = $Core
+	outline_sprite = get_node_or_null("Outline") as Polygon2D
+	_ensure_ground_shadow()
 
 
 func _physics_process(delta: float) -> void:
@@ -43,8 +48,11 @@ func _physics_process(delta: float) -> void:
 	var bob: float = sin(visual_time * 5.0) * 1.6
 	body_sprite.position.y = bob
 	core_sprite.position.y = bob
+	if outline_sprite != null:
+		outline_sprite.position.y = bob
+	_update_ground_shadow(bob)
 	var pulse: float = 1.0 + (sin(visual_time * 8.0) * 0.08)
-	core_sprite.scale = Vector2.ONE * pulse
+	core_sprite.scale = core_base_scale * pulse
 
 
 func configure_drop(value: int, tier: String) -> void:
@@ -70,6 +78,13 @@ func configure_drop(value: int, tier: String) -> void:
 		_:
 			body_sprite.color = Color(0.7, 0.8, 1.0, 0.95)
 			core_sprite.color = Color(0.95, 0.96, 1.0, 0.98)
+	body_sprite.scale = Vector2(0.66, 0.66)
+	core_base_scale = Vector2(0.54, 0.54)
+	core_sprite.scale = core_base_scale
+	if outline_sprite != null:
+		outline_sprite.polygon = body_sprite.polygon
+		outline_sprite.scale = Vector2(0.98, 0.98)
+		outline_sprite.color = Color(0.0, 0.0, 0.0, 0.92)
 
 
 func _ensure_visual_nodes() -> void:
@@ -77,3 +92,36 @@ func _ensure_visual_nodes() -> void:
 		body_sprite = get_node_or_null("Polygon2D") as Polygon2D
 	if core_sprite == null:
 		core_sprite = get_node_or_null("Core") as Polygon2D
+	if outline_sprite == null:
+		outline_sprite = get_node_or_null("Outline") as Polygon2D
+
+
+func _ensure_ground_shadow() -> void:
+	if ground_shadow != null:
+		return
+	ground_shadow = Polygon2D.new()
+	ground_shadow.polygon = PackedVector2Array([
+		Vector2(0, -4),
+		Vector2(5, -2),
+		Vector2(6, 0),
+		Vector2(5, 2),
+		Vector2(0, 4),
+		Vector2(-5, 2),
+		Vector2(-6, 0),
+		Vector2(-5, -2)
+	])
+	ground_shadow.color = Color(0.0, 0.0, 0.0, 0.4)
+	ground_shadow.scale = Vector2(1.0, 0.58)
+	ground_shadow.position = Vector2(0.0, 7.0)
+	ground_shadow.show_behind_parent = true
+	ground_shadow.z_index = 0
+	add_child(ground_shadow)
+
+
+func _update_ground_shadow(bob: float) -> void:
+	if ground_shadow == null:
+		return
+	var t: float = clamp(abs(bob) / 1.8, 0.0, 1.0)
+	ground_shadow.position = Vector2(0.0, 7.0)
+	ground_shadow.scale = Vector2(lerp(1.0, 0.9, t), lerp(0.58, 0.5, t))
+	ground_shadow.modulate.a = lerp(0.4, 0.3, t)

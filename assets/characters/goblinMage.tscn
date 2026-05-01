@@ -437,7 +437,7 @@ animations = [{
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_fxwma"]
 radius = 6.0
-height = 14.0
+height = 26.0
 
 [node name="enemy" type="CharacterBody2D" unique_id=310589185]
 script = ExtResource("1_nbma8")

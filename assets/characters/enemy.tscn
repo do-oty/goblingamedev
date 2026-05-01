@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://dgot1tc7up8r2" path="res://assets/characters/enemy.png" id="1_1a4b3"]
 [ext_resource type="Script" uid="uid://dhec2weptapkq" path="res://scripts/enemy.gd" id="1_nbma8"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/BruteChargeStartSmokeVfx.tscn" id="2_brute_smoke"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fxwma"]
 atlas = ExtResource("1_1a4b3")
@@ -53,15 +54,15 @@ region = Rect2(44, 32, 22, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_t1ksj"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(0, 64, 22, 32)
+region = Rect2(0, 66, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vaket"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(22, 64, 22, 32)
+region = Rect2(22, 66, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jf324"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(44, 64, 22, 32)
+region = Rect2(44, 66, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ljmjs"]
 atlas = ExtResource("1_1a4b3")
@@ -77,27 +78,27 @@ region = Rect2(110, 0, 22, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3oig7"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(66, 32, 22, 32)
+region = Rect2(66, 33, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4yslq"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(88, 32, 22, 32)
+region = Rect2(88, 33, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vlloh"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(110, 32, 22, 32)
+region = Rect2(110, 33, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_w163c"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(66, 64, 22, 32)
+region = Rect2(66, 66, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hy6wr"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(88, 64, 22, 32)
+region = Rect2(88, 66, 22, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_itp1e"]
 atlas = ExtResource("1_1a4b3")
-region = Rect2(110, 64, 22, 32)
+region = Rect2(110, 66, 22, 33)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_vadtu"]
 animations = [{
@@ -221,16 +222,19 @@ animations = [{
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_fxwma"]
 radius = 6.0
-height = 14.0
+height = 20.0
 
 [node name="enemy" type="CharacterBody2D" unique_id=1491725651]
 script = ExtResource("1_nbma8")
+brute_charge_start_smoke_vfx_scene = ExtResource("2_brute_smoke")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1369071536]
+texture_filter = 1
 position = Vector2(-0.5, 1)
 scale = Vector2(0.95454544, 0.9375)
 sprite_frames = SubResource("SpriteFrames_vadtu")
-animation = &"back_attack"
+animation = &"right_attack"
+frame_progress = 0.66666794
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1519150205]
 position = Vector2(0, 2)

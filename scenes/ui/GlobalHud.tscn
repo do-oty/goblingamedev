@@ -357,6 +357,20 @@ grow_horizontal = 2
 max_value = 5.0
 show_percentage = false
 
+[node name="DebugToggleButtonSprite" type="Button" parent="SpriteHud" unique_id=191834220]
+custom_minimum_size = Vector2(112, 34)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -72.0
+offset_top = 34.0
+offset_right = 54.0
+offset_bottom = 70.0
+grow_horizontal = 2
+focus_mode = 0
+text = "Debug (Open)"
+
 [node name="RunTimerLabel" type="Label" parent="SpriteHud" unique_id=1499394660]
 layout_mode = 0
 offset_left = 79.0
@@ -657,57 +671,19 @@ theme_override_font_sizes/font_size = 15
 text = "Stats"
 autowrap_mode = 3
 
-[node name="TopBar" type="HBoxContainer" parent="." unique_id=1109308736]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 22.0
-offset_top = 224.0
-offset_right = -18.0
-offset_bottom = 272.0
-grow_horizontal = 2
-theme_override_constants/separation = 20
-
-[node name="TimeLabel" type="Label" parent="TopBar" unique_id=1532567738]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "20:00"
-
-[node name="HealthLabel" type="Label" parent="TopBar" unique_id=1621641042]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "HP: 100 / 100"
-
-[node name="EnemyCountLabel" type="Label" parent="TopBar" unique_id=1004748683]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Enemies: 0 / 10"
-
-[node name="LevelLabel" type="Label" parent="TopBar" unique_id=862104077]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Lv 1  XP 0/5"
-
-[node name="WeaponLabel" type="Label" parent="TopBar" unique_id=514368775]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Sword Slash Lv 1/5"
-
-[node name="DebugToggleButton" type="Button" parent="TopBar" unique_id=2103056391]
-custom_minimum_size = Vector2(120, 42)
-layout_mode = 2
-text = "Debug"
-
 [node name="DebugPanel" type="PanelContainer" parent="." unique_id=162885334]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -242.0
-offset_top = 14.0
-offset_right = -10.0
-offset_bottom = 729.0
-grow_horizontal = 0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 423.0
+offset_top = -374.0
+offset_right = 641.0
+offset_bottom = 376.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DebugMargin" type="MarginContainer" parent="DebugPanel" unique_id=981925742]
 layout_mode = 2
@@ -756,6 +732,11 @@ custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Spawn Tank"
 
+[node name="DebugGTankButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1321093310]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Hobgoblin"
+
 [node name="DebugSwordButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1066795069]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
@@ -786,6 +767,11 @@ custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Spawn Elite Elec"
 
+[node name="DebugEliteHobgoblinButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=2019312457]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Elite Hobgoblin"
+
 [node name="DebugAoeButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=207828388]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
@@ -807,29 +793,6 @@ theme_override_font_sizes/font_size = 12
 text = "DBG"
 autowrap_mode = 3
 clip_text = true
-
-[node name="XpBar" type="ProgressBar" parent="." unique_id=1241958480]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 14.0
-offset_top = 159.0
-offset_right = -26.0
-offset_bottom = 175.0
-grow_horizontal = 2
-show_percentage = false
-
-[node name="HpBar" type="ProgressBar" parent="." unique_id=2139504632]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 20.0
-offset_top = 180.0
-offset_right = -20.0
-offset_bottom = 196.0
-grow_horizontal = 2
-value = 100.0
-show_percentage = false
 
 [node name="HordeWarning" type="Label" parent="." unique_id=1849546806]
 visible = false

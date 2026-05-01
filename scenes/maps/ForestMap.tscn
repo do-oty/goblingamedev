@@ -1,8 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dk8gccgvpj6gi"]
+[gd_scene format=3 uid="uid://dk8gccgvpj6gi"]
 
 [ext_resource type="Script" uid="uid://cas23h4uysrk0" path="res://scripts/GameRoot.gd" id="1_root_script"]
 [ext_resource type="PackedScene" uid="uid://m8d1e3t1dw60" path="res://assets/characters/player.tscn" id="2_player_scene"]
-[ext_resource type="PackedScene" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
+[ext_resource type="PackedScene" uid="uid://buf3cr0tftoq0" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
 
 [node name="ForestMap" type="Node2D" unique_id=2036808203]
 script = ExtResource("1_root_script")
@@ -12,7 +12,7 @@ offset_left = -2200.0
 offset_top = -2200.0
 offset_right = 2200.0
 offset_bottom = 2200.0
-color = Color(0.101961, 0.129412, 0.0980392, 1)
+color = Color(0.48625284, 0.5984827, 0.52154267, 1)
 
 [node name="Enemies" type="Node2D" parent="." unique_id=20729437]
 
@@ -21,6 +21,7 @@ color = Color(0.101961, 0.129412, 0.0980392, 1)
 [node name="Drops" type="Node2D" parent="." unique_id=1248371286]
 
 [node name="Player" parent="." unique_id=1646848590 instance=ExtResource("2_player_scene")]
+dash_start_smoke_vfx_scene = null
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=1900327636]
 zoom = Vector2(1.2, 1.2)
@@ -29,22 +30,4 @@ position_smoothing_speed = 12.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=772507349]
 
-[node name="HUD" parent="CanvasLayer" instance=ExtResource("3_global_hud")]
-
-[connection signal="pressed" from="CanvasLayer/HUD/TopBar/DebugToggleButton" to="." method="_on_debug_toggle_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSkipButton" to="." method="_on_debug_skip_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHordeButton" to="." method="_on_debug_horde_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteButton" to="." method="_on_debug_elite_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugBruteButton" to="." method="_on_debug_brute_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugBlinkButton" to="." method="_on_debug_blink_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugTankButton" to="." method="_on_debug_tank_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSwordButton" to="." method="_on_debug_sword_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugMageButton" to="." method="_on_debug_mage_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugElectricMageButton" to="." method="_on_debug_electric_mage_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteSwordButton" to="." method="_on_debug_elite_sword_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteMageButton" to="." method="_on_debug_elite_mage_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteElectricMageButton" to="." method="_on_debug_elite_electric_mage_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugAoeButton" to="." method="_on_debug_aoe_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugLevelButton" to="." method="_on_debug_level_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHealButton" to="." method="_on_debug_heal_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/HUD/SpriteHud/StatsToggleButton" to="." method="_on_stats_toggle_button_pressed"]
+[node name="HUD" parent="CanvasLayer" unique_id=363297383 instance=ExtResource("3_global_hud")]

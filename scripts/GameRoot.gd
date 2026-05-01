@@ -1,51 +1,57 @@
 extends Node2D
 
 const RUN_DURATION_SECONDS: float = 15.0 * 60.0
-const START_SPAWN_INTERVAL: float = 2.45
-const END_SPAWN_INTERVAL: float = 0.18
-const START_MAX_ENEMIES: int = 18
-const END_MAX_ENEMIES: int = 260
-const START_MIN_ENEMIES_ALIVE: int = 1
-const END_MIN_ENEMIES_ALIVE: int = 120
-const START_SPAWN_BURST: int = 1
-const END_SPAWN_BURST: int = 4
+const START_SPAWN_INTERVAL: float = 1.35
+const END_SPAWN_INTERVAL: float = 0.07
+const START_MAX_ENEMIES: int = 55
+const END_MAX_ENEMIES: int = 1200
+const START_MIN_ENEMIES_ALIVE: int = 6
+const END_MIN_ENEMIES_ALIVE: int = 760
+const START_SPAWN_BURST: int = 2
+const END_SPAWN_BURST: int = 20
 const SPAWN_DISTANCE_MIN: float = 360.0
 const SPAWN_DISTANCE_MAX: float = 760.0
 const BASE_XP_TO_LEVEL: int = 5
 const XP_GROWTH_PER_LEVEL: int = 3
-const HORDE_EVENT_MIN_SECONDS: float = 28.0
-const HORDE_EVENT_MAX_SECONDS: float = 44.0
-const HORDE_GROUP_MIN: int = 12
-const HORDE_GROUP_MAX: int = 22
+const HORDE_EVENT_MIN_SECONDS: float = 16.0
+const HORDE_EVENT_MAX_SECONDS: float = 30.0
+const HORDE_GROUP_MIN: int = 24
+const HORDE_GROUP_MAX: int = 90
 const HORDE_WARNING_DURATION: float = 1.8
-const ELITE_START_TIME_SECONDS: float = 90.0
-const ELITE_BASE_SPAWN_CHANCE: float = 0.01
-const ELITE_MAX_SPAWN_CHANCE: float = 0.16
-const ELITE_EVENT_MIN_INTERVAL: float = 20.0
-const ELITE_EVENT_MAX_INTERVAL: float = 58.0
-const SWORD_UNLOCK_SECONDS: float = 180.0
-const FIRE_MAGE_UNLOCK_SECONDS: float = 390.0
-const ELECTRIC_MAGE_UNLOCK_SECONDS: float = 540.0
+const HORDE_EXTRA_WARNING_BASE_CHANCE: float = 0.62
+const HORDE_EXTRA_WARNING_MAX_CHANCE: float = 0.88
+const HORDE_MAX_WARNING_BURST: int = 3
+const ELITE_START_TIME_SECONDS: float = 120.0
+const ELITE_BASE_SPAWN_CHANCE: float = 0.04
+const ELITE_MAX_SPAWN_CHANCE: float = 0.28
+const ELITE_EVENT_MIN_INTERVAL: float = 10.0
+const ELITE_EVENT_MAX_INTERVAL: float = 28.0
+const SWORD_UNLOCK_SECONDS: float = 75.0
+const FIRE_MAGE_UNLOCK_SECONDS: float = 240.0
+const ELECTRIC_MAGE_UNLOCK_SECONDS: float = 420.0
+const TANK_ENEMY_UNLOCK_SECONDS: float = 120.0
 const COIN_DROP_CHANCE: float = 0.18
 const HEALTH_DROP_CHANCE: float = 0.012
 const HEALTH_DROP_HEAL: int = 22
 const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
+const FLOOR_FILL_INTERVAL: float = 0.18
+const EARLY_GAME_EASY_SECONDS: float = 120.0
 
 @onready var player = $Player
 @onready var global_hud: Control = $"CanvasLayer/HUD"
 @onready var enemies_root: Node2D = $Enemies
 @onready var orbs_root: Node2D = $XpOrbs
 @onready var drops_root: Node2D = $Drops
-@onready var time_label: Label = $"CanvasLayer/HUD/TopBar/TimeLabel"
-@onready var hp_label: Label = $"CanvasLayer/HUD/TopBar/HealthLabel"
-@onready var enemy_count_label: Label = $"CanvasLayer/HUD/TopBar/EnemyCountLabel"
-@onready var level_label: Label = $"CanvasLayer/HUD/TopBar/LevelLabel"
-@onready var weapon_label: Label = $"CanvasLayer/HUD/TopBar/WeaponLabel"
-@onready var xp_bar: ProgressBar = $"CanvasLayer/HUD/XpBar"
-@onready var hp_bar: ProgressBar = $"CanvasLayer/HUD/HpBar"
+@onready var time_label: Label = get_node_or_null("CanvasLayer/HUD/TopBar/TimeLabel") as Label
+@onready var hp_label: Label = get_node_or_null("CanvasLayer/HUD/TopBar/HealthLabel") as Label
+@onready var enemy_count_label: Label = get_node_or_null("CanvasLayer/HUD/TopBar/EnemyCountLabel") as Label
+@onready var level_label: Label = get_node_or_null("CanvasLayer/HUD/TopBar/LevelLabel") as Label
+@onready var weapon_label: Label = get_node_or_null("CanvasLayer/HUD/TopBar/WeaponLabel") as Label
+@onready var xp_bar: ProgressBar = get_node_or_null("CanvasLayer/HUD/XpBar") as ProgressBar
+@onready var hp_bar: ProgressBar = get_node_or_null("CanvasLayer/HUD/HpBar") as ProgressBar
 @onready var status_label: Label = get_node_or_null("CanvasLayer/HUD/BottomBar/StatusLabel") as Label
 @onready var stats_label: Label = get_node_or_null("CanvasLayer/HUD/BottomBar/StatsLabel") as Label
-@onready var top_bar: Control = $"CanvasLayer/HUD/TopBar"
+@onready var top_bar: Control = get_node_or_null("CanvasLayer/HUD/TopBar") as Control
 @onready var bottom_bar: Control = get_node_or_null("CanvasLayer/HUD/BottomBar") as Control
 @onready var sprite_hud: Control = $"CanvasLayer/HUD/SpriteHud"
 @onready var sprite_hud_time_label: Label = $"CanvasLayer/HUD/SpriteHud/TopRightFrame/TimeLabel"
@@ -67,7 +73,7 @@ const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
 @onready var upgrade_button_1: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton1"
 @onready var upgrade_button_2: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton2"
 @onready var upgrade_button_3: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton3"
-@onready var debug_toggle_button: Button = $"CanvasLayer/HUD/TopBar/DebugToggleButton"
+@onready var debug_toggle_button: Button = $"CanvasLayer/HUD/SpriteHud/DebugToggleButtonSprite"
 @onready var debug_panel: PanelContainer = $"CanvasLayer/HUD/DebugPanel"
 @onready var debug_skip_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSkipButton"
 @onready var debug_horde_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHordeButton"
@@ -75,12 +81,14 @@ const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
 @onready var debug_brute_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugBruteButton"
 @onready var debug_blink_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugBlinkButton"
 @onready var debug_tank_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugTankButton"
+@onready var debug_gtank_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugGTankButton"
 @onready var debug_sword_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSwordButton"
 @onready var debug_mage_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugMageButton"
 @onready var debug_electric_mage_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugElectricMageButton"
 @onready var debug_elite_sword_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteSwordButton"
 @onready var debug_elite_mage_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteMageButton"
 @onready var debug_elite_electric_mage_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteElectricMageButton"
+@onready var debug_elite_hobgoblin_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteHobgoblinButton"
 @onready var debug_aoe_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugAoeButton"
 @onready var debug_level_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugLevelButton"
 @onready var debug_heal_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHealButton"
@@ -90,6 +98,7 @@ var enemy_scene: PackedScene = preload("res://assets/characters/enemy.tscn")
 var enemy_scene_goblin_sword: PackedScene = preload("res://assets/characters/goblinSword.tscn")
 var enemy_scene_goblin_mage: PackedScene = preload("res://assets/characters/goblinMage.tscn")
 var enemy_scene_goblin_electric_mage: PackedScene = preload("res://assets/characters/goblinElectricMage.tscn")
+var enemy_scene_hobgoblin: PackedScene = preload("res://assets/characters/hobgoblin.tscn")
 var xp_orb_scene: PackedScene = preload("res://scenes/XpOrb.tscn")
 var pickup_drop_scene: PackedScene = preload("res://scenes/PickupDrop.tscn")
 var run_time_seconds: float = 0.0
@@ -104,13 +113,14 @@ var queued_upgrades: Array[Dictionary] = []
 var pending_level_queue: Array[Dictionary] = []
 var item_pool: Array[Dictionary] = []
 var talent_pool: Array[Dictionary] = []
-var horde_warning_pending: bool = false
+var active_horde_warnings: int = 0
 var debug_status_until_ms: int = 0
 var debug_status_text: String = ""
 var use_sprite_hud: bool = true
 var run_coins: int = 0
 var run_damage_taken: int = 0
 var last_health_sample: int = -1
+var floor_fill_cooldown: float = 0.0
 
 
 func _ready() -> void:
@@ -136,31 +146,41 @@ func _ready() -> void:
 	debug_brute_button.visible = true
 	debug_blink_button.visible = true
 	debug_tank_button.visible = true
+	debug_gtank_button.visible = true
 	debug_sword_button.visible = true
 	debug_mage_button.visible = true
 	debug_electric_mage_button.visible = true
 	debug_elite_sword_button.visible = true
 	debug_elite_mage_button.visible = true
 	debug_elite_electric_mage_button.visible = true
+	debug_elite_hobgoblin_button.visible = true
 	debug_aoe_button.visible = true
 	debug_level_button.visible = true
 	debug_heal_button.visible = true
-	debug_panel.visible = true
+	debug_panel.visible = false
 	debug_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	debug_panel.move_to_front()
-	debug_toggle_button.visible = false
+	debug_toggle_button.visible = true
+	debug_toggle_button.text = "Debug (Open)"
 	_ensure_debug_connections()
 	_ensure_panel_connections()
 	_ensure_debug_controls_clickable()
 	_make_debug_panel_overlay()
 	_setup_hud_mode()
-	xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	time_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	enemy_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	weapon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if xp_bar != null:
+		xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if hp_bar != null:
+		hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if time_label != null:
+		time_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if hp_label != null:
+		hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if enemy_count_label != null:
+		enemy_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if level_label != null:
+		level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if weapon_label != null:
+		weapon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if status_label != null:
 		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if stats_label != null:
@@ -212,6 +232,8 @@ func _ensure_debug_connections() -> void:
 		debug_blink_button.pressed.connect(_on_debug_blink_button_pressed)
 	if not debug_tank_button.pressed.is_connected(_on_debug_tank_button_pressed):
 		debug_tank_button.pressed.connect(_on_debug_tank_button_pressed)
+	if not debug_gtank_button.pressed.is_connected(_on_debug_gtank_button_pressed):
+		debug_gtank_button.pressed.connect(_on_debug_gtank_button_pressed)
 	if not debug_sword_button.pressed.is_connected(_on_debug_sword_button_pressed):
 		debug_sword_button.pressed.connect(_on_debug_sword_button_pressed)
 	if not debug_mage_button.pressed.is_connected(_on_debug_mage_button_pressed):
@@ -224,6 +246,8 @@ func _ensure_debug_connections() -> void:
 		debug_elite_mage_button.pressed.connect(_on_debug_elite_mage_button_pressed)
 	if not debug_elite_electric_mage_button.pressed.is_connected(_on_debug_elite_electric_mage_button_pressed):
 		debug_elite_electric_mage_button.pressed.connect(_on_debug_elite_electric_mage_button_pressed)
+	if not debug_elite_hobgoblin_button.pressed.is_connected(_on_debug_elite_hobgoblin_button_pressed):
+		debug_elite_hobgoblin_button.pressed.connect(_on_debug_elite_hobgoblin_button_pressed)
 	if not debug_aoe_button.pressed.is_connected(_on_debug_aoe_button_pressed):
 		debug_aoe_button.pressed.connect(_on_debug_aoe_button_pressed)
 	if not debug_level_button.pressed.is_connected(_on_debug_level_button_pressed):
@@ -259,12 +283,14 @@ func _ensure_debug_controls_clickable() -> void:
 	debug_brute_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_blink_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_tank_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	debug_gtank_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_sword_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_elite_sword_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_elite_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_elite_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	debug_elite_hobgoblin_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_aoe_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_level_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_heal_button.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -275,12 +301,14 @@ func _ensure_debug_controls_clickable() -> void:
 	debug_brute_button.disabled = false
 	debug_blink_button.disabled = false
 	debug_tank_button.disabled = false
+	debug_gtank_button.disabled = false
 	debug_sword_button.disabled = false
 	debug_mage_button.disabled = false
 	debug_electric_mage_button.disabled = false
 	debug_elite_sword_button.disabled = false
 	debug_elite_mage_button.disabled = false
 	debug_elite_electric_mage_button.disabled = false
+	debug_elite_hobgoblin_button.disabled = false
 	debug_aoe_button.disabled = false
 	debug_level_button.disabled = false
 	debug_heal_button.disabled = false
@@ -300,6 +328,7 @@ func _process(delta: float) -> void:
 
 	run_time_seconds = min(run_time_seconds + delta, RUN_DURATION_SECONDS)
 	spawn_cooldown = max(spawn_cooldown - delta, 0.0)
+	floor_fill_cooldown = max(floor_fill_cooldown - delta, 0.0)
 	horde_event_cooldown = max(horde_event_cooldown - delta, 0.0)
 	elite_event_cooldown = max(elite_event_cooldown - delta, 0.0)
 
@@ -307,9 +336,11 @@ func _process(delta: float) -> void:
 		_try_spawn_enemy(_get_spawn_burst_count())
 		spawn_cooldown = _get_spawn_interval()
 
-	_fill_minimum_enemy_floor()
+	if floor_fill_cooldown <= 0.0:
+		_fill_minimum_enemy_floor()
+		floor_fill_cooldown = FLOOR_FILL_INTERVAL
 
-	if horde_event_cooldown <= 0.0 and not horde_warning_pending:
+	if horde_event_cooldown <= 0.0:
 		horde_event_cooldown = randf_range(HORDE_EVENT_MIN_SECONDS, HORDE_EVENT_MAX_SECONDS)
 		_trigger_horde_event_warning()
 	if elite_event_cooldown <= 0.0:
@@ -356,6 +387,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_on_debug_tank_button_pressed()
 		get_viewport().set_input_as_handled()
 		return
+	if _try_click_debug_button(debug_gtank_button, mouse_pos):
+		_on_debug_gtank_button_pressed()
+		get_viewport().set_input_as_handled()
+		return
 	if _try_click_debug_button(debug_sword_button, mouse_pos):
 		_on_debug_sword_button_pressed()
 		get_viewport().set_input_as_handled()
@@ -380,6 +415,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_on_debug_elite_electric_mage_button_pressed()
 		get_viewport().set_input_as_handled()
 		return
+	if _try_click_debug_button(debug_elite_hobgoblin_button, mouse_pos):
+		_on_debug_elite_hobgoblin_button_pressed()
+		get_viewport().set_input_as_handled()
+		return
 	if _try_click_debug_button(debug_aoe_button, mouse_pos):
 		_on_debug_aoe_button_pressed()
 		get_viewport().set_input_as_handled()
@@ -399,10 +438,10 @@ func _try_click_debug_button(button: Button, mouse_pos: Vector2) -> bool:
 
 
 func _try_spawn_enemy(count: int = 1) -> void:
-	if enemies_root.get_child_count() >= _get_max_enemies_alive():
+	if _get_non_horde_enemy_count() >= _get_max_enemies_alive():
 		return
 	for _i in range(max(count, 1)):
-		if enemies_root.get_child_count() >= _get_max_enemies_alive():
+		if _get_non_horde_enemy_count() >= _get_max_enemies_alive():
 			break
 		_spawn_enemy_instance()
 
@@ -423,44 +462,75 @@ func _get_progress_ratio() -> float:
 
 
 func _get_spawn_interval() -> float:
-	return lerp(START_SPAWN_INTERVAL, END_SPAWN_INTERVAL, _get_progress_ratio())
+	var base_interval: float = lerp(START_SPAWN_INTERVAL, END_SPAWN_INTERVAL, _get_progress_ratio())
+	return base_interval / _get_difficulty_pressure()
 
 
 func _get_spawn_burst_count() -> int:
-	return int(round(lerp(float(START_SPAWN_BURST), float(END_SPAWN_BURST), _get_progress_ratio())))
+	var base_burst: float = lerp(float(START_SPAWN_BURST), float(END_SPAWN_BURST), _get_progress_ratio())
+	return int(round(base_burst * _get_difficulty_pressure()))
 
 
 func _get_max_enemies_alive() -> int:
-	return int(round(lerp(float(START_MAX_ENEMIES), float(END_MAX_ENEMIES), _get_progress_ratio())))
+	var base_max: float = lerp(float(START_MAX_ENEMIES), float(END_MAX_ENEMIES), _get_progress_ratio())
+	return int(round(base_max * _get_difficulty_pressure()))
 
 
 func _get_min_enemies_alive() -> int:
-	return int(round(lerp(float(START_MIN_ENEMIES_ALIVE), float(END_MIN_ENEMIES_ALIVE), _get_progress_ratio())))
+	var base_min: float = lerp(float(START_MIN_ENEMIES_ALIVE), float(END_MIN_ENEMIES_ALIVE), _get_progress_ratio())
+	return int(round(base_min * _get_difficulty_pressure()))
+
+
+func _get_difficulty_pressure() -> float:
+	# First ~2 minutes are intentionally easy, then pressure ramps aggressively.
+	var time_pressure: float = 1.0
+	if run_time_seconds < EARLY_GAME_EASY_SECONDS:
+		var early_t: float = clamp(run_time_seconds / EARLY_GAME_EASY_SECONDS, 0.0, 1.0)
+		time_pressure = lerp(0.35, 1.0, early_t)
+	else:
+		var post_progress: float = clamp((run_time_seconds - EARLY_GAME_EASY_SECONDS) / max(RUN_DURATION_SECONDS - EARLY_GAME_EASY_SECONDS, 1.0), 0.0, 1.0)
+		time_pressure = lerp(1.0, 2.05, post_progress)
+	var level_pressure: float = 1.0
+	if current_level >= 6:
+		level_pressure += min(float(current_level - 5) * 0.05, 0.55)
+	return max(time_pressure * level_pressure, 0.25)
 
 
 func _fill_minimum_enemy_floor() -> void:
 	var min_alive: int = min(_get_min_enemies_alive(), _get_max_enemies_alive())
-	if enemies_root.get_child_count() >= min_alive:
+	if _get_non_horde_enemy_count() >= min_alive:
 		return
-	var needed: int = min_alive - enemies_root.get_child_count()
-	_try_spawn_enemy(min(needed, 10))
+	var needed: int = min_alive - _get_non_horde_enemy_count()
+	var max_fill_batch: int = int(round(lerp(4.0, 90.0, _get_progress_ratio())))
+	if run_time_seconds < 12.0:
+		max_fill_batch = min(max_fill_batch, 2)
+	elif run_time_seconds < 40.0:
+		max_fill_batch = min(max_fill_batch, 5)
+	_try_spawn_enemy(min(needed, max_fill_batch))
 
 
 func _update_hud() -> void:
 	var remaining_time_text: String = _format_time(RUN_DURATION_SECONDS - run_time_seconds)
-	var enemy_text: String = "Enemies: %d / %d" % [enemies_root.get_child_count(), _get_max_enemies_alive()]
+	var non_horde_count: int = _get_non_horde_enemy_count()
+	var enemy_text: String = "Enemies: %d (%d core) / %d core cap" % [enemies_root.get_child_count(), non_horde_count, _get_max_enemies_alive()]
 	var level_text: String = "Lv %d  XP %d/%d  Coins %d" % [current_level, current_xp, xp_to_next_level, GameState.get_coins()]
 	var hp_text: String = "HP: %d / %d" % [player.current_health, player.max_health]
 	var status_text: String = "Sword stacks to Lv8. Milestones: Lv5 = +1 slash, Lv8 = +2 slashes."
 
-	time_label.text = remaining_time_text
-	enemy_count_label.text = enemy_text
-	level_label.text = level_text
-	hp_label.text = hp_text
-	xp_bar.max_value = float(xp_to_next_level)
-	xp_bar.value = float(current_xp)
-	hp_bar.max_value = float(player.max_health)
-	hp_bar.value = float(player.current_health)
+	if time_label != null:
+		time_label.text = remaining_time_text
+	if enemy_count_label != null:
+		enemy_count_label.text = enemy_text
+	if level_label != null:
+		level_label.text = level_text
+	if hp_label != null:
+		hp_label.text = hp_text
+	if xp_bar != null:
+		xp_bar.max_value = float(xp_to_next_level)
+		xp_bar.value = float(current_xp)
+	if hp_bar != null:
+		hp_bar.max_value = float(player.max_health)
+		hp_bar.value = float(player.current_health)
 	if status_label != null:
 		status_label.text = status_text
 	if Time.get_ticks_msec() < debug_status_until_ms:
@@ -657,6 +727,7 @@ func _update_debug_stats_panel() -> void:
 	var goblin_sword_count: int = 0
 	var goblin_mage_count: int = 0
 	var goblin_electric_mage_count: int = 0
+	var hobgoblin_count: int = 0
 	for enemy_node in enemies_root.get_children():
 		if not enemy_node.has_method("get_debug_snapshot"):
 			continue
@@ -669,6 +740,8 @@ func _update_debug_stats_panel() -> void:
 				goblin_mage_count += 1
 			"electric_mage":
 				goblin_electric_mage_count += 1
+			"hobgoblin":
+				hobgoblin_count += 1
 			_:
 				goblin_grunt_count += 1
 		if snap.get("is_elite", false):
@@ -692,7 +765,7 @@ func _update_debug_stats_panel() -> void:
 				"recover":
 					brute_recover += 1
 
-	debug_stats_label.text = "Run %.1f%% | T %.0fs | Lv %d\nSpawn i%.2f b%d | Alive %d min%d max%d\nTypes G:%d S:%d F:%d E:%d\nPlayer HP %d/%d | SPD %.0f | PICK %.0f MAG %.0f\nSword L%d DMG %d AOE %.0f CD %.2f | Slashes x%d\nElites %d (Brt %d Blk %d Tnk %d)\nBrute states idle:%d windup:%d charge:%d recover:%d\nHordeCD %.1f EliteCD %.1f XP %d/%d" % [
+	debug_stats_label.text = "Run %.1f%% | T %.0fs | Lv %d\nSpawn i%.2f b%d | Alive %d min%d max%d\nTypes G:%d S:%d F:%d E:%d T:%d\nPlayer HP %d/%d | SPD %.0f | PICK %.0f MAG %.0f\nSword L%d DMG %d AOE %.0f CD %.2f | Slashes x%d\nElites %d (Brt %d Blk %d Tnk %d)\nBrute states idle:%d windup:%d charge:%d recover:%d\nHordeCD %.1f EliteCD %.1f XP %d/%d" % [
 		progress_pct,
 		run_time_seconds,
 		current_level,
@@ -705,6 +778,7 @@ func _update_debug_stats_panel() -> void:
 		goblin_sword_count,
 		goblin_mage_count,
 		goblin_electric_mage_count,
+		hobgoblin_count,
 		player.current_health,
 		player.max_health,
 		player.move_speed,
@@ -741,11 +815,13 @@ func _on_player_health_changed(current: int, max_health: int) -> void:
 	if last_health_sample >= 0 and current < last_health_sample:
 		run_damage_taken += (last_health_sample - current)
 	last_health_sample = current
-	hp_label.text = "HP: %d / %d" % [current, max_health]
+	if hp_label != null:
+		hp_label.text = "HP: %d / %d" % [current, max_health]
 
 
 func _on_sword_level_changed(level: int, max_level: int) -> void:
-	weapon_label.text = "Sword Slash Lv %d/%d" % [level, max_level]
+	if weapon_label != null:
+		weapon_label.text = "Sword Slash Lv %d/%d" % [level, max_level]
 
 
 func _on_stats_toggle_button_pressed() -> void:
@@ -1075,8 +1151,19 @@ func _on_debug_blink_button_pressed() -> void:
 func _on_debug_tank_button_pressed() -> void:
 	if run_is_over:
 		return
-	_spawn_debug_elite_variant("tank")
-	_show_debug_status("DEBUG: Tank elite spawned")
+	_spawn_debug_visible_enemy(enemy_scene, true, "tank")
+
+
+func _on_debug_gtank_button_pressed() -> void:
+	if run_is_over:
+		return
+	var hobgoblin_scene: PackedScene = load("res://assets/characters/hobgoblin.tscn") as PackedScene
+	if hobgoblin_scene != null:
+		_spawn_debug_visible_enemy(hobgoblin_scene, false, "")
+		return
+	# Fallback path: use archetype resolver in case direct load fails.
+	_spawn_debug_enemy_variant("hobgoblin")
+	_show_debug_status("DEBUG: Hobgoblin spawned via fallback")
 
 
 func _on_debug_sword_button_pressed() -> void:
@@ -1121,6 +1208,13 @@ func _on_debug_elite_electric_mage_button_pressed() -> void:
 	_show_debug_status("DEBUG: Elite Electric Mage spawned")
 
 
+func _on_debug_elite_hobgoblin_button_pressed() -> void:
+	if run_is_over:
+		return
+	_spawn_debug_enemy_variant("hobgoblin", true)
+	_show_debug_status("DEBUG: Elite Hobgoblin spawned")
+
+
 func _on_debug_aoe_button_pressed() -> void:
 	if run_is_over:
 		return
@@ -1151,8 +1245,13 @@ func _on_debug_heal_button_pressed() -> void:
 
 
 func _on_debug_toggle_button_pressed() -> void:
-	debug_panel.visible = true
-	debug_panel.move_to_front()
+	if debug_panel == null:
+		return
+	debug_panel.visible = not debug_panel.visible
+	if debug_panel.visible:
+		debug_panel.move_to_front()
+	if debug_toggle_button != null:
+		debug_toggle_button.text = "Debug (Close)" if debug_panel.visible else "Debug (Open)"
 
 
 func _show_debug_status(text: String) -> void:
@@ -1175,26 +1274,28 @@ func _spawn_horde_event() -> void:
 
 
 func _trigger_horde_event_warning() -> void:
-	if horde_warning_pending or run_is_over:
+	if run_is_over:
 		return
-
-	horde_warning_pending = true
-	var entry_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
-	_show_horde_warning(entry_direction)
-	_spawn_horde_event_after_warning(entry_direction)
+	var burst_count: int = _get_horde_warning_burst_count()
+	for _i in range(burst_count):
+		active_horde_warnings += 1
+		var entry_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
+		_show_horde_warning(entry_direction)
+		_spawn_horde_event_after_warning(entry_direction)
 
 
 func _spawn_horde_event_after_warning(entry_direction: Vector2) -> void:
 	await get_tree().create_timer(HORDE_WARNING_DURATION).timeout
 	if run_is_over:
-		horde_warning_pending = false
+		active_horde_warnings = max(active_horde_warnings - 1, 0)
 		return
 	_spawn_horde_event_with_direction(entry_direction)
-	horde_warning_pending = false
+	active_horde_warnings = max(active_horde_warnings - 1, 0)
 
 
 func _spawn_horde_event_with_direction(entry_direction: Vector2) -> void:
-	var horde_count: int = randi_range(HORDE_GROUP_MIN, HORDE_GROUP_MAX)
+	var pressure: float = _get_difficulty_pressure()
+	var horde_count: int = int(round(randi_range(HORDE_GROUP_MIN, HORDE_GROUP_MAX) * pressure))
 	var center_distance: float = _get_offscreen_spawn_distance() + 140.0
 	var center_pos: Vector2 = player.global_position + (entry_direction * center_distance)
 	var move_direction: Vector2 = (player.global_position - center_pos).normalized()
@@ -1216,22 +1317,36 @@ func _show_horde_warning(entry_direction: Vector2) -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var screen_center: Vector2 = viewport_size * 0.5
 	var edge_offset: Vector2 = dir * min(viewport_size.x, viewport_size.y) * 0.34
-	horde_warning_label.position = screen_center + edge_offset
-	horde_warning_label.rotation = dir.angle()
-	horde_warning_label.scale = Vector2.ONE
-	horde_warning_label.text = ">"
-	horde_warning_label.visible = true
-	horde_warning_label.modulate = Color(1.0, 0.35, 0.35, 1.0)
+	var warning_label: Label = Label.new()
+	warning_label.text = ">"
+	warning_label.add_theme_font_size_override("font_size", 28)
+	warning_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	warning_label.position = screen_center + edge_offset
+	warning_label.rotation = dir.angle()
+	warning_label.scale = Vector2.ONE
+	warning_label.modulate = Color(1.0, 0.35, 0.35, 1.0)
+	warning_label.z_index = 250
+	$CanvasLayer.add_child(warning_label)
 
 	var tween: Tween = create_tween()
-	tween.tween_property(horde_warning_label, "scale", Vector2(1.22, 1.22), HORDE_WARNING_DURATION * 0.5)
-	tween.parallel().tween_property(horde_warning_label, "modulate:a", 0.25, HORDE_WARNING_DURATION * 0.5)
-	tween.tween_property(horde_warning_label, "scale", Vector2.ONE, HORDE_WARNING_DURATION * 0.5)
-	tween.parallel().tween_property(horde_warning_label, "modulate:a", 1.0, HORDE_WARNING_DURATION * 0.5)
+	tween.tween_property(warning_label, "scale", Vector2(1.22, 1.22), HORDE_WARNING_DURATION * 0.5)
+	tween.parallel().tween_property(warning_label, "modulate:a", 0.25, HORDE_WARNING_DURATION * 0.5)
+	tween.tween_property(warning_label, "scale", Vector2.ONE, HORDE_WARNING_DURATION * 0.5)
+	tween.parallel().tween_property(warning_label, "modulate:a", 1.0, HORDE_WARNING_DURATION * 0.5)
 	tween.tween_callback(func() -> void:
-		horde_warning_label.visible = false
-		horde_warning_label.modulate.a = 1.0
+		if is_instance_valid(warning_label):
+			warning_label.queue_free()
 	)
+
+
+func _get_horde_warning_burst_count() -> int:
+	var burst_count: int = 1
+	var progress: float = _get_progress_ratio()
+	var chance: float = lerp(HORDE_EXTRA_WARNING_BASE_CHANCE, HORDE_EXTRA_WARNING_MAX_CHANCE, progress)
+	while burst_count < HORDE_MAX_WARNING_BURST and randf() < chance:
+		burst_count += 1
+		chance *= 0.72
+	return burst_count
 
 
 func _get_horde_spawn_position(
@@ -1311,10 +1426,35 @@ func _spawn_debug_enemy_variant(archetype: String, make_elite: bool = false) -> 
 	enemies_root.add_child(enemy)
 
 
+func _spawn_debug_visible_enemy(scene: PackedScene, make_elite: bool = false, elite_type: String = "") -> void:
+	if scene == null:
+		_show_debug_status("DEBUG: Spawn failed (scene missing)")
+		return
+	var enemy: CharacterBody2D = scene.instantiate() as CharacterBody2D
+	if enemy == null:
+		_show_debug_status("DEBUG: Spawn failed (instantiate)")
+		return
+	var spawn_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
+	var spawn_distance: float = randf_range(80.0, 130.0)
+	enemy.global_position = player.global_position + (spawn_direction * spawn_distance)
+	if make_elite:
+		_configure_enemy_as_elite(enemy, elite_type)
+	enemy.defeated.connect(_on_enemy_defeated)
+	enemies_root.add_child(enemy)
+	if enemy.has_method("get_enemy_archetype"):
+		var kind: String = enemy.call("get_enemy_archetype")
+		_show_debug_status("DEBUG: Spawned %s" % kind)
+		return
+	if make_elite:
+		_show_debug_status("DEBUG: Tank elite spawned")
+	else:
+		_show_debug_status("DEBUG: Hobgoblin enemy spawned")
+
+
 func _try_spawn_timed_elite() -> void:
 	if run_is_over or run_time_seconds < ELITE_START_TIME_SECONDS:
 		return
-	if enemies_root.get_child_count() >= _get_max_enemies_alive():
+	if _get_non_horde_enemy_count() >= _get_max_enemies_alive():
 		return
 	var spawn_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
 	var spawn_distance: float = _get_offscreen_spawn_distance() + 40.0
@@ -1331,18 +1471,20 @@ func _get_next_elite_event_interval() -> float:
 
 
 func _pick_enemy_scene_for_progress() -> PackedScene:
-	if run_time_seconds < SWORD_UNLOCK_SECONDS:
-		return enemy_scene
 	var progress: float = _get_progress_ratio()
-	var sword_weight: float = lerp(0.12, 0.34, progress)
+	var sword_weight: float = lerp(0.0, 0.24, progress) if run_time_seconds >= SWORD_UNLOCK_SECONDS else 0.0
 	var mage_weight: float = lerp(0.0, 0.18, progress) if run_time_seconds >= FIRE_MAGE_UNLOCK_SECONDS else 0.0
-	var electric_mage_weight: float = lerp(0.0, 0.14, progress) if run_time_seconds >= ELECTRIC_MAGE_UNLOCK_SECONDS else 0.0
+	var electric_mage_weight: float = lerp(0.0, 0.16, progress) if run_time_seconds >= ELECTRIC_MAGE_UNLOCK_SECONDS else 0.0
+	var tank_weight: float = lerp(0.0, 0.12, progress) if run_time_seconds >= TANK_ENEMY_UNLOCK_SECONDS else 0.0
+	# Keep early game overwhelmingly grunt-heavy, then layer in types over time.
 	var roll: float = randf()
-	if roll < electric_mage_weight:
+	if roll < tank_weight:
+		return enemy_scene_hobgoblin
+	if roll < tank_weight + electric_mage_weight:
 		return enemy_scene_goblin_electric_mage
-	if roll < electric_mage_weight + mage_weight:
+	if roll < tank_weight + electric_mage_weight + mage_weight:
 		return enemy_scene_goblin_mage
-	if roll < electric_mage_weight + mage_weight + sword_weight:
+	if roll < tank_weight + electric_mage_weight + mage_weight + sword_weight:
 		return enemy_scene_goblin_sword
 	return enemy_scene
 
@@ -1355,5 +1497,16 @@ func _get_enemy_scene_by_archetype(archetype: String) -> PackedScene:
 			return enemy_scene_goblin_mage
 		"electric_mage":
 			return enemy_scene_goblin_electric_mage
+		"hobgoblin":
+			return enemy_scene_hobgoblin
 		_:
 			return enemy_scene
+
+
+func _get_non_horde_enemy_count() -> int:
+	var count: int = 0
+	for enemy_node in enemies_root.get_children():
+		if enemy_node != null and enemy_node.has_method("is_horde_runner_unit") and enemy_node.call("is_horde_runner_unit"):
+			continue
+		count += 1
+	return count

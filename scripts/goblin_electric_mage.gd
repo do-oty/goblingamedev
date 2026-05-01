@@ -20,6 +20,9 @@ const ELEC_PROJECTILE_HEIGHT: float = 44.0
 const ELEC_EXPLOSION_Y_OFFSET: float = 8.0
 const ELEC_STRIKE_DROP_HEIGHT: float = 120.0
 const ELEC_STRIKE_DROP_TIME: float = 0.08
+const ELEC_TELEGRAPH_OUTER_COLOR: Color = Color(0.58, 0.04, 0.04, 0.12)
+const ELEC_TELEGRAPH_INNER_COLOR: Color = Color(0.74, 0.13, 0.13, 0.1)
+const ELEC_TELEGRAPH_OUTLINE_RED: Color = Color(0.58, 0.04, 0.04, 0.8)
 
 var cast_cooldown: float = 0.0
 var channel_timer: float = 0.0
@@ -177,17 +180,28 @@ func _schedule_electric_line(direction: Vector2) -> void:
 		var segment_center: Vector2 = start_pos + (base_dir * (ELEC_SEGMENT_LENGTH * float(i)))
 		var telegraph_outer: Polygon2D = Polygon2D.new()
 		telegraph_outer.polygon = _build_circle_polygon(ELEC_SEGMENT_HALF_WIDTH, 26)
-		telegraph_outer.color = Color(1.0, 0.18, 0.18, 0.16)
+		telegraph_outer.color = ELEC_TELEGRAPH_OUTER_COLOR
 		telegraph_outer.global_position = segment_center
-		telegraph_outer.z_index = -1
+		telegraph_outer.z_index = -2
 		get_parent().add_child(telegraph_outer)
 
 		var telegraph_inner: Polygon2D = Polygon2D.new()
 		telegraph_inner.polygon = _build_circle_polygon(ELEC_SEGMENT_HALF_WIDTH * 0.58, 20)
-		telegraph_inner.color = Color(1.0, 0.28, 0.28, 0.14)
+		telegraph_inner.color = ELEC_TELEGRAPH_INNER_COLOR
 		telegraph_inner.global_position = segment_center
-		telegraph_inner.z_index = -1
+		telegraph_inner.z_index = -2
 		get_parent().add_child(telegraph_inner)
+		var telegraph_outline_red: Line2D = Line2D.new()
+		telegraph_outline_red.points = telegraph_outer.polygon
+		telegraph_outline_red.closed = true
+		telegraph_outline_red.width = 1.15
+		telegraph_outline_red.default_color = ELEC_TELEGRAPH_OUTLINE_RED
+		telegraph_outline_red.joint_mode = Line2D.LINE_JOINT_ROUND
+		telegraph_outline_red.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		telegraph_outline_red.end_cap_mode = Line2D.LINE_CAP_ROUND
+		telegraph_outline_red.global_position = segment_center
+		telegraph_outline_red.z_index = 0
+		get_parent().add_child(telegraph_outline_red)
 		var impact_delay: float = 0.38 + (float(i) * 0.24)
 		impact_events.append({
 			"time_left": impact_delay,
@@ -195,7 +209,8 @@ func _schedule_electric_line(direction: Vector2) -> void:
 			"segment_center": segment_center,
 			"segment_dir": base_dir,
 			"telegraph_outer": telegraph_outer,
-			"telegraph_inner": telegraph_inner
+			"telegraph_inner": telegraph_inner,
+			"telegraph_outline_red": telegraph_outline_red
 		})
 
 
@@ -209,17 +224,21 @@ func _update_electric_impacts(delta: float) -> void:
 		impact_events[i] = evt
 		var telegraph_outer: Polygon2D = evt.get("telegraph_outer", null) as Polygon2D
 		var telegraph_inner: Polygon2D = evt.get("telegraph_inner", null) as Polygon2D
+		var telegraph_outline_red: Line2D = evt.get("telegraph_outline_red", null) as Line2D
 		if telegraph_outer != null:
 			var total: float = max(float(evt.get("impact_total", 0.01)), 0.01)
 			var progress: float = clamp(1.0 - (time_left / total), 0.0, 1.0)
-			var pulse_speed: float = lerp(2.0, 16.0, progress)
+			var pulse_speed: float = lerp(1.2, 5.0, progress)
 			var pulse: float = 0.5 + (0.5 * sin(Time.get_ticks_msec() * 0.001 * pulse_speed))
-			telegraph_outer.modulate.a = lerp(0.12, 0.68, pulse)
+			telegraph_outer.modulate.a = lerp(0.14, 0.38, pulse)
 			var ring_scale: float = lerp(0.98, 1.08, pulse * 0.5)
 			telegraph_outer.scale = Vector2(ring_scale, ring_scale)
 			if telegraph_inner != null:
-				telegraph_inner.modulate.a = lerp(0.1, 0.56, pulse)
+				telegraph_inner.modulate.a = lerp(0.12, 0.32, pulse)
 				telegraph_inner.scale = Vector2(ring_scale * 1.02, ring_scale * 1.02)
+			if telegraph_outline_red != null:
+				telegraph_outline_red.default_color = Color(0.58, 0.04, 0.04, clamp(0.22 + telegraph_outer.modulate.a, 0.2, 0.82))
+				telegraph_outline_red.scale = Vector2(ring_scale, ring_scale)
 		if time_left > 0.0:
 			continue
 		_apply_electric_segment_hit(evt)
@@ -227,15 +246,33 @@ func _update_electric_impacts(delta: float) -> void:
 			telegraph_outer.queue_free()
 		if telegraph_inner != null:
 			telegraph_inner.queue_free()
+		if telegraph_outline_red != null:
+			telegraph_outline_red.queue_free()
 		impact_events.remove_at(i)
 	if impact_events.is_empty():
 		_hide_cast_projectile()
+
+
+func _exit_tree() -> void:
+	for evt in impact_events:
+		var telegraph_outer: Polygon2D = evt.get("telegraph_outer", null) as Polygon2D
+		var telegraph_inner: Polygon2D = evt.get("telegraph_inner", null) as Polygon2D
+		var telegraph_outline_red: Line2D = evt.get("telegraph_outline_red", null) as Line2D
+		if telegraph_outer != null:
+			telegraph_outer.queue_free()
+		if telegraph_inner != null:
+			telegraph_inner.queue_free()
+		if telegraph_outline_red != null:
+			telegraph_outline_red.queue_free()
+	impact_events.clear()
 
 
 func _apply_electric_segment_hit(evt: Dictionary) -> void:
 	var center: Vector2 = evt.get("segment_center", global_position)
 	var dir: Vector2 = evt.get("segment_dir", Vector2.RIGHT).normalized()
 	_spawn_explosion_vfx(center, dir)
+	if target_player != null and is_instance_valid(target_player) and target_player.has_method("add_screen_shake"):
+		target_player.call("add_screen_shake", 5.5, 0.1)
 	if target_player == null or not is_instance_valid(target_player) or not target_player.has_method("receive_damage"):
 		return
 	var player_pos: Vector2 = target_player.global_position

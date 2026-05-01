@@ -147,6 +147,7 @@ animations = [{
 script = ExtResource("1_blink_tp_script")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1706719331]
+texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_blink_tp")
 animation = &"blink_tp"
 

@@ -1,48 +1,56 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://btseoo7sx00n8"]
 
-[ext_resource type="Script" path="res://scripts/Lobby.gd" id="1_xv68m"]
-[ext_resource type="PackedScene" path="res://assets/characters/player.tscn" id="2_f3pxu"]
-[ext_resource type="PackedScene" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
+[ext_resource type="Script" uid="uid://cjjmop2kcjoeh" path="res://scripts/Lobby.gd" id="1_xv68m"]
+[ext_resource type="PackedScene" uid="uid://m8d1e3t1dw60" path="res://assets/characters/player.tscn" id="2_f3pxu"]
+[ext_resource type="PackedScene" uid="uid://buf3cr0tftoq0" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1q2a8"]
+radius = 42.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_u0g3d"]
+radius = 42.0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7edvj"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_h7n2j"]
 radius = 42.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_w2e8u"]
 radius = 64.0
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_u0g3d"]
-radius = 42.0
+[sub_resource type="CircleShape2D" id="CircleShape2D_historian"]
+radius = 64.0
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_h7n2j"]
-radius = 42.0
-
-[node name="LobbyMap" type="Node2D"]
+[node name="LobbyMap" type="Node2D" unique_id=220049832]
 script = ExtResource("1_xv68m")
 
-[node name="Ground" type="ColorRect" parent="."]
+[node name="Ground" type="ColorRect" parent="." unique_id=1222075745]
 offset_right = 1400.0
 offset_bottom = 900.0
 color = Color(0.13, 0.14, 0.16, 1)
 
-[node name="CanvasModulate" type="CanvasModulate" parent="."]
+[node name="CanvasModulate" type="CanvasModulate" parent="." unique_id=2103391444]
 color = Color(0.74, 0.78, 0.86, 1)
 
-[node name="Player" parent="." instance=ExtResource("2_f3pxu")]
+[node name="Player" parent="." unique_id=109853097 instance=ExtResource("2_f3pxu")]
 position = Vector2(438, 400)
 
-[node name="PlayerLight" type="PointLight2D" parent="Player"]
+[node name="PlayerLight" type="PointLight2D" parent="Player" unique_id=817674808]
+color = Color(1, 0.96, 0.85, 1)
 energy = 1.2
 texture_scale = 1.9
-color = Color(1, 0.96, 0.85, 1)
 
-[node name="PortalForest" type="Node2D" parent="."]
+[node name="PortalForest" type="Node2D" parent="." unique_id=1101649236]
 position = Vector2(940, 410)
 
-[node name="PortalRing" type="Polygon2D" parent="PortalForest"]
-polygon = PackedVector2Array(0, -44, 30, -32, 42, 0, 30, 32, 0, 44, -30, 32, -42, 0, -30, -32)
+[node name="PortalRing" type="Polygon2D" parent="PortalForest" unique_id=726972656]
 color = Color(0.38, 0.58, 1, 0.88)
+polygon = PackedVector2Array(0, -44, 30, -32, 42, 0, 30, 32, 0, 44, -30, 32, -42, 0, -30, -32)
 
-[node name="PortalLabel" type="Label" parent="PortalForest"]
+[node name="PortalSprite" type="AnimatedSprite2D" parent="PortalForest" unique_id=681347903]
+z_index = 2
+
+[node name="PortalLabel" type="Label" parent="PortalForest" unique_id=969978482]
 offset_left = -38.0
 offset_top = 52.0
 offset_right = 38.0
@@ -50,19 +58,22 @@ offset_bottom = 76.0
 text = "Forest"
 horizontal_alignment = 1
 
-[node name="PortalArea" type="Area2D" parent="PortalForest"]
+[node name="PortalArea" type="Area2D" parent="PortalForest" unique_id=1742547599]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalForest/PortalArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalForest/PortalArea" unique_id=442750309]
 shape = SubResource("CircleShape2D_1q2a8")
 
-[node name="PortalDesert" type="Node2D" parent="."]
+[node name="PortalDesert" type="Node2D" parent="." unique_id=1868762716]
 position = Vector2(1110, 360)
 
-[node name="PortalRing" type="Polygon2D" parent="PortalDesert"]
+[node name="PortalRing" type="Polygon2D" parent="PortalDesert" unique_id=2052847325]
+color = Color(1, 0.78, 0.36, 0.9)
 polygon = PackedVector2Array(0, -44, 30, -32, 42, 0, 30, 32, 0, 44, -30, 32, -42, 0, -30, -32)
-color = Color(1.0, 0.78, 0.36, 0.9)
 
-[node name="PortalLabel" type="Label" parent="PortalDesert"]
+[node name="PortalSprite" type="AnimatedSprite2D" parent="PortalDesert" unique_id=1131979448]
+z_index = 2
+
+[node name="PortalLabel" type="Label" parent="PortalDesert" unique_id=2035509301]
 offset_left = -38.0
 offset_top = 52.0
 offset_right = 38.0
@@ -70,19 +81,23 @@ offset_bottom = 76.0
 text = "Desert"
 horizontal_alignment = 1
 
-[node name="PortalArea" type="Area2D" parent="PortalDesert"]
+[node name="PortalArea" type="Area2D" parent="PortalDesert" unique_id=1313316772]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalDesert/PortalArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalDesert/PortalArea" unique_id=1792702714]
 shape = SubResource("CircleShape2D_u0g3d")
 
-[node name="PortalSnow" type="Node2D" parent="."]
+[node name="PortalSnow" type="Node2D" parent="." unique_id=205005300]
 position = Vector2(1110, 470)
 
-[node name="PortalRing" type="Polygon2D" parent="PortalSnow"]
+[node name="PortalRing" type="Polygon2D" parent="PortalSnow" unique_id=1224441166]
+color = Color(0.78, 0.9, 1, 0.9)
 polygon = PackedVector2Array(0, -44, 30, -32, 42, 0, 30, 32, 0, 44, -30, 32, -42, 0, -30, -32)
-color = Color(0.78, 0.9, 1.0, 0.9)
 
-[node name="PortalLabel" type="Label" parent="PortalSnow"]
+[node name="PortalSprite" type="AnimatedSprite2D" parent="PortalSnow" unique_id=892595650]
+z_index = 2
+sprite_frames = SubResource("SpriteFrames_7edvj")
+
+[node name="PortalLabel" type="Label" parent="PortalSnow" unique_id=1585094815]
 offset_left = -38.0
 offset_top = 52.0
 offset_right = 38.0
@@ -90,24 +105,35 @@ offset_bottom = 76.0
 text = "Snow"
 horizontal_alignment = 1
 
-[node name="PortalArea" type="Area2D" parent="PortalSnow"]
+[node name="PortalArea" type="Area2D" parent="PortalSnow" unique_id=111530517]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalSnow/PortalArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalSnow/PortalArea" unique_id=455263432]
 shape = SubResource("CircleShape2D_h7n2j")
 
-[node name="UpgradeNpc" type="Node2D" parent="."]
+[node name="UpgradeNpc" type="Node2D" parent="." unique_id=42873273]
 position = Vector2(225, 368)
 
-[node name="NpcBody" type="Polygon2D" parent="UpgradeNpc"]
-polygon = PackedVector2Array(0, -30, 20, -18, 24, 16, 0, 30, -24, 16, -20, -18)
+[node name="NpcBody" type="Polygon2D" parent="UpgradeNpc" unique_id=1288844116]
 color = Color(0.95, 0.75, 0.45, 1)
+polygon = PackedVector2Array(0, -30, 20, -18, 24, 16, 0, 30, -24, 16, -20, -18)
 
-[node name="NpcArea" type="Area2D" parent="UpgradeNpc"]
+[node name="NpcArea" type="Area2D" parent="UpgradeNpc" unique_id=213914875]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="UpgradeNpc/NpcArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UpgradeNpc/NpcArea" unique_id=2080565151]
 shape = SubResource("CircleShape2D_w2e8u")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="HistorianNpc" type="Node2D" parent="." unique_id=173489302]
+position = Vector2(308, 434)
 
-[node name="HUD" parent="CanvasLayer" instance=ExtResource("3_global_hud")]
+[node name="NpcBody" type="Polygon2D" parent="HistorianNpc" unique_id=529189331]
+color = Color(0.55, 0.78, 0.98, 1)
+polygon = PackedVector2Array(0, -28, 18, -16, 22, 14, 0, 28, -22, 14, -18, -16)
 
+[node name="NpcArea" type="Area2D" parent="HistorianNpc" unique_id=1574329222]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HistorianNpc/NpcArea" unique_id=1621490023]
+shape = SubResource("CircleShape2D_historian")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=740516511]
+
+[node name="HUD" parent="CanvasLayer" unique_id=572741492 instance=ExtResource("3_global_hud")]
