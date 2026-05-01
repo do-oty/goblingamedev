@@ -1,0 +1,846 @@
+[gd_scene format=3 uid="uid://buf3cr0tftoq0"]
+
+[ext_resource type="Script" uid="uid://cdwxsv8vk81bm" path="res://scripts/ui/GlobalHud.gd" id="1_global_hud_script"]
+[ext_resource type="Texture2D" uid="uid://ccwia5yk1xskb" path="res://assets/ui/megaUisheet.png" id="2_tsmiw"]
+[ext_resource type="Texture2D" uid="uid://dl43n7beo8t18" path="res://assets/ui/cooldown.png" id="3_ykvjm"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8xpbk"]
+atlas = ExtResource("2_tsmiw")
+region = Rect2(772.7278, -0.018096924, 52.727356, 67.059555)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f3ebr"]
+atlas = ExtResource("2_tsmiw")
+region = Rect2(452.8854, 68.81835, 55.59735, 55.59735)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1ffoq"]
+atlas = ExtResource("2_tsmiw")
+region = Rect2(513.00055, -0.9090195, 63.63452, 65.11082)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ykvjm"]
+atlas = ExtResource("2_tsmiw")
+region = Rect2(642.169, 3538.15, 59.418274, 48.34424)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tsmiw"]
+atlas = ExtResource("3_ykvjm")
+region = Rect2(-0.11464691, 16.065582, 16.092197, 16.047302)
+
+[node name="HUD" type="Control" unique_id=1758859223]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_global_hud_script")
+
+[node name="CoinLabel" type="Label" parent="." unique_id=413560251]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = -34.0
+offset_right = 260.0
+offset_bottom = -10.0
+grow_vertical = 0
+text = "Coins: 0"
+
+[node name="HintLabel" type="Label" parent="." unique_id=1148969958]
+visible = false
+layout_mode = 0
+offset_left = 18.0
+offset_top = 44.0
+offset_right = 300.0
+offset_bottom = 74.0
+text = "Press E to talk"
+
+[node name="LastRunLabel" type="Label" parent="." unique_id=589348300]
+visible = false
+layout_mode = 0
+offset_left = 18.0
+offset_top = 74.0
+offset_right = 980.0
+offset_bottom = 106.0
+text = "Last Run: -"
+autowrap_mode = 3
+
+[node name="UpgradePanel" type="PanelContainer" parent="." unique_id=1949926612]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 88.0
+offset_right = 420.0
+offset_bottom = 360.0
+
+[node name="Margin" type="MarginContainer" parent="UpgradePanel" unique_id=227137604]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="UpgradePanel/Margin" unique_id=1777392407]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="UpgradePanel/Margin/VBox" unique_id=1814536679]
+layout_mode = 2
+text = "Upgrade Merchant"
+
+[node name="HpButton" type="Button" parent="UpgradePanel/Margin/VBox" unique_id=189434768]
+layout_mode = 2
+text = "Max HP"
+
+[node name="SpeedButton" type="Button" parent="UpgradePanel/Margin/VBox" unique_id=1628329726]
+layout_mode = 2
+text = "Move Speed"
+
+[node name="LuckButton" type="Button" parent="UpgradePanel/Margin/VBox" unique_id=1980808582]
+layout_mode = 2
+text = "Luck"
+
+[node name="DashButton" type="Button" parent="UpgradePanel/Margin/VBox" unique_id=637688601]
+layout_mode = 2
+text = "Dash Mastery"
+
+[node name="GameOverPanel" type="PanelContainer" parent="." unique_id=1493544813]
+process_mode = 3
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -190.0
+offset_right = 420.0
+offset_bottom = 190.0
+
+[node name="Margin" type="MarginContainer" parent="GameOverPanel" unique_id=1454927750]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="RootRow" type="HBoxContainer" parent="GameOverPanel/Margin" unique_id=1312078747]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SummaryPanel" type="PanelContainer" parent="GameOverPanel/Margin/RootRow" unique_id=1740350336]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SummaryMargin" type="MarginContainer" parent="GameOverPanel/Margin/RootRow/SummaryPanel" unique_id=2081696200]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="SummaryVBox" type="VBoxContainer" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin" unique_id=160948517]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=2010870751]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Run Over"
+
+[node name="Description" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=613759810]
+layout_mode = 2
+text = "Try again?"
+autowrap_mode = 3
+
+[node name="SummaryText" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=1119619598]
+layout_mode = 2
+text = "Summary"
+autowrap_mode = 3
+
+[node name="ActionsVBox" type="VBoxContainer" parent="GameOverPanel/Margin/RootRow" unique_id=894918992]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RetryButton" type="Button" parent="GameOverPanel/Margin/RootRow/ActionsVBox" unique_id=1429474402]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_mode = 0
+text = "Retry"
+
+[node name="RetryIcon" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/RetryButton" unique_id=2132673007]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 8.0
+offset_top = 19.0
+offset_right = 26.0
+offset_bottom = 37.0
+texture = SubResource("AtlasTexture_8xpbk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DungeonButton" type="Button" parent="GameOverPanel/Margin/RootRow/ActionsVBox" unique_id=1545040666]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_mode = 0
+text = "Return To Dungeon"
+
+[node name="DungeonIcon" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/DungeonButton" unique_id=1705377324]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 8.0
+offset_top = 19.0
+offset_right = 26.0
+offset_bottom = 37.0
+texture = SubResource("AtlasTexture_f3ebr")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MenuButton" type="Button" parent="GameOverPanel/Margin/RootRow/ActionsVBox" unique_id=1893465709]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_mode = 0
+text = "Back To Menu"
+
+[node name="MenuIcon" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/MenuButton" unique_id=822349996]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 8.0
+offset_top = 19.0
+offset_right = 26.0
+offset_bottom = 37.0
+texture = SubResource("AtlasTexture_1ffoq")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelUpPanel" type="PanelContainer" parent="." unique_id=1784143997]
+process_mode = 3
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -180.0
+offset_right = 300.0
+offset_bottom = 180.0
+
+[node name="Margin" type="MarginContainer" parent="LevelUpPanel" unique_id=1657961338]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="LevelUpPanel/Margin" unique_id=1019184970]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="LevelUpPanel/Margin/VBox" unique_id=181984128]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Level Up!"
+horizontal_alignment = 1
+
+[node name="SubTitle" type="Label" parent="LevelUpPanel/Margin/VBox" unique_id=871925135]
+layout_mode = 2
+text = "Pick one upgrade"
+horizontal_alignment = 1
+
+[node name="UpgradeButton1" type="Button" parent="LevelUpPanel/Margin/VBox" unique_id=2035049019]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "Upgrade 1"
+
+[node name="UpgradeButton2" type="Button" parent="LevelUpPanel/Margin/VBox" unique_id=533234306]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "Upgrade 2"
+
+[node name="UpgradeButton3" type="Button" parent="LevelUpPanel/Margin/VBox" unique_id=1412804706]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "Upgrade 3"
+
+[node name="SpriteHud" type="Control" parent="." unique_id=1322439263]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="TopLeftStack" type="VBoxContainer" parent="SpriteHud" unique_id=708213714]
+visible = false
+layout_mode = 1
+offset_left = 18.0
+offset_top = 16.0
+offset_right = 370.0
+offset_bottom = 168.0
+theme_override_constants/separation = 8
+
+[node name="HpFrame" type="TextureRect" parent="SpriteHud/TopLeftStack" unique_id=1288869490]
+self_modulate = Color(0.2, 0.08, 0.08, 0.85)
+custom_minimum_size = Vector2(352, 44)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HpLabel" type="Label" parent="SpriteHud/TopLeftStack/HpFrame" unique_id=363268219]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -12.0
+offset_right = 160.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 21
+text = "HP 100 / 100"
+horizontal_alignment = 1
+
+[node name="XpFrame" type="TextureRect" parent="SpriteHud/TopLeftStack" unique_id=1454295063]
+self_modulate = Color(0.08, 0.12, 0.2, 0.85)
+custom_minimum_size = Vector2(352, 26)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="XpLabel" type="Label" parent="SpriteHud/TopLeftStack/XpFrame" unique_id=1237971103]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -10.0
+offset_right = 160.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 17
+text = "Lv 1  XP 0/5"
+horizontal_alignment = 1
+
+[node name="TopBars" type="Control" parent="SpriteHud" unique_id=1031604420]
+anchors_preset = 0
+anchor_right = 1.0
+offset_left = 4.0
+offset_top = 8.0
+offset_right = -4.0
+offset_bottom = 40.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="HpSpriteBar" type="ProgressBar" parent="SpriteHud/TopBars" unique_id=2137883968]
+layout_mode = 0
+anchor_right = 1.0
+offset_bottom = 12.0
+grow_horizontal = 2
+value = 100.0
+show_percentage = false
+
+[node name="XpSpriteBar" type="ProgressBar" parent="SpriteHud/TopBars" unique_id=432707044]
+layout_mode = 0
+anchor_right = 1.0
+offset_top = 16.0
+offset_bottom = 28.0
+grow_horizontal = 2
+max_value = 5.0
+show_percentage = false
+
+[node name="RunTimerLabel" type="Label" parent="SpriteHud" unique_id=1499394660]
+layout_mode = 0
+offset_left = 79.0
+offset_top = 58.0
+offset_right = 231.0
+offset_bottom = 78.0
+theme_override_font_sizes/font_size = 14
+text = "Run 00:00"
+
+[node name="LevelChipLabel" type="Label" parent="SpriteHud" unique_id=2139539933]
+layout_mode = 0
+offset_left = 19.0
+offset_top = 59.0
+offset_right = 87.0
+offset_bottom = 79.0
+theme_override_font_sizes/font_size = 14
+text = "Lv 1"
+
+[node name="DashPanel" type="Control" parent="SpriteHud" unique_id=1551174066]
+anchors_preset = 0
+offset_left = 15.0
+offset_top = 50.0
+offset_right = 331.0
+offset_bottom = 86.0
+mouse_filter = 2
+
+[node name="DashCountLabel" type="Label" parent="SpriteHud/DashPanel" unique_id=781587649]
+layout_mode = 0
+offset_left = 28.0
+offset_top = -12.0
+offset_right = 112.0
+offset_bottom = 10.0
+text = "Dash 1/1"
+
+[node name="DashIcon" type="TextureRect" parent="SpriteHud/DashPanel" unique_id=985282940]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 0
+offset_left = 2.0
+offset_top = -12.0
+offset_right = 20.0
+offset_bottom = 6.0
+texture = SubResource("AtlasTexture_ykvjm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DashCooldownBar" type="TextureProgressBar" parent="SpriteHud/DashPanel" unique_id=413523575]
+layout_mode = 0
+offset_left = 113.0
+offset_top = -10.0
+offset_right = 129.0
+offset_bottom = 6.0
+value = 100.0
+fill_mode = 5
+texture_progress = SubResource("AtlasTexture_tsmiw")
+tint_under = Color(0.08, 0.08, 0.08, 0.9)
+tint_over = Color(1, 1, 1, 0)
+tint_progress = Color(0.95, 0.95, 1, 1)
+
+[node name="MobileDashButton" type="Button" parent="SpriteHud" unique_id=1995552745]
+custom_minimum_size = Vector2(76, 76)
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -106.0
+offset_right = -24.0
+offset_bottom = -30.0
+focus_mode = 0
+
+[node name="Icon" type="TextureRect" parent="SpriteHud/MobileDashButton" unique_id=623753086]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemsToggleButton" type="Button" parent="SpriteHud" unique_id=1871312646]
+custom_minimum_size = Vector2(112, 36)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -174.0
+offset_top = -46.0
+offset_right = -62.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+tooltip_text = "Items"
+focus_mode = 0
+text = "Items"
+
+[node name="Icon" type="TextureRect" parent="SpriteHud/ItemsToggleButton" unique_id=1416639845]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 0
+offset_left = 6.0
+offset_top = 7.0
+offset_right = 20.0
+offset_bottom = 21.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StatsToggleButtonLeft" type="Button" parent="SpriteHud" unique_id=673065895]
+custom_minimum_size = Vector2(112, 36)
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 62.0
+offset_top = -46.0
+offset_right = 174.0
+offset_bottom = -10.0
+tooltip_text = "Stats"
+focus_mode = 0
+text = "Stats"
+
+[node name="Icon" type="TextureRect" parent="SpriteHud/StatsToggleButtonLeft" unique_id=2137059382]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 0
+offset_left = 6.0
+offset_top = 7.0
+offset_right = 20.0
+offset_bottom = 21.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemsModal" type="PanelContainer" parent="SpriteHud" unique_id=396716431]
+visible = false
+z_index = 520
+layout_mode = 0
+offset_left = 60.0
+offset_top = 132.0
+offset_right = 520.0
+offset_bottom = 300.0
+
+[node name="Margin" type="MarginContainer" parent="SpriteHud/ItemsModal" unique_id=2056967233]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="ItemsList" type="VBoxContainer" parent="SpriteHud/ItemsModal/Margin" unique_id=167915216]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ItemDetailLabel" type="Label" parent="SpriteHud/ItemsModal/Margin" unique_id=1411169270]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Tap an item to view effects."
+autowrap_mode = 3
+
+[node name="TalentsToggleButton" type="Button" parent="SpriteHud" unique_id=1588452042]
+custom_minimum_size = Vector2(112, 36)
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -56.0
+offset_top = -46.0
+offset_right = 56.0
+offset_bottom = -10.0
+tooltip_text = "Talents"
+focus_mode = 0
+text = "Talents"
+
+[node name="Icon" type="TextureRect" parent="SpriteHud/TalentsToggleButton" unique_id=1405079253]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 0
+offset_left = 6.0
+offset_top = 7.0
+offset_right = 20.0
+offset_bottom = 21.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TalentsModal" type="PanelContainer" parent="SpriteHud" unique_id=443453218]
+visible = false
+z_index = 530
+layout_mode = 0
+offset_left = 60.0
+offset_top = 308.0
+offset_right = 520.0
+offset_bottom = 476.0
+
+[node name="Margin" type="MarginContainer" parent="SpriteHud/TalentsModal" unique_id=433823922]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="TalentsList" type="VBoxContainer" parent="SpriteHud/TalentsModal/Margin" unique_id=1141740153]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TalentDetailLabel" type="Label" parent="SpriteHud/TalentsModal/Margin" unique_id=2128083554]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "No active talents yet."
+autowrap_mode = 3
+
+[node name="StatsModalLeft" type="PanelContainer" parent="SpriteHud" unique_id=1659641653]
+visible = false
+z_index = 540
+layout_mode = 0
+offset_left = 60.0
+offset_top = 484.0
+offset_right = 520.0
+offset_bottom = 652.0
+
+[node name="Margin" type="MarginContainer" parent="SpriteHud/StatsModalLeft" unique_id=350925096]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="StatsText" type="Label" parent="SpriteHud/StatsModalLeft/Margin" unique_id=2022170712]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Stats"
+autowrap_mode = 3
+
+[node name="TopRightFrame" type="TextureRect" parent="SpriteHud" unique_id=806951418]
+self_modulate = Color(0.12, 0.14, 0.14, 0.82)
+custom_minimum_size = Vector2(252, 38)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -209.0
+offset_top = 37.0
+offset_right = 43.0
+offset_bottom = 75.0
+grow_horizontal = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TimeLabel" type="Label" parent="SpriteHud/TopRightFrame" unique_id=26642917]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -79.0
+offset_top = -18.0
+offset_right = 161.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 22
+text = "15:00"
+horizontal_alignment = 1
+
+[node name="StatsModal" type="PanelContainer" parent="SpriteHud" unique_id=20603852]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -95.0
+offset_right = 260.0
+offset_bottom = 95.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="SpriteHud/StatsModal" unique_id=526364368]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="StatsText" type="Label" parent="SpriteHud/StatsModal/Margin" unique_id=1451723868]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Stats"
+autowrap_mode = 3
+
+[node name="TopBar" type="HBoxContainer" parent="." unique_id=1109308736]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 22.0
+offset_top = 224.0
+offset_right = -18.0
+offset_bottom = 272.0
+grow_horizontal = 2
+theme_override_constants/separation = 20
+
+[node name="TimeLabel" type="Label" parent="TopBar" unique_id=1532567738]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "20:00"
+
+[node name="HealthLabel" type="Label" parent="TopBar" unique_id=1621641042]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "HP: 100 / 100"
+
+[node name="EnemyCountLabel" type="Label" parent="TopBar" unique_id=1004748683]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Enemies: 0 / 10"
+
+[node name="LevelLabel" type="Label" parent="TopBar" unique_id=862104077]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Lv 1  XP 0/5"
+
+[node name="WeaponLabel" type="Label" parent="TopBar" unique_id=514368775]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Sword Slash Lv 1/5"
+
+[node name="DebugToggleButton" type="Button" parent="TopBar" unique_id=2103056391]
+custom_minimum_size = Vector2(120, 42)
+layout_mode = 2
+text = "Debug"
+
+[node name="DebugPanel" type="PanelContainer" parent="." unique_id=162885334]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -242.0
+offset_top = 14.0
+offset_right = -10.0
+offset_bottom = 729.0
+grow_horizontal = 0
+
+[node name="DebugMargin" type="MarginContainer" parent="DebugPanel" unique_id=981925742]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="DebugVBox" type="VBoxContainer" parent="DebugPanel/DebugMargin" unique_id=14866428]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DebugTitle" type="Label" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=485954403]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Debug Actions"
+horizontal_alignment = 1
+
+[node name="DebugSkipButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=199157019]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "+60s Time"
+
+[node name="DebugHordeButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1840033230]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Horde"
+
+[node name="DebugEliteButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1938619960]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Elite"
+
+[node name="DebugBruteButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1390476456]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Brute"
+
+[node name="DebugBlinkButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=534717412]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Blink"
+
+[node name="DebugTankButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1031422881]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Tank"
+
+[node name="DebugSwordButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1066795069]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Sword"
+
+[node name="DebugMageButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=885247151]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Mage"
+
+[node name="DebugElectricMageButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=581024384]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Elec Mage"
+
+[node name="DebugEliteSwordButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1194173388]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Elite Sword"
+
+[node name="DebugEliteMageButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=330648200]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Elite Mage"
+
+[node name="DebugEliteElectricMageButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=635203387]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Spawn Elite Elec"
+
+[node name="DebugAoeButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=207828388]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "AOE+"
+
+[node name="DebugLevelButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=1102511972]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Level+"
+
+[node name="DebugHealButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=407126547]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Heal"
+
+[node name="DebugStatsLabel" type="Label" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=489236039]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "DBG"
+autowrap_mode = 3
+clip_text = true
+
+[node name="XpBar" type="ProgressBar" parent="." unique_id=1241958480]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 159.0
+offset_right = -26.0
+offset_bottom = 175.0
+grow_horizontal = 2
+show_percentage = false
+
+[node name="HpBar" type="ProgressBar" parent="." unique_id=2139504632]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 180.0
+offset_right = -20.0
+offset_bottom = 196.0
+grow_horizontal = 2
+value = 100.0
+show_percentage = false
+
+[node name="HordeWarning" type="Label" parent="." unique_id=1849546806]
+visible = false
+layout_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "▲ HORDE"
+horizontal_alignment = 1
+
+[node name="BruteChargeWarning" type="Label" parent="." unique_id=1465199435]
+visible = false
+layout_mode = 0
+theme_override_font_sizes/font_size = 36
+text = ">"
+horizontal_alignment = 1

@@ -29,8 +29,10 @@ const ELECTRIC_MAGE_UNLOCK_SECONDS: float = 540.0
 const COIN_DROP_CHANCE: float = 0.18
 const HEALTH_DROP_CHANCE: float = 0.012
 const HEALTH_DROP_HEAL: int = 22
+const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
 
 @onready var player = $Player
+@onready var global_hud: Control = $"CanvasLayer/HUD"
 @onready var enemies_root: Node2D = $Enemies
 @onready var orbs_root: Node2D = $XpOrbs
 @onready var drops_root: Node2D = $Drops
@@ -41,19 +43,30 @@ const HEALTH_DROP_HEAL: int = 22
 @onready var weapon_label: Label = $"CanvasLayer/HUD/TopBar/WeaponLabel"
 @onready var xp_bar: ProgressBar = $"CanvasLayer/HUD/XpBar"
 @onready var hp_bar: ProgressBar = $"CanvasLayer/HUD/HpBar"
-@onready var status_label: Label = $"CanvasLayer/HUD/BottomBar/StatusLabel"
-@onready var stats_label: Label = $"CanvasLayer/HUD/BottomBar/StatsLabel"
+@onready var status_label: Label = get_node_or_null("CanvasLayer/HUD/BottomBar/StatusLabel") as Label
+@onready var stats_label: Label = get_node_or_null("CanvasLayer/HUD/BottomBar/StatsLabel") as Label
+@onready var top_bar: Control = $"CanvasLayer/HUD/TopBar"
+@onready var bottom_bar: Control = get_node_or_null("CanvasLayer/HUD/BottomBar") as Control
+@onready var sprite_hud: Control = $"CanvasLayer/HUD/SpriteHud"
+@onready var sprite_hud_time_label: Label = $"CanvasLayer/HUD/SpriteHud/TopRightFrame/TimeLabel"
+@onready var sprite_hud_hp_label: Label = $"CanvasLayer/HUD/SpriteHud/TopLeftStack/HpFrame/HpLabel"
+@onready var sprite_hud_xp_label: Label = $"CanvasLayer/HUD/SpriteHud/TopLeftStack/XpFrame/XpLabel"
+@onready var sprite_hud_status_label: Label = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatusFrame/StatusLabel") as Label
+@onready var sprite_stats_toggle_button: Button = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsToggleButton") as Button
+@onready var sprite_stats_modal: PanelContainer = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsModal") as PanelContainer
+@onready var sprite_stats_text_label: Label = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsModal/Margin/StatsText") as Label
 @onready var horde_warning_label: Label = $"CanvasLayer/HUD/HordeWarning"
 @onready var brute_charge_warning_label: Label = $"CanvasLayer/HUD/BruteChargeWarning"
-@onready var game_over_panel: PanelContainer = $"CanvasLayer/GameOverPanel"
-@onready var game_over_title: Label = $"CanvasLayer/GameOverPanel/Margin/VBox/Title"
-@onready var game_over_desc: Label = $"CanvasLayer/GameOverPanel/Margin/VBox/Description"
-@onready var level_up_panel: PanelContainer = $"CanvasLayer/LevelUpPanel"
-@onready var level_up_title: Label = $"CanvasLayer/LevelUpPanel/Margin/VBox/Title"
-@onready var level_up_subtitle: Label = $"CanvasLayer/LevelUpPanel/Margin/VBox/SubTitle"
-@onready var upgrade_button_1: Button = $"CanvasLayer/LevelUpPanel/Margin/VBox/UpgradeButton1"
-@onready var upgrade_button_2: Button = $"CanvasLayer/LevelUpPanel/Margin/VBox/UpgradeButton2"
-@onready var upgrade_button_3: Button = $"CanvasLayer/LevelUpPanel/Margin/VBox/UpgradeButton3"
+@onready var game_over_panel: PanelContainer = $"CanvasLayer/HUD/GameOverPanel"
+@onready var game_over_title: Label = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox/Title"
+@onready var game_over_desc: Label = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox/Description"
+@onready var game_over_summary_text: Label = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox/SummaryText"
+@onready var level_up_panel: PanelContainer = $"CanvasLayer/HUD/LevelUpPanel"
+@onready var level_up_title: Label = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/Title"
+@onready var level_up_subtitle: Label = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/SubTitle"
+@onready var upgrade_button_1: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton1"
+@onready var upgrade_button_2: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton2"
+@onready var upgrade_button_3: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton3"
 @onready var debug_toggle_button: Button = $"CanvasLayer/HUD/TopBar/DebugToggleButton"
 @onready var debug_panel: PanelContainer = $"CanvasLayer/HUD/DebugPanel"
 @onready var debug_skip_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSkipButton"
@@ -94,10 +107,19 @@ var talent_pool: Array[Dictionary] = []
 var horde_warning_pending: bool = false
 var debug_status_until_ms: int = 0
 var debug_status_text: String = ""
+var use_sprite_hud: bool = true
+var run_coins: int = 0
+var run_damage_taken: int = 0
+var last_health_sample: int = -1
 
 
 func _ready() -> void:
 	randomize()
+	run_coins = 0
+	run_damage_taken = 0
+	last_health_sample = -1
+	if global_hud != null and global_hud.has_method("set_ui_mode"):
+		global_hud.call("set_ui_mode", "combat")
 	player.add_to_group("player")
 	player.health_changed.connect(_on_player_health_changed)
 	player.died.connect(_on_player_died)
@@ -128,8 +150,10 @@ func _ready() -> void:
 	debug_panel.move_to_front()
 	debug_toggle_button.visible = false
 	_ensure_debug_connections()
+	_ensure_panel_connections()
 	_ensure_debug_controls_clickable()
 	_make_debug_panel_overlay()
+	_setup_hud_mode()
 	xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	time_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -137,8 +161,10 @@ func _ready() -> void:
 	enemy_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	weapon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if status_label != null:
+		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if stats_label != null:
+		stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	horde_warning_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	brute_charge_warning_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	orbs_root.z_index = 1
@@ -152,9 +178,28 @@ func _ready() -> void:
 	_update_hud()
 
 
+func _setup_hud_mode() -> void:
+	if sprite_hud != null:
+		sprite_hud.visible = use_sprite_hud
+	if top_bar != null:
+		top_bar.visible = not use_sprite_hud
+	if bottom_bar != null:
+		bottom_bar.visible = not use_sprite_hud
+	if xp_bar != null:
+		xp_bar.visible = not use_sprite_hud
+	if hp_bar != null:
+		hp_bar.visible = not use_sprite_hud
+	if sprite_stats_modal != null:
+		sprite_stats_modal.visible = false
+	if sprite_stats_toggle_button != null:
+		sprite_stats_toggle_button.visible = use_sprite_hud
+
+
 func _ensure_debug_connections() -> void:
 	if not debug_toggle_button.pressed.is_connected(_on_debug_toggle_button_pressed):
 		debug_toggle_button.pressed.connect(_on_debug_toggle_button_pressed)
+	if sprite_stats_toggle_button != null and not sprite_stats_toggle_button.pressed.is_connected(_on_stats_toggle_button_pressed):
+		sprite_stats_toggle_button.pressed.connect(_on_stats_toggle_button_pressed)
 	if not debug_skip_button.pressed.is_connected(_on_debug_skip_button_pressed):
 		debug_skip_button.pressed.connect(_on_debug_skip_button_pressed)
 	if not debug_horde_button.pressed.is_connected(_on_debug_horde_button_pressed):
@@ -185,6 +230,24 @@ func _ensure_debug_connections() -> void:
 		debug_level_button.pressed.connect(_on_debug_level_button_pressed)
 	if not debug_heal_button.pressed.is_connected(_on_debug_heal_button_pressed):
 		debug_heal_button.pressed.connect(_on_debug_heal_button_pressed)
+
+
+func _ensure_panel_connections() -> void:
+	if not upgrade_button_1.pressed.is_connected(_on_upgrade_button_1_pressed):
+		upgrade_button_1.pressed.connect(_on_upgrade_button_1_pressed)
+	if not upgrade_button_2.pressed.is_connected(_on_upgrade_button_2_pressed):
+		upgrade_button_2.pressed.connect(_on_upgrade_button_2_pressed)
+	if not upgrade_button_3.pressed.is_connected(_on_upgrade_button_3_pressed):
+		upgrade_button_3.pressed.connect(_on_upgrade_button_3_pressed)
+	var retry_button: Button = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/ActionsVBox/RetryButton"
+	var dungeon_button: Button = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/ActionsVBox/DungeonButton"
+	var menu_button: Button = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/ActionsVBox/MenuButton"
+	if retry_button != null and not retry_button.pressed.is_connected(_on_retry_button_pressed):
+		retry_button.pressed.connect(_on_retry_button_pressed)
+	if dungeon_button != null and not dungeon_button.pressed.is_connected(_on_return_to_dungeon_button_pressed):
+		dungeon_button.pressed.connect(_on_return_to_dungeon_button_pressed)
+	if menu_button != null and not menu_button.pressed.is_connected(_on_menu_button_pressed):
+		menu_button.pressed.connect(_on_menu_button_pressed)
 
 
 func _ensure_debug_controls_clickable() -> void:
@@ -384,20 +447,29 @@ func _fill_minimum_enemy_floor() -> void:
 
 
 func _update_hud() -> void:
-	time_label.text = _format_time(RUN_DURATION_SECONDS - run_time_seconds)
-	enemy_count_label.text = "Enemies: %d / %d" % [enemies_root.get_child_count(), _get_max_enemies_alive()]
-	level_label.text = "Lv %d  XP %d/%d" % [current_level, current_xp, xp_to_next_level]
-	level_label.text += "  Coins %d" % GameState.get_coins()
+	var remaining_time_text: String = _format_time(RUN_DURATION_SECONDS - run_time_seconds)
+	var enemy_text: String = "Enemies: %d / %d" % [enemies_root.get_child_count(), _get_max_enemies_alive()]
+	var level_text: String = "Lv %d  XP %d/%d  Coins %d" % [current_level, current_xp, xp_to_next_level, GameState.get_coins()]
+	var hp_text: String = "HP: %d / %d" % [player.current_health, player.max_health]
+	var status_text: String = "Sword stacks to Lv8. Milestones: Lv5 = +1 slash, Lv8 = +2 slashes."
+
+	time_label.text = remaining_time_text
+	enemy_count_label.text = enemy_text
+	level_label.text = level_text
+	hp_label.text = hp_text
 	xp_bar.max_value = float(xp_to_next_level)
 	xp_bar.value = float(current_xp)
 	hp_bar.max_value = float(player.max_health)
 	hp_bar.value = float(player.current_health)
-	status_label.text = "Sword stacks to Lv8. Milestones: Lv5 = +1 slash, Lv8 = +2 slashes."
+	if status_label != null:
+		status_label.text = status_text
 	if Time.get_ticks_msec() < debug_status_until_ms:
-		status_label.text = debug_status_text
+		status_text = debug_status_text
+		if status_label != null:
+			status_label.text = status_text
 	var dash_cd_left: float = player.get_dash_cooldown_remaining() if player.has_method("get_dash_cooldown_remaining") else 0.0
 	var dash_cd_total: float = player.get_dash_cooldown_total() if player.has_method("get_dash_cooldown_total") else 0.0
-	stats_label.text = "SPD %.0f | LUCK %.2f | PICK %.0f | MAG %.0f | DMG %d | AOE %.0f | ATK CD %.2fs | SLASH x%d | DASH %.2f/%.2f" % [
+	var stats_text: String = "SPD %.0f | LUCK %.2f | PICK %.0f | MAG %.0f | DMG %d | AOE %.0f | ATK CD %.2fs | SLASH x%d | DASH %.2f/%.2f" % [
 		player.move_speed,
 		player.get_luck() if player.has_method("get_luck") else 0.0,
 		player.get_pickup_radius() if player.has_method("get_pickup_radius") else 0.0,
@@ -409,8 +481,120 @@ func _update_hud() -> void:
 		dash_cd_left,
 		dash_cd_total
 	]
+	if stats_label != null:
+		stats_label.text = stats_text
+	_update_sprite_hud(remaining_time_text, hp_text, level_text, enemy_text, status_text, stats_text)
 	_update_debug_stats_panel()
 	_update_brute_offscreen_warning()
+
+
+func _update_sprite_hud(
+	remaining_time_text: String,
+	_hp_text: String,
+	_level_text: String,
+	enemy_text: String,
+	status_text: String,
+	stats_text: String
+) -> void:
+	if not use_sprite_hud:
+		return
+	if sprite_hud_time_label != null:
+		sprite_hud_time_label.text = remaining_time_text
+	if sprite_hud_hp_label != null:
+		sprite_hud_hp_label.text = ""
+	if sprite_hud_xp_label != null:
+		sprite_hud_xp_label.text = ""
+	var dash_cd_left: float = player.get_dash_cooldown_remaining() if player.has_method("get_dash_cooldown_remaining") else 0.0
+	var dash_cd_total: float = player.get_dash_cooldown_total() if player.has_method("get_dash_cooldown_total") else 1.0
+	var dash_ready_count: int = 1 if dash_cd_left <= 0.01 else 0
+	var quick_stats_text: String = "SPD %.0f  DMG %d  CD %.2fs  AOE %.0f" % [
+		player.move_speed,
+		player.sword_damage,
+		player.sword_cooldown,
+		player.sword_aoe_radius
+	]
+	var run_minutes: int = int(run_time_seconds / 60.0)
+	var run_seconds: int = int(run_time_seconds) % 60
+	var run_timer_text: String = "Run %02d:%02d" % [run_minutes, run_seconds]
+	var level_chip_text: String = "Lv %d" % current_level
+	var item_entries: Array[Dictionary] = []
+	item_entries.append({
+		"icon": "[S]",
+		"name": "Sword Slash",
+		"stacks": "Lv %d" % player.sword_level,
+		"effects": "Damage %d\nAOE %.0f\nCooldown %.2fs\nExtra slashes x%d" % [
+			player.sword_damage,
+			player.sword_aoe_radius,
+			player.sword_cooldown,
+			1 + player.extra_slash_count
+		]
+	})
+	var item_stack_text: String = "Items: [S] Lv%d" % player.sword_level
+	var talent_entries: Array[Dictionary] = []
+	if player.extra_slash_count > 0:
+		talent_entries.append({
+			"icon": "[F]",
+			"name": "Blade Fan",
+			"stacks": "x%d" % player.extra_slash_count,
+			"effects": "Adds extra angled slashes (%d)." % player.extra_slash_count
+		})
+	if player.dash_cooldown_multiplier < 0.99:
+		talent_entries.append({
+			"icon": "[D]",
+			"name": "Dash Mastery",
+			"stacks": "Lv 1",
+			"effects": "Dash cooldown improved (x%.2f)." % player.dash_cooldown_multiplier
+		})
+	if player.dash_iframe_bonus > 0.001:
+		talent_entries.append({
+			"icon": "[I]",
+			"name": "I-Frame Boost",
+			"stacks": "+%.2fs" % player.dash_iframe_bonus,
+			"effects": "Extra dash invulnerability: +%.2fs." % player.dash_iframe_bonus
+		})
+	if player.dash_distance_bonus > 0.001:
+		talent_entries.append({
+			"icon": "[L]",
+			"name": "Longstep",
+			"stacks": "+%.0f" % player.dash_distance_bonus,
+			"effects": "Adds dash distance by %.0f." % player.dash_distance_bonus
+		})
+	if talent_entries.is_empty():
+		talent_entries.append({
+			"icon": "[ ]",
+			"name": "No Talents Yet",
+			"stacks": "-",
+			"effects": "Reach Lv 5 milestones to unlock talents."
+		})
+	if global_hud != null and global_hud.has_method("update_combat_bars"):
+		global_hud.call(
+			"update_combat_bars",
+			player.current_health,
+			player.max_health,
+			current_xp,
+			xp_to_next_level,
+			dash_ready_count,
+			1,
+			dash_cd_left,
+			dash_cd_total,
+			quick_stats_text
+		)
+	if global_hud != null and global_hud.has_method("update_combat_meta"):
+		global_hud.call(
+			"update_combat_meta",
+			run_coins,
+			item_stack_text,
+			stats_text,
+			item_entries,
+			talent_entries,
+			run_timer_text,
+			level_chip_text,
+			run_damage_taken
+		)
+	if sprite_hud_status_label != null:
+		sprite_hud_status_label.text = "%s | %s" % [enemy_text, status_text]
+	if sprite_stats_text_label != null:
+		sprite_stats_text_label.text = stats_text
 
 
 func _update_brute_offscreen_warning() -> void:
@@ -554,11 +738,20 @@ func _format_time(seconds_left: float) -> String:
 
 
 func _on_player_health_changed(current: int, max_health: int) -> void:
+	if last_health_sample >= 0 and current < last_health_sample:
+		run_damage_taken += (last_health_sample - current)
+	last_health_sample = current
 	hp_label.text = "HP: %d / %d" % [current, max_health]
 
 
 func _on_sword_level_changed(level: int, max_level: int) -> void:
 	weapon_label.text = "Sword Slash Lv %d/%d" % [level, max_level]
+
+
+func _on_stats_toggle_button_pressed() -> void:
+	if sprite_stats_modal == null:
+		return
+	sprite_stats_modal.visible = not sprite_stats_modal.visible
 
 
 func _on_player_died() -> void:
@@ -572,6 +765,7 @@ func _finish_run(survived_to_end: bool) -> void:
 	run_is_over = true
 	get_tree().paused = true
 	game_over_panel.visible = true
+	game_over_panel.move_to_front()
 
 	if survived_to_end:
 		game_over_title.text = "Run Complete"
@@ -579,6 +773,24 @@ func _finish_run(survived_to_end: bool) -> void:
 	else:
 		game_over_title.text = "You Died"
 		game_over_desc.text = "Try again and push your survival build farther."
+
+	var elapsed_text: String = _format_time(run_time_seconds)
+	var summary_data: Dictionary = {
+		"result": "Complete" if survived_to_end else "Defeat",
+		"level": current_level,
+		"time_text": elapsed_text,
+		"run_coins": run_coins,
+		"damage_taken": run_damage_taken
+	}
+	GameState.record_last_run_summary(summary_data)
+	if game_over_summary_text != null:
+		game_over_summary_text.text = "Result: %s\nLevel Reached: %d\nTime Survived: %s\nRun Coins: %d\nDamage Taken: %d" % [
+			summary_data.get("result", "Run"),
+			current_level,
+			elapsed_text,
+			run_coins,
+			run_damage_taken
+		]
 
 
 func _on_retry_button_pressed() -> void:
@@ -589,6 +801,11 @@ func _on_retry_button_pressed() -> void:
 func _on_menu_button_pressed() -> void:
 	get_tree().paused = false
 	GameState.go_to_main_menu()
+
+
+func _on_return_to_dungeon_button_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(LOBBY_SCENE_PATH)
 
 
 func _on_enemy_defeated(world_position: Vector2, xp_value: int, xp_tier: String) -> void:
@@ -650,6 +867,7 @@ func _on_pickup_collected(pickup_type: String, value: int) -> void:
 				player.call("heal", value)
 		"coin":
 			GameState.add_coins(value)
+			run_coins += value
 			_show_debug_status("Coins +%d" % value)
 		_:
 			pass
@@ -691,6 +909,7 @@ func _show_level_up_panel() -> void:
 	upgrade_button_2.text = queued_upgrades[1].get("label", "Upgrade 2")
 	upgrade_button_3.text = queued_upgrades[2].get("label", "Upgrade 3")
 	level_up_panel.visible = true
+	level_up_panel.move_to_front()
 	get_tree().paused = true
 
 

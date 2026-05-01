@@ -6,7 +6,8 @@ const DEFAULT_SAVE_DATA := {
 	"progress": "new_game",
 	"created_at_unix": 0,
 	"coins": 0,
-	"permanent_upgrades": {}
+	"permanent_upgrades": {},
+	"last_run_summary": {}
 }
 
 var latest_save_data: Dictionary = {}
@@ -133,6 +134,33 @@ func get_total_permanent_bonus() -> Dictionary:
 	return bonus
 
 
+func record_last_run_summary(summary: Dictionary) -> void:
+	var save_data: Dictionary = _ensure_save_loaded()
+	save_data["last_run_summary"] = summary.duplicate(true)
+	save_game(save_data)
+
+
+func get_last_run_summary() -> Dictionary:
+	var save_data: Dictionary = _ensure_save_loaded()
+	var summary: Variant = save_data.get("last_run_summary", {})
+	if summary is Dictionary:
+		return (summary as Dictionary).duplicate(true)
+	return {}
+
+
+func get_last_run_summary_text() -> String:
+	var summary: Dictionary = get_last_run_summary()
+	if summary.is_empty():
+		return "No recent run summary."
+	return "Last Run: %s | Lv %d | Time %s | Run Coins %d | DMG Taken %d" % [
+		summary.get("result", "Run"),
+		int(summary.get("level", 1)),
+		String(summary.get("time_text", "00:00")),
+		int(summary.get("run_coins", 0)),
+		int(summary.get("damage_taken", 0))
+	]
+
+
 func _ensure_save_loaded() -> Dictionary:
 	if latest_save_data.is_empty():
 		latest_save_data = load_save()
@@ -147,4 +175,6 @@ func _with_defaults(data: Dictionary) -> Dictionary:
 		merged["created_at_unix"] = Time.get_unix_time_from_system()
 	if not (merged.get("permanent_upgrades", {}) is Dictionary):
 		merged["permanent_upgrades"] = {}
+	if not (merged.get("last_run_summary", {}) is Dictionary):
+		merged["last_run_summary"] = {}
 	return merged

@@ -5,24 +5,29 @@ const DESERT_SCENE_PATH: String = "res://scenes/maps/DesertMap.tscn"
 const SNOW_SCENE_PATH: String = "res://scenes/maps/SnowMap.tscn"
 
 @onready var player: CharacterBody2D = $Player
+@onready var global_hud: Control = $"CanvasLayer/HUD"
 @onready var forest_portal_area: Area2D = $PortalForest/PortalArea
 @onready var desert_portal_area: Area2D = $PortalDesert/PortalArea
 @onready var snow_portal_area: Area2D = $PortalSnow/PortalArea
 @onready var npc_area: Area2D = $UpgradeNpc/NpcArea
 @onready var coin_label: Label = $"CanvasLayer/HUD/CoinLabel"
 @onready var hint_label: Label = $"CanvasLayer/HUD/HintLabel"
-@onready var panel: PanelContainer = $"CanvasLayer/UpgradePanel"
-@onready var panel_title: Label = $"CanvasLayer/UpgradePanel/Margin/VBox/Title"
-@onready var button_hp: Button = $"CanvasLayer/UpgradePanel/Margin/VBox/HpButton"
-@onready var button_speed: Button = $"CanvasLayer/UpgradePanel/Margin/VBox/SpeedButton"
-@onready var button_luck: Button = $"CanvasLayer/UpgradePanel/Margin/VBox/LuckButton"
-@onready var button_dash: Button = $"CanvasLayer/UpgradePanel/Margin/VBox/DashButton"
+@onready var panel: PanelContainer = $"CanvasLayer/HUD/UpgradePanel"
+@onready var panel_title: Label = $"CanvasLayer/HUD/UpgradePanel/Margin/VBox/Title"
+@onready var button_hp: Button = $"CanvasLayer/HUD/UpgradePanel/Margin/VBox/HpButton"
+@onready var button_speed: Button = $"CanvasLayer/HUD/UpgradePanel/Margin/VBox/SpeedButton"
+@onready var button_luck: Button = $"CanvasLayer/HUD/UpgradePanel/Margin/VBox/LuckButton"
+@onready var button_dash: Button = $"CanvasLayer/HUD/UpgradePanel/Margin/VBox/DashButton"
 
 var player_in_npc_range: bool = false
 
 
 func _ready() -> void:
 	get_tree().paused = false
+	if global_hud != null and global_hud.has_method("set_ui_mode"):
+		global_hud.call("set_ui_mode", "lobby")
+	if global_hud != null and global_hud.has_method("set_lobby_last_run_text"):
+		global_hud.call("set_lobby_last_run_text", GameState.get_last_run_summary_text())
 	if player != null and player.has_method("set_lobby_mode"):
 		player.call("set_lobby_mode", true)
 	panel.visible = false
@@ -126,6 +131,8 @@ func _refresh_coins() -> void:
 
 func _set_upgrade_panel_visible(is_open: bool) -> void:
 	panel.visible = is_open
+	if is_open:
+		panel.move_to_front()
 	if player != null:
 		player.set_physics_process(not is_open)
 		if is_open:

@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/Lobby.gd" id="1_xv68m"]
 [ext_resource type="PackedScene" path="res://assets/characters/player.tscn" id="2_f3pxu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1q2a8"]
 radius = 42.0
@@ -108,62 +109,5 @@ shape = SubResource("CircleShape2D_w2e8u")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="HUD" type="Control" parent="CanvasLayer"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="HUD" parent="CanvasLayer" instance=ExtResource("3_global_hud")]
 
-[node name="CoinLabel" type="Label" parent="CanvasLayer/HUD"]
-offset_left = 18.0
-offset_top = 14.0
-offset_right = 240.0
-offset_bottom = 38.0
-text = "Coins: 0"
-
-[node name="HintLabel" type="Label" parent="CanvasLayer/HUD"]
-offset_left = 18.0
-offset_top = 44.0
-offset_right = 250.0
-offset_bottom = 74.0
-text = "Press E to talk"
-
-[node name="UpgradePanel" type="PanelContainer" parent="CanvasLayer"]
-visible = false
-offset_left = 20.0
-offset_top = 88.0
-offset_right = 420.0
-offset_bottom = 360.0
-
-[node name="Margin" type="MarginContainer" parent="CanvasLayer/UpgradePanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
-
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UpgradePanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="Title" type="Label" parent="CanvasLayer/UpgradePanel/Margin/VBox"]
-layout_mode = 2
-text = "Upgrade Merchant"
-
-[node name="HpButton" type="Button" parent="CanvasLayer/UpgradePanel/Margin/VBox"]
-layout_mode = 2
-text = "Max HP"
-
-[node name="SpeedButton" type="Button" parent="CanvasLayer/UpgradePanel/Margin/VBox"]
-layout_mode = 2
-text = "Move Speed"
-
-[node name="LuckButton" type="Button" parent="CanvasLayer/UpgradePanel/Margin/VBox"]
-layout_mode = 2
-text = "Luck"
-
-[node name="DashButton" type="Button" parent="CanvasLayer/UpgradePanel/Margin/VBox"]
-layout_mode = 2
-text = "Dash Mastery"
