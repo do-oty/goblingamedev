@@ -4,6 +4,8 @@ extends "res://scripts/hobgoblin.gd"
 
 const KING_EXTRA_VISUAL_SCALE: float = 1.38
 const KING_HP_MULT: float = 1.4
+const KING_COLLIDER_SCALE: float = 1.42
+const KING_COLLIDER_Y_OFFSET: float = 8.0
 const KING_SLAM_COOLDOWN_MIN: float = 4.2
 const KING_SLAM_COOLDOWN_MAX: float = 6.0
 const KING_SLAM_WINDUP: float = 1.15
@@ -37,11 +39,14 @@ const KING_RING_DAMAGE_MULT: float = 0.82
 const KING_SLAM_RECOVER_LOCK: float = 0.7
 const KING_PHASE1_BARRAGE_COOLDOWN_MIN: float = 8.5
 const KING_PHASE1_BARRAGE_COOLDOWN_MAX: float = 13.0
-const KING_PHASE1_BARRAGE_WARN_TIME: float = 1.0
-const KING_PHASE1_BARRAGE_WIDTH: float = 136.0
-const KING_PHASE1_BARRAGE_LENGTH: float = 2100.0
-const KING_PHASE1_BARRAGE_COUNT: int = 3
+const KING_PHASE1_BARRAGE_WARN_TIME: float = 1.05
+const KING_PHASE1_SIGIL_RADIUS: float = 170.0
+const KING_PHASE1_SIGIL_COUNT: int = 6
 const KING_PHASE1_BARRAGE_DAMAGE_MULT: float = 1.05
+const KING_SLAM_SHOCKWAVE_WARN: float = 0.55
+const KING_SLAM_SHOCKWAVE_WIDTH: float = 110.0
+const KING_SLAM_SHOCKWAVE_LENGTH: float = 1400.0
+const KING_SLAM_SHOCKWAVE_DAMAGE_MULT: float = 0.72
 
 enum KingAttackState {
 	STATE_IDLE,
@@ -88,6 +93,10 @@ func _ready() -> void:
 	elite_max_health = current_health
 	$AnimatedSprite2D.scale *= KING_EXTRA_VISUAL_SCALE
 	base_sprite_scale = $AnimatedSprite2D.scale
+	var body_collision: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if body_collision != null:
+		body_collision.scale *= KING_COLLIDER_SCALE
+		body_collision.position.y += KING_COLLIDER_Y_OFFSET
 	xp_reward = max(xp_reward + 22, 32)
 	xp_tier = "rainbow"
 	z_index = 8
@@ -203,15 +212,9 @@ func _apply_royal_slam() -> void:
 			_spawn_bleed_burst_at(target_player.global_position)
 		if target_player.global_position.distance_to(impact_pos) <= core_r and target_player.has_method("apply_launch_force"):
 			target_player.call("apply_launch_force", impact_pos, 520.0, 42.0, 0.34)
-	# After the first slam lands, only the outer ring stays dangerous.
-	_show_ring_indicator(core_r * 0.7, core_r * KING_RING_RADIUS_MULT)
-	king_cast_lock_timer = max(king_cast_lock_timer, KING_RING_DELAY + KING_SLAM_RECOVER_LOCK)
-	get_tree().create_timer(KING_RING_DELAY).timeout.connect(func () -> void:
-		if not is_instance_valid(self):
-			return
-		_hide_ring_indicator()
-		_king_crown_ring_damage(impact_pos, core_r * KING_RING_RADIUS_MULT)
-	)
+	# Reworked follow-up: directional shockwaves instead of delayed ring.
+	_cast_slam_shockwaves(impact_pos)
+	king_cast_lock_timer = max(king_cast_lock_timer, KING_SLAM_SHOCKWAVE_WARN + KING_SLAM_RECOVER_LOCK)
 
 
 func _king_crown_ring_damage(center: Vector2, outer_radius: float) -> void:
@@ -674,23 +677,18 @@ func _try_zone_damage_player(zone_data: Dictionary) -> void:
 func _cast_phase1_lane_barrage() -> void:
 	if target_player == null or not is_instance_valid(target_player) or get_parent() == null:
 		return
-	var base_dir: Vector2 = (target_player.global_position - global_position).normalized()
-	if base_dir == Vector2.ZERO:
-		base_dir = Vector2.RIGHT
-	var side: Vector2 = base_dir.orthogonal()
-	var lane_offsets: Array[float] = [-KING_PHASE1_BARRAGE_WIDTH * 1.2, 0.0, KING_PHASE1_BARRAGE_WIDTH * 1.2]
-	var lanes: Array[Dictionary] = []
-	for i in range(min(KING_PHASE1_BARRAGE_COUNT, lane_offsets.size())):
-		var offset: float = lane_offsets[i]
-		var center: Vector2 = target_player.global_position + (side * offset)
-		var start: Vector2 = center - (base_dir * (KING_PHASE1_BARRAGE_LENGTH * 0.5))
-		var end: Vector2 = center + (base_dir * (KING_PHASE1_BARRAGE_LENGTH * 0.5))
-		var lane: Dictionary = _spawn_world_lane_indicator(start, end, KING_PHASE1_BARRAGE_WIDTH)
-		lanes.append({"start": start, "end": end, "width": KING_PHASE1_BARRAGE_WIDTH, "nodes": lane})
+	var hazards: Array[Dictionary] = []
+	for i in range(KING_PHASE1_SIGIL_COUNT):
+		var ring_t: float = float(i) / float(max(KING_PHASE1_SIGIL_COUNT, 1))
+		var ang: float = (ring_t * TAU) + randf_range(-0.25, 0.25)
+		var dist: float = randf_range(150.0, 520.0)
+		var center: Vector2 = target_player.global_position + (Vector2.RIGHT.rotated(ang) * dist)
+		var sigil_nodes: Dictionary = _spawn_world_circle_indicator(center, KING_PHASE1_SIGIL_RADIUS)
+		hazards.append({"center": center, "radius": KING_PHASE1_SIGIL_RADIUS, "nodes": sigil_nodes})
 	king_cast_lock_timer = KING_PHASE1_BARRAGE_WARN_TIME + 0.4
 	var t: Tween = create_tween()
-	for lane_entry in lanes:
-		var nodes: Dictionary = lane_entry.get("nodes", {})
+	for hazard in hazards:
+		var nodes: Dictionary = hazard.get("nodes", {})
 		var fill: Polygon2D = nodes.get("fill", null) as Polygon2D
 		var inner: Polygon2D = nodes.get("inner", null) as Polygon2D
 		var outline: Line2D = nodes.get("outline", null) as Line2D
@@ -706,8 +704,8 @@ func _cast_phase1_lane_barrage() -> void:
 	get_tree().create_timer(KING_PHASE1_BARRAGE_WARN_TIME).timeout.connect(func() -> void:
 		if not is_instance_valid(self):
 			return
-		_apply_phase1_lane_barrage_damage(lanes)
-		_cleanup_lane_entries(lanes)
+		_apply_phase1_lane_barrage_damage(hazards)
+		_cleanup_lane_entries(hazards)
 	)
 
 
@@ -716,11 +714,9 @@ func _apply_phase1_lane_barrage_damage(lanes: Array[Dictionary]) -> void:
 		return
 	var ppos: Vector2 = target_player.global_position
 	for lane_entry in lanes:
-		var start: Vector2 = lane_entry.get("start", ppos)
-		var end: Vector2 = lane_entry.get("end", ppos)
-		var width: float = float(lane_entry.get("width", KING_PHASE1_BARRAGE_WIDTH))
-		var dist: float = Geometry2D.get_closest_point_to_segment(ppos, start, end).distance_to(ppos)
-		if dist <= (width * 0.5):
+		var center: Vector2 = lane_entry.get("center", ppos)
+		var radius: float = float(lane_entry.get("radius", KING_PHASE1_SIGIL_RADIUS))
+		if ppos.distance_to(center) <= radius:
 			var dmg: int = int(round(float(_get_contact_damage()) * KING_PHASE1_BARRAGE_DAMAGE_MULT))
 			target_player.call("receive_damage", dmg)
 			_spawn_bleed_burst_at(target_player.global_position)
@@ -741,6 +737,74 @@ func _cleanup_lane_entries(lanes: Array[Dictionary]) -> void:
 			inner.queue_free()
 		if outline != null and is_instance_valid(outline):
 			outline.queue_free()
+
+
+func _cast_slam_shockwaves(center: Vector2) -> void:
+	var base_dir: Vector2 = (target_player.global_position - center).normalized() if target_player != null else Vector2.RIGHT
+	if base_dir == Vector2.ZERO:
+		base_dir = Vector2.RIGHT
+	var dirs: Array[Vector2] = [
+		base_dir,
+		base_dir.rotated(PI * 0.5),
+		base_dir.rotated(PI),
+		base_dir.rotated(-PI * 0.5)
+	]
+	var lanes: Array[Dictionary] = []
+	for d in dirs:
+		var start: Vector2 = center
+		var end: Vector2 = center + (d * KING_SLAM_SHOCKWAVE_LENGTH)
+		var lane_nodes: Dictionary = _spawn_world_lane_indicator(start, end, KING_SLAM_SHOCKWAVE_WIDTH)
+		lanes.append({"start": start, "end": end, "width": KING_SLAM_SHOCKWAVE_WIDTH, "nodes": lane_nodes})
+	get_tree().create_timer(KING_SLAM_SHOCKWAVE_WARN).timeout.connect(func() -> void:
+		if not is_instance_valid(self):
+			return
+		_apply_slam_shockwave_damage(lanes)
+		_cleanup_lane_entries(lanes)
+	)
+
+
+func _apply_slam_shockwave_damage(lanes: Array[Dictionary]) -> void:
+	if target_player == null or not is_instance_valid(target_player) or not target_player.has_method("receive_damage"):
+		return
+	var ppos: Vector2 = target_player.global_position
+	for lane_entry in lanes:
+		var start: Vector2 = lane_entry.get("start", ppos)
+		var end: Vector2 = lane_entry.get("end", ppos)
+		var width: float = float(lane_entry.get("width", KING_SLAM_SHOCKWAVE_WIDTH))
+		var dist: float = Geometry2D.get_closest_point_to_segment(ppos, start, end).distance_to(ppos)
+		if dist <= (width * 0.5):
+			var dmg: int = int(round(float(_get_contact_damage()) * KING_SLAM_SHOCKWAVE_DAMAGE_MULT))
+			target_player.call("receive_damage", dmg)
+			_spawn_bleed_burst_at(target_player.global_position)
+			return
+
+
+func _spawn_world_circle_indicator(center_world: Vector2, radius: float) -> Dictionary:
+	var parent_node: Node = get_parent() if get_parent() != null else self
+	var fill: Polygon2D = Polygon2D.new()
+	fill.z_index = -2
+	fill.color = Color(0.72, 0.04, 0.04, 0.3)
+	fill.polygon = _build_circle_polygon(radius, 44)
+	fill.global_position = center_world
+	parent_node.add_child(fill)
+	var inner: Polygon2D = Polygon2D.new()
+	inner.z_index = -2
+	inner.color = Color(1.0, 0.12, 0.12, 0.44)
+	inner.polygon = _build_circle_polygon(radius * 0.58, 36)
+	inner.global_position = center_world
+	parent_node.add_child(inner)
+	var outline: Line2D = Line2D.new()
+	outline.width = 1.3
+	outline.closed = true
+	outline.default_color = Color(0.22, 0.0, 0.0, 0.96)
+	outline.joint_mode = Line2D.LINE_JOINT_ROUND
+	outline.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	outline.end_cap_mode = Line2D.LINE_CAP_ROUND
+	outline.points = _build_circle_polygon(radius, 44)
+	outline.z_index = 0
+	outline.global_position = center_world
+	parent_node.add_child(outline)
+	return {"fill": fill, "inner": inner, "outline": outline}
 
 
 func _spawn_bleed_burst_at(world_pos: Vector2) -> void:

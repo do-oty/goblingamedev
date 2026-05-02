@@ -250,10 +250,11 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_fxwma"]
-radius = 16.0
-height = 38.0
+radius = 22.0
+height = 72.0
 
 [node name="enemy" type="CharacterBody2D" unique_id=748804146]
+position = Vector2(56, -1)
 script = ExtResource("1_nbma8")
 hobgoblin_landing_smoke_vfx_scene = ExtResource("3_hob_smoke")
 
@@ -265,5 +266,5 @@ animation = &"front_attack"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1061981473]
 texture_filter = 1
-position = Vector2(-1, 11)
+position = Vector2(-1, 6)
 shape = SubResource("CapsuleShape2D_fxwma")
