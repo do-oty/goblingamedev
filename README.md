@@ -5,7 +5,8 @@ Current build is a Vampire Survivors-style prototype with a lobby -> portal -> r
 ## Gameplay Recordings
 
 - [Recording 1 (Google Drive)](https://drive.google.com/file/d/1Azd7qEZaWNg-6dxrSSoIpGJlejQYLr4v/view?usp=sharing)
-- [Recording 2 (Google Drive)](https://drive.google.com/file/d/1Azd7qEZaWNg-6dxrSSoIpGJlejQYLr4v/view?usp=sharing)
+- [Recording 2 (Google Drive)](https://drive.google.com/file/d/1k21RNITrByAMIohRdneNXEOYu7UPFXKX/view?usp=sharing)
+- [Recordings Folder (Google Drive)](https://drive.google.com/drive/folders/1bby5zQtOiqNot6vsDPVRgXTL4H8c4iiT?usp=drive_link)
 
 ## Recent Updates (May 2026)
 
