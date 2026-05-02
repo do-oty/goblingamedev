@@ -19,6 +19,7 @@ const DASH_BASE_DISTANCE: float = 165.0
 const DASH_IFRAME_BASE: float = 0.18
 const DASH_BLUR_SPAWN_INTERVAL: float = 0.035
 const DASH_INPUT_BUFFER_WINDOW: float = 0.2
+const DASH_SMUDGE_FRAME_HOLD_RATIO: float = 0.72
 signal sword_level_changed(level: int, max_level: int)
 
 var last_direction := Vector2.DOWN
@@ -56,6 +57,8 @@ var is_dashing: bool = false
 var dash_buffer_remaining: float = 0.0
 ## When true, a directional `dash_*` clip from SpriteFrames is driving the dash (ghost trail throttled).
 var dash_uses_directional_anim: bool = false
+var dash_directional_anim_name: StringName = &""
+var dash_directional_anim_frame_count: int = 0
 var lobby_mode: bool = false
 var launch_velocity: Vector2 = Vector2.ZERO
 var launch_timer: float = 0.0
@@ -100,6 +103,8 @@ func _physics_process(delta: float) -> void:
 		dash_duration_remaining = max(dash_duration_remaining - delta, 0.0)
 		velocity = Vector2.ZERO
 		global_position += dash_direction * _get_dash_speed() * delta
+		if dash_uses_directional_anim:
+			_update_dash_directional_anim_progress()
 		_spawn_dash_blur_if_needed(delta)
 		if dash_duration_remaining <= 0.0:
 			is_dashing = false
@@ -107,6 +112,8 @@ func _physics_process(delta: float) -> void:
 			if dash_uses_directional_anim and not is_attacking:
 				play_idle_animation()
 			dash_uses_directional_anim = false
+			dash_directional_anim_name = &""
+			dash_directional_anim_frame_count = 0
 			if body_collision != null:
 				body_collision.set_deferred("disabled", false)
 			_show_dash_rematerialize()
@@ -546,6 +553,8 @@ func _try_play_dash_directional_anim(direction: Vector2) -> bool:
 	var anim_name: StringName = _dash_animation_name_for_direction(direction)
 	if not body_sprite.sprite_frames.has_animation(anim_name):
 		return false
+	dash_directional_anim_name = anim_name
+	dash_directional_anim_frame_count = body_sprite.sprite_frames.get_frame_count(anim_name)
 	body_sprite.play(anim_name)
 	return true
 
@@ -557,6 +566,22 @@ func _dash_animation_name_for_direction(direction: Vector2) -> StringName:
 	if abs(dir.x) > abs(dir.y):
 		return &"dash_right" if dir.x > 0.0 else &"dash_left"
 	return &"dash_front" if dir.y > 0.0 else &"dash_back"
+
+
+func _update_dash_directional_anim_progress() -> void:
+	if body_sprite == null or body_sprite.sprite_frames == null:
+		return
+	if dash_directional_anim_name == &"" or dash_directional_anim_frame_count <= 0:
+		return
+	if body_sprite.animation != dash_directional_anim_name:
+		body_sprite.play(dash_directional_anim_name)
+	var duration_total: float = max(DASH_BASE_DURATION, 0.001)
+	var elapsed_ratio: float = clamp(1.0 - (dash_duration_remaining / duration_total), 0.0, 1.0)
+	# Reach the last frame early and hold it so the smudge reads clearly.
+	var held_ratio: float = clamp(elapsed_ratio / max(DASH_SMUDGE_FRAME_HOLD_RATIO, 0.05), 0.0, 1.0)
+	var target_frame: int = int(round(held_ratio * float(max(dash_directional_anim_frame_count - 1, 0))))
+	body_sprite.frame = clamp(target_frame, 0, max(dash_directional_anim_frame_count - 1, 0))
+	body_sprite.frame_progress = 0.0
 
 
 func _spawn_dash_blur() -> void:

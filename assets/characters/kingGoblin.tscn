@@ -33,21 +33,17 @@ region = Rect2(38, 60, 38, 60)
 atlas = ExtResource("3_0vgs8")
 region = Rect2(76, 60, 38, 60)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_0vgs8"]
+atlas = ExtResource("3_0vgs8")
+region = Rect2(0, 0, 38, 60)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_k071q"]
 atlas = ExtResource("3_0vgs8")
-region = Rect2(114, 0, 38, 60)
+region = Rect2(38, 0, 38, 60)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_dmhjg"]
 atlas = ExtResource("3_0vgs8")
-region = Rect2(152, 0, 38, 60)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_uul1j"]
-atlas = ExtResource("3_0vgs8")
-region = Rect2(190, 0, 38, 60)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_tmxn6"]
-atlas = ExtResource("3_0vgs8")
-region = Rect2(228, 0, 38, 60)
+region = Rect2(76, 0, 38, 60)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cftnj"]
 atlas = ExtResource("2_syupk")
@@ -73,20 +69,20 @@ region = Rect2(38, 120, 38, 60)
 atlas = ExtResource("2_syupk")
 region = Rect2(76, 120, 38, 60)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_2yutt"]
-atlas = ExtResource("2_syupk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_uul1j"]
+atlas = ExtResource("3_0vgs8")
 region = Rect2(114, 0, 38, 60)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_x870e"]
-atlas = ExtResource("2_syupk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_tmxn6"]
+atlas = ExtResource("3_0vgs8")
 region = Rect2(152, 0, 38, 60)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_4r0al"]
-atlas = ExtResource("2_syupk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_c5p61"]
+atlas = ExtResource("3_0vgs8")
 region = Rect2(190, 0, 38, 60)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_yviag"]
-atlas = ExtResource("2_syupk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_ox1n8"]
+atlas = ExtResource("3_0vgs8")
 region = Rect2(228, 0, 38, 60)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_856d6"]
@@ -161,16 +157,13 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_0vgs8")
+}, {
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_k071q")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_dmhjg")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_uul1j")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_tmxn6")
 }],
 "loop": true,
 "name": &"enemy_front",
@@ -206,16 +199,16 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_2yutt")
+"texture": SubResource("AtlasTexture_uul1j")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_x870e")
+"texture": SubResource("AtlasTexture_tmxn6")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_4r0al")
+"texture": SubResource("AtlasTexture_c5p61")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_yviag")
+"texture": SubResource("AtlasTexture_ox1n8")
 }],
 "loop": true,
 "name": &"front_attack",
@@ -268,8 +261,7 @@ hobgoblin_landing_smoke_vfx_scene = ExtResource("3_hob_smoke")
 position = Vector2(-0.5, 1)
 scale = Vector2(0.95454544, 0.9375)
 sprite_frames = SubResource("SpriteFrames_vadtu")
-animation = &"enemy_front"
-frame_progress = 0.55438435
+animation = &"front_attack"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1061981473]
 texture_filter = 1

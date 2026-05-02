@@ -132,6 +132,62 @@ animations = [{
 "texture": SubResource("AtlasTexture_dl8jj")
 }],
 "loop": true,
+"name": &"dash_back",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8nlh7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hmlts")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e72xj")
+}],
+"loop": true,
+"name": &"dash_front",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5shr2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6q63e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xxh1p")
+}],
+"loop": true,
+"name": &"dash_left",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l3mcr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xnfrv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bwn6v")
+}],
+"loop": true,
+"name": &"dash_right",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_clmix")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4663m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dl8jj")
+}],
+"loop": true,
 "name": &"enemy_back",
 "speed": 3.5
 }, {
