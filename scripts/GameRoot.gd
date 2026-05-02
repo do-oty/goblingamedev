@@ -151,13 +151,7 @@ var map_height := 50
 var tree_count := 80
 var source_id := 0
 
-var tree_tiles = [
-	Vector2i(0, 0),  # replace with your actual atlas coords
-]
-var map_width := 50
-var map_height := 50
-var tree_count := 80
-var source_id := 0
+
 
 
 func _ready() -> void:
