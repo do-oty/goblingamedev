@@ -37,6 +37,7 @@ const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
 const FLOOR_FILL_INTERVAL: float = 0.18
 const EARLY_GAME_EASY_SECONDS: float = 120.0
 
+@onready var tree_layer = $trees
 @onready var player = $Player
 @onready var global_hud: Control = $"CanvasLayer/HUD"
 @onready var enemies_root: Node2D = $Enemies
@@ -122,9 +123,18 @@ var run_damage_taken: int = 0
 var last_health_sample: int = -1
 var floor_fill_cooldown: float = 0.0
 
+var tree_tiles = [
+	Vector2i(0, 0),  # replace with your actual atlas coords
+]
+var map_width := 50
+var map_height := 50
+var tree_count := 80
+var source_id := 0
+
 
 func _ready() -> void:
 	randomize()
+	spawn_trees()
 	run_coins = 0
 	run_damage_taken = 0
 	last_health_sample = -1
@@ -196,8 +206,14 @@ func _ready() -> void:
 	_on_player_health_changed(player.current_health, player.max_health)
 	_on_sword_level_changed(player.sword_level, player.sword_max_level)
 	_update_hud()
-
-
+	
+func spawn_trees():
+	for i in tree_count:
+		var x = randi_range(-map_width, map_width)
+		var y = randi_range(-map_height, map_height)
+		var random_tree = tree_tiles[randi() % tree_tiles.size()]
+		tree_layer.set_cell(Vector2i(x, y), source_id, random_tree)
+		
 func _setup_hud_mode() -> void:
 	if sprite_hud != null:
 		sprite_hud.visible = use_sprite_hud

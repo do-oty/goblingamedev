@@ -863,9 +863,6 @@ z_index = 3
 [node name="Drops" parent="." index="3" unique_id=1248371286]
 z_index = 3
 
-[node name="Player" parent="." index="4" unique_id=1646848590]
-z_index = 2
-
 [node name="HUD" parent="CanvasLayer" parent_id_path=PackedInt32Array(772507349) index="0" unique_id=363297383]
 z_index = 3
 
@@ -883,3 +880,9 @@ tile_set = SubResource("TileSet_ddgpc")
 
 [node name="Walls" type="TileMapLayer" parent="." index="8" unique_id=421440698]
 texture_filter = 1
+
+[node name="trees" parent="." index="9" unique_id=2047506037]
+visible = false
+
+[node name="base" parent="." index="10" unique_id=472416091]
+visible = false
