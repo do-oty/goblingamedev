@@ -13,7 +13,7 @@ const KNOCKBACK_DECAY: float = 14.0
 const HORDE_RUN_SPEED: float = 90.0
 const HORDE_DESPAWN_DISTANCE: float = 1250.0
 const ATTACK_ANIM_DURATION: float = 0.16
-const ELITE_SCALE: float = 1.24
+const ELITE_SCALE: float = 1.10
 const ELITE_HP_MULTIPLIER: float = 3.0
 const ELITE_DAMAGE_MULTIPLIER: float = 1.8
 const ELITE_SPEED_MULTIPLIER: float = 0.82
@@ -22,7 +22,6 @@ const ELITE_TINT: Color = Color(0.95, 0.95, 1.0, 1.0)
 const ELITE_AURA_ALPHA_MIN: float = 0.20
 const ELITE_AURA_ALPHA_MAX: float = 0.34
 const ELITE_AURA_COLOR: Color = Color(0.42, 0.72, 1.0, 0.45)
-const ELITE_TYPES: Array[String] = ["brute", "blink", "tank"]
 const BRUTE_CHARGE_COOLDOWN_MIN: float = 2.1
 const BRUTE_CHARGE_COOLDOWN_MAX: float = 3.4
 const BRUTE_CHARGE_WINDUP: float = 1.2
@@ -39,7 +38,7 @@ const BRUTE_WINDUP_INDICATOR_LENGTH: float = 120.0
 const BRUTE_WINDUP_INDICATOR_WIDTH: float = 44.0
 const BRUTE_INDICATOR_BASE_ALPHA: float = 0.08
 const BRUTE_INDICATOR_PEAK_ALPHA: float = 0.24
-const TANK_ELITE_EXTRA_SCALE: float = 1.22
+const TANK_ELITE_EXTRA_SCALE: float = 1.08
 const BLINK_TP_VFX_SCENE_PATH: String = "res://scenes/vfx/BlinkTeleportVfx.tscn"
 
 var current_health: int = MAX_HEALTH
@@ -60,13 +59,16 @@ var base_sprite_local_y: float = 0.0
 var ground_shadow: Polygon2D = null
 var attack_anim_timer: float = 0.0
 var is_elite: bool = false
+## Charger archetype (former brute elite); driven only by dedicated scripts, not roll tables.
+var brute_mode: bool = false
+## Teleporter archetype (former blink elite).
+var blink_mode: bool = false
 var elite_speed_multiplier: float = 1.0
 var elite_damage_multiplier: float = 1.0
 var xp_reward: int = XP_REWARD
 var xp_tier: String = XP_TIER
 var elite_aura_sprite: AnimatedSprite2D = null
 var elite_sheen_sprite: AnimatedSprite2D = null
-var elite_type: String = ""
 var elite_blink_cooldown: float = 0.0
 var elite_blink_cooldown_max: float = 3.1
 var elite_blink_distance: float = 88.0
@@ -87,6 +89,7 @@ var brute_charge_indicator_tip: Polygon2D = null
 var brute_charge_outline_red: Line2D = null
 var brute_rest_label: Label = null
 var elite_magic_particles: CPUParticles2D = null
+var elite_fx_phase: float = 0.0
 var blink_tp_vfx_scene: PackedScene = preload(BLINK_TP_VFX_SCENE_PATH)
 @export var brute_charge_start_smoke_vfx_scene: PackedScene
 
@@ -101,35 +104,39 @@ func _ready() -> void:
 	_ensure_ground_shadow()
 	_update_render_priority()
 	_randomize_anim_phase()
+	if blink_mode:
+		_ensure_blink_archetype_particles()
 
 
 func _physics_process(delta: float) -> void:
 	contact_cooldown = max(contact_cooldown - delta, 0.0)
-	elite_blink_cooldown = max(elite_blink_cooldown - delta, 0.0)
-	brute_charge_cooldown = max(brute_charge_cooldown - delta, 0.0)
-	if brute_is_winding_up:
-		brute_charge_windup_timer = max(brute_charge_windup_timer - delta, 0.0)
-		_update_brute_charge_indicator_visual()
-		if brute_charge_windup_timer <= 0.0:
-			brute_is_winding_up = false
-			brute_has_hit_during_charge = false
-			# Charge path is locked at windup start; don't retarget at release.
-			brute_charge_timer = BRUTE_CHARGE_DURATION
-			brute_is_charging = true
-			_hide_brute_rest_indicator()
-			_hide_brute_charge_indicator()
-			$AnimatedSprite2D.modulate = Color(1.35, 0.65, 0.65, 1.0)
-	if brute_is_charging:
-		brute_charge_timer = max(brute_charge_timer - delta, 0.0)
-		if brute_charge_timer <= 0.0:
-			brute_is_charging = false
-			brute_recover_timer = BRUTE_RECOVER_DURATION
-			$AnimatedSprite2D.modulate = Color(0.95, 0.55, 0.55, 1.0)
-			_show_brute_rest_indicator()
-	if brute_recover_timer > 0.0:
-		brute_recover_timer = max(brute_recover_timer - delta, 0.0)
-		if brute_recover_timer <= 0.0:
-			_hide_brute_rest_indicator()
+	if blink_mode:
+		elite_blink_cooldown = max(elite_blink_cooldown - delta, 0.0)
+	if brute_mode:
+		brute_charge_cooldown = max(brute_charge_cooldown - delta, 0.0)
+		if brute_is_winding_up:
+			brute_charge_windup_timer = max(brute_charge_windup_timer - delta, 0.0)
+			_update_brute_charge_indicator_visual()
+			if brute_charge_windup_timer <= 0.0:
+				brute_is_winding_up = false
+				brute_has_hit_during_charge = false
+				# Charge path is locked at windup start; don't retarget at release.
+				brute_charge_timer = BRUTE_CHARGE_DURATION
+				brute_is_charging = true
+				_hide_brute_rest_indicator()
+				_hide_brute_charge_indicator()
+				$AnimatedSprite2D.modulate = Color(1.35, 0.65, 0.65, 1.0)
+		if brute_is_charging:
+			brute_charge_timer = max(brute_charge_timer - delta, 0.0)
+			if brute_charge_timer <= 0.0:
+				brute_is_charging = false
+				brute_recover_timer = BRUTE_RECOVER_DURATION
+				$AnimatedSprite2D.modulate = Color(0.95, 0.55, 0.55, 1.0)
+				_show_brute_rest_indicator()
+		if brute_recover_timer > 0.0:
+			brute_recover_timer = max(brute_recover_timer - delta, 0.0)
+			if brute_recover_timer <= 0.0:
+				_hide_brute_rest_indicator()
 	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, KNOCKBACK_DECAY * delta)
 	external_launch_timer = max(external_launch_timer - delta, 0.0)
 	if external_launch_timer > 0.0:
@@ -196,8 +203,10 @@ func _physics_process(delta: float) -> void:
 	var distance: float = to_player.length()
 	var direction: Vector2 = to_player.normalized() if distance > 0.001 else Vector2.ZERO
 	_update_archetype_behavior(delta, direction, distance)
-	if is_elite:
-		_update_elite_ability(direction, distance)
+	if blink_mode:
+		_update_blink_teleport_logic(direction, distance)
+	if brute_mode:
+		_update_brute_charge_logic(direction, distance)
 
 	var move_direction: Vector2 = direction
 	var move_speed_multiplier: float = elite_speed_multiplier
@@ -242,7 +251,7 @@ func take_damage(amount: int, source_position: Vector2 = Vector2.ZERO, knockback
 	_show_hit_feedback(amount)
 	if knockback_force > 0.0 and source_position != Vector2.ZERO:
 		# Don't let knockback cancel brute windup/charge behavior.
-		if not (elite_type == "brute" and (_is_brute_charge_windup() or _is_brute_charging())):
+		if not (brute_mode and (_is_brute_charge_windup() or _is_brute_charging())):
 			var kb_dir: Vector2 = (global_position - source_position).normalized()
 			if kb_dir != Vector2.ZERO:
 				knockback_velocity = kb_dir * knockback_force * elite_brute_knockback_resist
@@ -375,7 +384,7 @@ func _push_nearby_enemies(center: Vector2, radius: float, force: float, launch_h
 			other_enemy.call("apply_external_knockback", center, force)
 
 
-func configure_as_elite(progress_ratio: float = 0.0, forced_type: String = "") -> void:
+func configure_as_elite(progress_ratio: float = 0.0, _unused_legacy_elite_param: String = "") -> void:
 	if is_elite:
 		return
 	is_elite = true
@@ -391,15 +400,12 @@ func configure_as_elite(progress_ratio: float = 0.0, forced_type: String = "") -
 
 	var anim: AnimatedSprite2D = $AnimatedSprite2D
 	anim.scale *= ELITE_SCALE
-	elite_type = _resolve_elite_type_with_rules(forced_type)
 	anim.modulate = _get_elite_sprite_tint()
 	_apply_elite_variant_modifiers()
 	_update_render_priority()
 	_create_elite_aura_sprite()
 	_create_elite_sheen_sprite()
-	_create_elite_magic_particles()
-	_start_elite_aura_tween()
-	_start_elite_sheen_tween()
+	elite_fx_phase = randf() * TAU
 	_randomize_anim_phase()
 
 
@@ -432,8 +438,8 @@ func _create_elite_aura_sprite() -> void:
 
 func _create_elite_sheen_sprite() -> void:
 	var anim: AnimatedSprite2D = $AnimatedSprite2D
-	if elite_type == "blink":
-		# Blink elites use glow + particles instead of sheen tint to avoid muddy colors.
+	if blink_mode:
+		# Blink stalkers use ring particles instead of sheen to keep silhouette readable.
 		return
 	elite_sheen_sprite = AnimatedSprite2D.new()
 	elite_sheen_sprite.sprite_frames = anim.sprite_frames
@@ -450,12 +456,12 @@ func _create_elite_sheen_sprite() -> void:
 	add_child(elite_sheen_sprite)
 
 
-func _create_elite_magic_particles() -> void:
-	if elite_type != "blink":
+func _ensure_blink_archetype_particles() -> void:
+	if not blink_mode or elite_magic_particles != null:
 		return
 	var anim: AnimatedSprite2D = $AnimatedSprite2D
 	elite_magic_particles = CPUParticles2D.new()
-	elite_magic_particles.amount = 18
+	elite_magic_particles.amount = 14
 	elite_magic_particles.lifetime = 0.74
 	elite_magic_particles.one_shot = false
 	elite_magic_particles.explosiveness = 0.08
@@ -476,26 +482,32 @@ func _create_elite_magic_particles() -> void:
 	elite_magic_particles.emitting = true
 
 
-func _start_elite_aura_tween() -> void:
-	if elite_aura_sprite == null:
+func _process(delta: float) -> void:
+	if not is_elite:
 		return
-	var pulse: Tween = create_tween()
-	pulse.set_loops()
-	pulse.tween_property(elite_aura_sprite, "modulate:a", ELITE_AURA_ALPHA_MAX, 0.55)
-	pulse.parallel().tween_property(elite_aura_sprite, "scale", elite_aura_sprite.scale * 1.04, 0.55)
-	pulse.tween_property(elite_aura_sprite, "modulate:a", ELITE_AURA_ALPHA_MIN, 0.55)
-	pulse.parallel().tween_property(elite_aura_sprite, "scale", elite_aura_sprite.scale, 0.55)
+	elite_fx_phase += delta
+	_apply_elite_decor_visuals()
 
 
-func _start_elite_sheen_tween() -> void:
-	if elite_sheen_sprite == null:
+## Aura/sheen track the main AnimatedSprite2D transform every frame (elites + large hobgoblins).
+func _apply_elite_decor_visuals() -> void:
+	var anim: AnimatedSprite2D = $AnimatedSprite2D
+	if anim == null:
 		return
-	var sheen_pulse: Tween = create_tween()
-	sheen_pulse.set_loops()
-	sheen_pulse.tween_property(elite_sheen_sprite, "modulate:a", 0.32, 0.7)
-	sheen_pulse.parallel().tween_property(elite_sheen_sprite, "position:x", elite_sheen_sprite.position.x + 0.6, 0.7)
-	sheen_pulse.tween_property(elite_sheen_sprite, "modulate:a", 0.22, 0.8)
-	sheen_pulse.parallel().tween_property(elite_sheen_sprite, "position:x", elite_sheen_sprite.position.x - 0.6, 0.8)
+	if elite_aura_sprite != null:
+		var aura_wave: float = 0.5 + 0.5 * sin(elite_fx_phase * 2.85)
+		elite_aura_sprite.position = anim.position
+		elite_aura_sprite.modulate.a = lerpf(ELITE_AURA_ALPHA_MIN, ELITE_AURA_ALPHA_MAX, aura_wave)
+		var aura_scale_mult: float = 1.10 * lerpf(1.0, 1.03, aura_wave)
+		elite_aura_sprite.scale = anim.scale * aura_scale_mult
+	if elite_sheen_sprite != null:
+		var sheen_wave: float = 0.5 + 0.5 * sin(elite_fx_phase * 1.75 + 1.05)
+		var wx: float = sin(elite_fx_phase * 3.25) * 0.6
+		elite_sheen_sprite.position = anim.position + Vector2(-1.0 + wx, -2.0)
+		elite_sheen_sprite.modulate.a = lerpf(0.22, 0.32, sheen_wave)
+		elite_sheen_sprite.scale = anim.scale * 0.98
+	if elite_magic_particles != null:
+		elite_magic_particles.position = anim.position + Vector2(0.0, 4.0)
 
 
 func _get_contact_damage() -> int:
@@ -518,45 +530,29 @@ func _sync_elite_aura_anim() -> void:
 
 
 func _apply_elite_variant_modifiers() -> void:
-	match elite_type:
-		"brute":
-			elite_brute_knockback_resist = 0.35
-			elite_damage_multiplier *= 1.15
-			current_health = int(round(float(current_health) * 1.35))
-			elite_max_health = current_health
-			brute_charge_cooldown = randf_range(BRUTE_CHARGE_COOLDOWN_MIN, BRUTE_CHARGE_COOLDOWN_MAX)
-		"blink":
-			elite_speed_multiplier *= 0.92
-			elite_blink_cooldown = randf_range(1.2, 2.4)
-		"tank":
-			elite_speed_multiplier *= 0.74
-			elite_damage_multiplier *= 0.95
-			current_health = int(round(float(current_health) * 1.85))
-			elite_max_health = current_health
-			var anim: AnimatedSprite2D = $AnimatedSprite2D
-			anim.scale *= TANK_ELITE_EXTRA_SCALE
-		_:
-			pass
+	# All elites use the former "tank" combat footprint: chunky silhouette + aura/sheen + hp.
+	elite_speed_multiplier *= 0.74
+	elite_damage_multiplier *= 0.95
+	current_health = int(round(float(current_health) * 1.85))
+	elite_max_health = current_health
+	var anim: AnimatedSprite2D = $AnimatedSprite2D
+	anim.scale *= TANK_ELITE_EXTRA_SCALE
 
 
-func _update_elite_ability(direction: Vector2, distance: float) -> void:
-	match elite_type:
-		"brute":
-			_update_brute_charge_logic(direction, distance)
-		"blink":
-			if elite_blink_cooldown <= 0.0 and distance > CONTACT_RANGE * 1.6:
-				var blink_from: Vector2 = global_position
-				global_position += direction * elite_blink_distance
-				var blink_to: Vector2 = global_position
-				_play_blink_teleport_effect(blink_from, blink_to)
-				elite_blink_cooldown = elite_blink_cooldown_max
-				if elite_aura_sprite != null:
-					elite_aura_sprite.modulate.a = ELITE_AURA_ALPHA_MAX
-		_:
-			pass
+func _update_blink_teleport_logic(direction: Vector2, distance: float) -> void:
+	if elite_blink_cooldown <= 0.0 and distance > CONTACT_RANGE * 1.6:
+		var blink_from: Vector2 = global_position
+		global_position += direction * elite_blink_distance
+		var blink_to: Vector2 = global_position
+		_play_blink_teleport_effect(blink_from, blink_to)
+		elite_blink_cooldown = elite_blink_cooldown_max
+		if elite_aura_sprite != null:
+			elite_aura_sprite.modulate.a = ELITE_AURA_ALPHA_MAX
 
 
 func _update_brute_charge_logic(direction: Vector2, _distance: float) -> void:
+	if not brute_mode:
+		return
 	if _is_brute_charging():
 		return
 	if _is_brute_charge_windup():
@@ -761,35 +757,15 @@ func _hide_brute_rest_indicator() -> void:
 
 
 func _get_elite_aura_color() -> Color:
-	match elite_type:
-		"brute":
-			return Color(1.0, 0.34, 0.34, 0.45)
-		"blink":
-			return Color(0.44, 0.22, 0.9, 0.6)
-		"tank":
-			return Color(0.34, 0.62, 1.0, 0.0)
-		_:
-			return ELITE_AURA_COLOR
+	return ELITE_AURA_COLOR
 
 
 func _get_elite_sheen_color() -> Color:
-	match elite_type:
-		"brute":
-			return Color(1.0, 0.72, 0.5, 1.0)
-		"blink":
-			return Color(0.72, 0.62, 1.0, 1.0)
-		"tank":
-			return Color(0.55, 1.0, 0.96, 1.0)
-		_:
-			return Color(0.9, 0.95, 1.0, 1.0)
+	return Color(0.55, 1.0, 0.96, 1.0)
 
 
 func _get_elite_sprite_tint() -> Color:
-	match elite_type:
-		"blink":
-			return Color(0.6, 0.36, 0.9, 1.0)
-		_:
-			return ELITE_TINT
+	return ELITE_TINT
 
 
 func _get_base_sprite_modulate() -> Color:
@@ -822,20 +798,20 @@ func _apply_brute_charge_hitbox_damage() -> void:
 
 
 func _is_brute_charge_windup() -> bool:
-	return elite_type == "brute" and brute_is_winding_up
+	return brute_mode and brute_is_winding_up
 
 
 func _is_brute_charging() -> bool:
-	return elite_type == "brute" and brute_is_charging
+	return brute_mode and brute_is_charging
 
 
 func _is_brute_recovering() -> bool:
-	return elite_type == "brute" and brute_recover_timer > 0.0
+	return brute_mode and brute_recover_timer > 0.0
 
 
 func get_debug_snapshot() -> Dictionary:
 	var brute_state: String = "none"
-	if elite_type == "brute":
+	if brute_mode:
 		if _is_brute_charging():
 			brute_state = "charge"
 		elif _is_brute_recovering():
@@ -846,7 +822,8 @@ func get_debug_snapshot() -> Dictionary:
 			brute_state = "idle"
 	return {
 		"is_elite": is_elite,
-		"elite_type": elite_type,
+		"brute_mode": brute_mode,
+		"blink_mode": blink_mode,
 		"archetype": get_enemy_archetype(),
 		"brute_state": brute_state,
 		"hp": current_health
@@ -880,30 +857,6 @@ func get_enemy_archetype() -> String:
 	return "grunt"
 
 
-func _resolve_elite_type_with_rules(forced_type: String) -> String:
-	var allowed: Array[String] = _get_allowed_elite_types_for_archetype()
-	if forced_type != "" and allowed.has(forced_type):
-		return forced_type
-	if allowed.is_empty():
-		return ELITE_TYPES[randi() % ELITE_TYPES.size()]
-	return allowed[randi() % allowed.size()]
-
-
-func _get_allowed_elite_types_for_archetype() -> Array[String]:
-	var archetype: String = get_enemy_archetype()
-	match archetype:
-		"mage", "electric_mage":
-			# Keep mage elites readable and remove blue tank aura variants.
-			return ["brute", "blink"]
-		"sword", "grunt":
-			return ELITE_TYPES
-		"hobgoblin":
-			# Keep hobgoblin as a heavy elite without mixing brute/blink behavior stacks.
-			return ["tank"]
-		_:
-			return ELITE_TYPES
-
-
 func _update_render_priority() -> void:
 	var archetype: String = get_enemy_archetype()
 	var base_priority: int = 0
@@ -916,6 +869,8 @@ func _update_render_priority() -> void:
 			base_priority = 2
 		"hobgoblin":
 			base_priority = 3
+		"king_goblin":
+			base_priority = 5
 		_:
 			base_priority = 1
 	if is_elite:

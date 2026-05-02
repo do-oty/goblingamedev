@@ -23,6 +23,9 @@ const ELEC_STRIKE_DROP_TIME: float = 0.08
 const ELEC_TELEGRAPH_OUTER_COLOR: Color = Color(0.58, 0.04, 0.04, 0.12)
 const ELEC_TELEGRAPH_INNER_COLOR: Color = Color(0.74, 0.13, 0.13, 0.1)
 const ELEC_TELEGRAPH_OUTLINE_RED: Color = Color(0.58, 0.04, 0.04, 0.8)
+const ELEC_ELITE_INCANT_MULT: float = 1.3
+const ELEC_ELITE_PROJECTILE_MULT: float = 1.26
+const ELEC_ELITE_LINE_MULT: float = 1.24
 
 var cast_cooldown: float = 0.0
 var channel_timer: float = 0.0
@@ -138,12 +141,19 @@ func _start_channel(direction: Vector2) -> void:
 func _show_incantation() -> void:
 	if incantation_sprite_node != null:
 		incantation_sprite_node.visible = true
-		incantation_sprite_node.scale = Vector2(ELEC_INCANT_SCALE, ELEC_INCANT_SCALE)
+		var inc: float = ELEC_INCANT_SCALE * (ELEC_ELITE_INCANT_MULT if is_elite else 1.0)
+		incantation_sprite_node.scale = Vector2(inc, inc)
 		if incantation_sprite_node.sprite_frames != null and incantation_sprite_node.sprite_frames.has_animation(&"incantation_loop"):
 			incantation_sprite_node.play(&"incantation_loop")
 	if cast_particles != null:
 		cast_particles.visible = true
 		cast_particles.emitting = true
+		if is_elite:
+			cast_particles.emission_ring_radius = 16.0
+			cast_particles.emission_ring_inner_radius = 6.0
+		else:
+			cast_particles.emission_ring_radius = 12.0
+			cast_particles.emission_ring_inner_radius = 5.0
 
 
 func _hide_incantation() -> void:
@@ -158,7 +168,8 @@ func _show_cast_projectile() -> void:
 	if cast_projectile_sprite_node != null:
 		cast_projectile_sprite_node.visible = true
 		cast_projectile_sprite_node.position = Vector2(0.0, -ELEC_PROJECTILE_HEIGHT)
-		cast_projectile_sprite_node.scale = Vector2(ELEC_PROJECTILE_SCALE, ELEC_PROJECTILE_SCALE)
+		var ps: float = ELEC_PROJECTILE_SCALE * (ELEC_ELITE_PROJECTILE_MULT if is_elite else 1.0)
+		cast_projectile_sprite_node.scale = Vector2(ps, ps)
 		if cast_projectile_sprite_node.sprite_frames != null and cast_projectile_sprite_node.sprite_frames.has_animation(&"projectile_loop"):
 			cast_projectile_sprite_node.play(&"projectile_loop")
 
@@ -175,18 +186,21 @@ func _schedule_electric_line(direction: Vector2) -> void:
 	var base_dir: Vector2 = direction if direction != Vector2.ZERO else (target_player.global_position - global_position).normalized()
 	if base_dir == Vector2.ZERO:
 		base_dir = Vector2.RIGHT
-	var start_pos: Vector2 = global_position + (base_dir * 46.0)
+	var line_mult: float = ELEC_ELITE_LINE_MULT if is_elite else 1.0
+	var seg_half: float = ELEC_SEGMENT_HALF_WIDTH * line_mult
+	var seg_len: float = ELEC_SEGMENT_LENGTH * line_mult
+	var start_pos: Vector2 = global_position + (base_dir * (46.0 * line_mult))
 	for i in range(ELEC_LINE_SEGMENT_COUNT):
-		var segment_center: Vector2 = start_pos + (base_dir * (ELEC_SEGMENT_LENGTH * float(i)))
+		var segment_center: Vector2 = start_pos + (base_dir * (seg_len * float(i)))
 		var telegraph_outer: Polygon2D = Polygon2D.new()
-		telegraph_outer.polygon = _build_circle_polygon(ELEC_SEGMENT_HALF_WIDTH, 26)
+		telegraph_outer.polygon = _build_circle_polygon(seg_half, 26)
 		telegraph_outer.color = ELEC_TELEGRAPH_OUTER_COLOR
 		telegraph_outer.global_position = segment_center
 		telegraph_outer.z_index = -2
 		get_parent().add_child(telegraph_outer)
 
 		var telegraph_inner: Polygon2D = Polygon2D.new()
-		telegraph_inner.polygon = _build_circle_polygon(ELEC_SEGMENT_HALF_WIDTH * 0.58, 20)
+		telegraph_inner.polygon = _build_circle_polygon(seg_half * 0.58, 20)
 		telegraph_inner.color = ELEC_TELEGRAPH_INNER_COLOR
 		telegraph_inner.global_position = segment_center
 		telegraph_inner.z_index = -2
@@ -275,11 +289,14 @@ func _apply_electric_segment_hit(evt: Dictionary) -> void:
 		target_player.call("add_screen_shake", 5.5, 0.1)
 	if target_player == null or not is_instance_valid(target_player) or not target_player.has_method("receive_damage"):
 		return
+	var line_mult: float = ELEC_ELITE_LINE_MULT if is_elite else 1.0
+	var seg_len: float = ELEC_SEGMENT_LENGTH * line_mult
+	var seg_half: float = ELEC_SEGMENT_HALF_WIDTH * line_mult
 	var player_pos: Vector2 = target_player.global_position
-	var a: Vector2 = center - (dir * (ELEC_SEGMENT_LENGTH * 0.5))
-	var b: Vector2 = center + (dir * (ELEC_SEGMENT_LENGTH * 0.5))
+	var a: Vector2 = center - (dir * (seg_len * 0.5))
+	var b: Vector2 = center + (dir * (seg_len * 0.5))
 	var dist: float = _distance_point_to_segment(player_pos, a, b)
-	if dist <= ELEC_SEGMENT_HALF_WIDTH:
+	if dist <= seg_half:
 		var dmg: int = int(round(float(_get_contact_damage()) * ELEC_SEGMENT_DAMAGE_MULT))
 		target_player.call("receive_damage", dmg)
 
