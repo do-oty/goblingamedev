@@ -20738,7 +20738,6 @@ tile_map_data = PackedByteArray("AAAbAP7/BAASABkAAAAbAP//BAASABoAAAAbAAAABAASABs
 tile_set = SubResource("TileSet_kwfgp")
 
 [node name="Player" parent="." unique_id=109853097 instance=ExtResource("2_f3pxu")]
-z_index = 2
 position = Vector2(582, 267)
 
 [node name="PlayerLight" type="PointLight2D" parent="Player" unique_id=817674808]
@@ -20764,7 +20763,7 @@ position = Vector2(1.7499958, -5.499997)
 scale = Vector2(1.1015624, 1.4218749)
 sprite_frames = SubResource("SpriteFrames_fxkv0")
 autoplay = "default"
-frame_progress = 0.3377671
+frame_progress = 0.07776709
 
 [node name="PortalLabel" type="Label" parent="PortalForest" unique_id=969978482]
 visible = false
@@ -20802,7 +20801,7 @@ position = Vector2(1, -11.5)
 scale = Vector2(1.03125, 1.359375)
 sprite_frames = SubResource("SpriteFrames_oo8nm")
 autoplay = "default"
-frame_progress = 0.11458601
+frame_progress = 0.854586
 
 [node name="PortalLabel" type="Label" parent="PortalDesert" unique_id=2035509301]
 visible = false
@@ -20820,7 +20819,6 @@ visible = false
 shape = SubResource("CircleShape2D_u0g3d")
 
 [node name="PortalSnow" type="Node2D" parent="." unique_id=205005300]
-visible = false
 position = Vector2(1041, 348)
 
 [node name="PortalRing" type="Polygon2D" parent="PortalSnow" unique_id=1224441166]
@@ -20835,7 +20833,7 @@ position = Vector2(3, -9)
 scale = Vector2(1.09375, 1.28125)
 sprite_frames = SubResource("SpriteFrames_7edvj")
 autoplay = "default"
-frame_progress = 0.24014194
+frame_progress = 0.98014194
 
 [node name="PortalLabel" type="Label" parent="PortalSnow" unique_id=1585094815]
 visible = false
@@ -20865,7 +20863,7 @@ position = Vector2(102, -83)
 scale = Vector2(1.3250002, 1.4804688)
 sprite_frames = SubResource("SpriteFrames_8dend")
 autoplay = "default"
-frame_progress = 0.37176216
+frame_progress = 0.55676216
 
 [node name="NpcBody" type="Polygon2D" parent="UpgradeNpc" unique_id=1288844116]
 visible = false
@@ -20913,7 +20911,7 @@ position = Vector2(456, 108.000015)
 scale = Vector2(1.3671875, 1.296875)
 sprite_frames = SubResource("SpriteFrames_rwiho")
 autoplay = "default"
-frame_progress = 0.3809747
+frame_progress = 0.68930805
 
 [node name="altar" type="Node2D" parent="." unique_id=1924523201]
 position = Vector2(9, -8)
@@ -20926,5 +20924,5 @@ position = Vector2(1024, 132)
 scale = Vector2(1.4093194, 1.3161892)
 sprite_frames = SubResource("SpriteFrames_hmn16")
 autoplay = "default"
-frame_progress = 0.39583266
+frame_progress = 0.704166
 metadata/_edit_lock_ = true
