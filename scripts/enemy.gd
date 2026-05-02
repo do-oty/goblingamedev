@@ -125,13 +125,14 @@ func _physics_process(delta: float) -> void:
 				brute_is_charging = true
 				_hide_brute_rest_indicator()
 				_hide_brute_charge_indicator()
-				$AnimatedSprite2D.modulate = Color(1.35, 0.65, 0.65, 1.0)
+				$AnimatedSprite2D.modulate = _get_base_sprite_modulate()
+				_play_brute_charge_animation(brute_charge_direction)
 		if brute_is_charging:
 			brute_charge_timer = max(brute_charge_timer - delta, 0.0)
 			if brute_charge_timer <= 0.0:
 				brute_is_charging = false
 				brute_recover_timer = BRUTE_RECOVER_DURATION
-				$AnimatedSprite2D.modulate = Color(0.95, 0.55, 0.55, 1.0)
+				$AnimatedSprite2D.modulate = _get_base_sprite_modulate()
 				_show_brute_rest_indicator()
 		if brute_recover_timer > 0.0:
 			brute_recover_timer = max(brute_recover_timer - delta, 0.0)
@@ -196,7 +197,7 @@ func _physics_process(delta: float) -> void:
 			global_position += brute_charge_direction * BRUTE_CHARGE_LUNGE_SPEED * delta
 			_apply_brute_charge_hitbox_damage()
 			if attack_anim_timer <= 0.0:
-				_play_walk_animation(brute_charge_direction)
+				_play_brute_charge_animation(brute_charge_direction)
 		return
 
 	var to_player: Vector2 = target_player.global_position - global_position
@@ -278,6 +279,33 @@ func _play_walk_animation(direction: Vector2) -> void:
 		else:
 			$AnimatedSprite2D.play("enemy_back")
 	_sync_elite_aura_anim()
+
+
+func _play_brute_charge_animation(direction: Vector2) -> void:
+	var anim: AnimatedSprite2D = $AnimatedSprite2D
+	if anim == null:
+		return
+	var suffix: String = "right"
+	if abs(direction.x) > abs(direction.y):
+		suffix = "right" if direction.x >= 0.0 else "left"
+	else:
+		suffix = "front" if direction.y >= 0.0 else "back"
+	var primary_anim: StringName = StringName("charge_%s" % suffix)
+	var fallback_anim: StringName = StringName("brute_charge_%s" % suffix)
+	var dash_anim: StringName = StringName("dash_%s" % suffix)
+	if anim.sprite_frames != null and anim.sprite_frames.has_animation(primary_anim):
+		anim.play(primary_anim)
+		_sync_elite_aura_anim()
+		return
+	if anim.sprite_frames != null and anim.sprite_frames.has_animation(fallback_anim):
+		anim.play(fallback_anim)
+		_sync_elite_aura_anim()
+		return
+	if anim.sprite_frames != null and anim.sprite_frames.has_animation(dash_anim):
+		anim.play(dash_anim)
+		_sync_elite_aura_anim()
+		return
+	_play_walk_animation(direction)
 
 
 func _show_hit_feedback(damage: int) -> void:
@@ -566,7 +594,8 @@ func _update_brute_charge_logic(direction: Vector2, _distance: float) -> void:
 		brute_charge_cooldown = randf_range(BRUTE_CHARGE_COOLDOWN_MIN, BRUTE_CHARGE_COOLDOWN_MAX)
 		_spawn_brute_charge_start_smoke()
 		_show_brute_charge_indicator()
-		$AnimatedSprite2D.modulate = Color(1.18, 0.78, 0.78, 1.0)
+		_play_brute_charge_animation(brute_charge_direction)
+		$AnimatedSprite2D.modulate = _get_base_sprite_modulate()
 
 
 func _show_brute_charge_indicator() -> void:

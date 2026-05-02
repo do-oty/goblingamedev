@@ -363,10 +363,10 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -72.0
-offset_top = 34.0
-offset_right = 54.0
-offset_bottom = 70.0
+offset_left = 174.0
+offset_top = 41.0
+offset_right = 300.0
+offset_bottom = 77.0
 grow_horizontal = 2
 focus_mode = 0
 text = "Debug (Open)"
@@ -771,6 +771,11 @@ text = "Spawn Elite Elec"
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Spawn Elite Hobgoblin"
+
+[node name="DebugKingGoblinButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=2032338932]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Debug Spawn King"
 
 [node name="DebugAoeButton" type="Button" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=207828388]
 custom_minimum_size = Vector2(0, 36)

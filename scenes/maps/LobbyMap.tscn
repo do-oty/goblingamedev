@@ -20894,7 +20894,6 @@ polygon = PackedVector2Array(0, -28, 18, -16, 22, 14, 0, 28, -22, 14, -18, -16)
 shape = SubResource("CircleShape2D_historian")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=740516511]
-visible = false
 
 [node name="HUD" parent="CanvasLayer" unique_id=572741492 instance=ExtResource("3_global_hud")]
 offset_left = 8.0

@@ -46,6 +46,7 @@ const DROP_MERGE_COUNT_PRESSURE: int = 36
 const PICKUP_MERGE_DISTANCE: float = 76.0
 const MAX_PICKUP_MERGES_PER_TICK: int = 18
 const KING_GOBLIN_SPAWN_SECONDS: float = 240.0
+const DEBUG_KING_EXTRA_SCALE: float = 1.2
 
 @onready var tree_layer = $trees
 @onready var player = $Player
@@ -100,6 +101,7 @@ const KING_GOBLIN_SPAWN_SECONDS: float = 240.0
 @onready var debug_elite_mage_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteMageButton"
 @onready var debug_elite_electric_mage_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteElectricMageButton"
 @onready var debug_elite_hobgoblin_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugEliteHobgoblinButton"
+@onready var debug_king_button: Button = get_node_or_null("CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugKingGoblinButton") as Button
 @onready var debug_aoe_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugAoeButton"
 @onready var debug_level_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugLevelButton"
 @onready var debug_heal_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHealButton"
@@ -140,8 +142,11 @@ var king_boss_spawned: bool = false
 var active_boss_unit: CharacterBody2D = null
 var active_boss_max_hp: int = 1
 var boss_bar_host: MarginContainer = null
-var boss_bar_fill: ProgressBar = null
+var boss_bar_fill: Control = null
 var boss_bar_title: Label = null
+var pause_menu_panel: PanelContainer = null
+var pause_return_lobby_button: Button = null
+var pause_return_menu_button: Button = null
 
 var tree_tiles = [
 	Vector2i(0, 0),  # replace with your actual atlas coords
@@ -186,6 +191,8 @@ func _ready() -> void:
 	debug_elite_mage_button.visible = true
 	debug_elite_electric_mage_button.visible = true
 	debug_elite_hobgoblin_button.visible = true
+	if debug_king_button != null:
+		debug_king_button.visible = true
 	debug_aoe_button.visible = true
 	debug_level_button.visible = true
 	debug_heal_button.visible = true
@@ -196,9 +203,11 @@ func _ready() -> void:
 	debug_toggle_button.text = "Debug (Open)"
 	_ensure_debug_connections()
 	_ensure_panel_connections()
+	_ensure_debug_king_button()
 	_ensure_debug_controls_clickable()
 	_make_debug_panel_overlay()
 	_ensure_boss_bar_ui()
+	_ensure_pause_menu_ui()
 	_setup_hud_mode()
 	if xp_bar != null:
 		xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -287,12 +296,37 @@ func _ensure_debug_connections() -> void:
 		debug_elite_electric_mage_button.pressed.connect(_on_debug_elite_electric_mage_button_pressed)
 	if not debug_elite_hobgoblin_button.pressed.is_connected(_on_debug_elite_hobgoblin_button_pressed):
 		debug_elite_hobgoblin_button.pressed.connect(_on_debug_elite_hobgoblin_button_pressed)
+	if debug_king_button != null and not debug_king_button.pressed.is_connected(_on_debug_king_button_pressed):
+		debug_king_button.pressed.connect(_on_debug_king_button_pressed)
 	if not debug_aoe_button.pressed.is_connected(_on_debug_aoe_button_pressed):
 		debug_aoe_button.pressed.connect(_on_debug_aoe_button_pressed)
 	if not debug_level_button.pressed.is_connected(_on_debug_level_button_pressed):
 		debug_level_button.pressed.connect(_on_debug_level_button_pressed)
 	if not debug_heal_button.pressed.is_connected(_on_debug_heal_button_pressed):
 		debug_heal_button.pressed.connect(_on_debug_heal_button_pressed)
+
+
+func _ensure_debug_king_button() -> void:
+	var debug_vbox: VBoxContainer = get_node_or_null("CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox") as VBoxContainer
+	if debug_vbox == null:
+		return
+	if debug_king_button == null:
+		debug_king_button = Button.new()
+		debug_king_button.name = "DebugKingGoblinButton"
+		debug_king_button.text = "Debug Spawn King"
+		debug_king_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		debug_vbox.add_child(debug_king_button)
+	var stats_node: Control = get_node_or_null("CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugStatsLabel") as Control
+	if stats_node != null:
+		var king_idx: int = debug_king_button.get_index()
+		var stats_idx: int = stats_node.get_index()
+		if king_idx > stats_idx:
+			debug_vbox.move_child(debug_king_button, stats_idx)
+	debug_king_button.visible = true
+	debug_king_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	debug_king_button.disabled = false
+	if not debug_king_button.pressed.is_connected(_on_debug_king_button_pressed):
+		debug_king_button.pressed.connect(_on_debug_king_button_pressed)
 
 
 func _ensure_panel_connections() -> void:
@@ -330,6 +364,8 @@ func _ensure_debug_controls_clickable() -> void:
 	debug_elite_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_elite_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_elite_hobgoblin_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if debug_king_button != null:
+		debug_king_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_aoe_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_level_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	debug_heal_button.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -348,6 +384,8 @@ func _ensure_debug_controls_clickable() -> void:
 	debug_elite_mage_button.disabled = false
 	debug_elite_electric_mage_button.disabled = false
 	debug_elite_hobgoblin_button.disabled = false
+	if debug_king_button != null:
+		debug_king_button.disabled = false
 	debug_aoe_button.disabled = false
 	debug_level_button.disabled = false
 	debug_heal_button.disabled = false
@@ -401,6 +439,10 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_pause_menu_toggle_event(event):
+		_toggle_pause_menu()
+		get_viewport().set_input_as_handled()
+		return
 	if run_is_over or not debug_panel.visible:
 		return
 	if not (event is InputEventMouseButton):
@@ -464,6 +506,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _try_click_debug_button(debug_elite_hobgoblin_button, mouse_pos):
 		_on_debug_elite_hobgoblin_button_pressed()
+		get_viewport().set_input_as_handled()
+		return
+	if _try_click_debug_button(debug_king_button, mouse_pos):
+		_on_debug_king_button_pressed()
 		get_viewport().set_input_as_handled()
 		return
 	if _try_click_debug_button(debug_aoe_button, mouse_pos):
@@ -723,8 +769,8 @@ func _ensure_boss_bar_ui() -> void:
 	boss_bar_host.visible = false
 	boss_bar_host.z_index = 199
 	boss_bar_host.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	boss_bar_host.add_theme_constant_override("margin_left", 100)
-	boss_bar_host.add_theme_constant_override("margin_right", 100)
+	boss_bar_host.add_theme_constant_override("margin_left", 190)
+	boss_bar_host.add_theme_constant_override("margin_right", 190)
 	boss_bar_host.add_theme_constant_override("margin_top", 44)
 	boss_bar_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cl.add_child(boss_bar_host)
@@ -736,13 +782,58 @@ func _ensure_boss_bar_ui() -> void:
 	boss_bar_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	boss_bar_title.add_theme_font_size_override("font_size", 15)
 	vbox.add_child(boss_bar_title)
-	boss_bar_fill = ProgressBar.new()
-	boss_bar_fill.min_value = 0.0
-	boss_bar_fill.max_value = 100.0
-	boss_bar_fill.value = 100.0
-	boss_bar_fill.show_percentage = false
-	boss_bar_fill.custom_minimum_size = Vector2(0, 20)
+	boss_bar_fill = Control.new()
+	boss_bar_fill.set_script(load("res://scripts/ui/BossHpBar.gd"))
+	boss_bar_fill.custom_minimum_size = Vector2(0, 24)
+	boss_bar_fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	boss_bar_fill.process_mode = Node.PROCESS_MODE_ALWAYS
 	vbox.add_child(boss_bar_fill)
+
+
+func _ensure_pause_menu_ui() -> void:
+	if pause_menu_panel != null:
+		return
+	var cl: CanvasLayer = $CanvasLayer as CanvasLayer
+	pause_menu_panel = PanelContainer.new()
+	pause_menu_panel.name = "PauseMenuPanel"
+	pause_menu_panel.visible = false
+	pause_menu_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	pause_menu_panel.z_index = 260
+	pause_menu_panel.set_anchors_preset(Control.PRESET_CENTER)
+	pause_menu_panel.custom_minimum_size = Vector2(320, 160)
+	cl.add_child(pause_menu_panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	pause_menu_panel.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var title: Label = Label.new()
+	title.text = "Paused"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(title)
+
+	pause_return_lobby_button = Button.new()
+	pause_return_lobby_button.text = "Return to Lobby"
+	pause_return_lobby_button.focus_mode = Control.FOCUS_ALL
+	pause_return_lobby_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_return_lobby_button.pressed.connect(_on_pause_return_lobby_pressed)
+	vbox.add_child(pause_return_lobby_button)
+
+	pause_return_menu_button = Button.new()
+	pause_return_menu_button.text = "Return to Main Menu"
+	pause_return_menu_button.focus_mode = Control.FOCUS_ALL
+	pause_return_menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_return_menu_button.pressed.connect(_on_pause_return_menu_pressed)
+	vbox.add_child(pause_return_menu_button)
 
 
 func _try_spawn_king_goblin_boss() -> void:
@@ -782,8 +873,8 @@ func _update_boss_bar() -> void:
 		active_boss_unit = null
 		return
 	var hp_now: int = active_boss_unit.current_health
-	boss_bar_fill.max_value = float(max(active_boss_max_hp, 1))
-	boss_bar_fill.value = float(clamp(hp_now, 0, active_boss_max_hp))
+	if boss_bar_fill.has_method("set_values"):
+		boss_bar_fill.call("set_values", hp_now, active_boss_max_hp)
 
 
 func _update_brute_offscreen_warning() -> void:
@@ -957,6 +1048,8 @@ func _finish_run(survived_to_end: bool) -> void:
 
 	run_is_over = true
 	active_boss_unit = null
+	if pause_menu_panel != null:
+		pause_menu_panel.visible = false
 	if boss_bar_host != null:
 		boss_bar_host.visible = false
 	get_tree().paused = true
@@ -1002,6 +1095,44 @@ func _on_menu_button_pressed() -> void:
 func _on_return_to_dungeon_button_pressed() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(LOBBY_SCENE_PATH)
+
+
+func _is_pause_menu_toggle_event(event: InputEvent) -> bool:
+	if event.is_action_pressed("ui_cancel"):
+		return true
+	if event is InputEventKey:
+		var key_event: InputEventKey = event as InputEventKey
+		if key_event != null and key_event.pressed and not key_event.echo:
+			if key_event.keycode == KEY_ESCAPE or key_event.keycode == KEY_BACK:
+				return true
+	return false
+
+
+func _toggle_pause_menu() -> void:
+	if run_is_over or level_up_panel.visible:
+		return
+	if pause_menu_panel == null:
+		return
+	var opening: bool = not pause_menu_panel.visible
+	pause_menu_panel.visible = opening
+	if opening:
+		pause_menu_panel.move_to_front()
+	get_tree().paused = opening
+
+
+func _on_pause_return_lobby_pressed() -> void:
+	pause_menu_panel.visible = false
+	_on_return_to_dungeon_button_pressed()
+
+
+func _on_pause_return_menu_pressed() -> void:
+	pause_menu_panel.visible = false
+	_on_menu_button_pressed()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_toggle_pause_menu()
 
 
 func _on_enemy_defeated(world_position: Vector2, xp_value: int, xp_tier: String) -> void:
@@ -1339,6 +1470,13 @@ func _on_debug_elite_hobgoblin_button_pressed() -> void:
 	_show_debug_status("DEBUG: Elite Hobgoblin spawned")
 
 
+func _on_debug_king_button_pressed() -> void:
+	if run_is_over:
+		return
+	_spawn_debug_king_goblin()
+	_show_debug_status("DEBUG: King Goblin spawned")
+
+
 func _on_debug_aoe_button_pressed() -> void:
 	if run_is_over:
 		return
@@ -1574,6 +1712,27 @@ func _spawn_debug_visible_enemy(scene: PackedScene, make_elite: bool = false) ->
 		_show_debug_status("DEBUG: Tank elite spawned")
 	else:
 		_show_debug_status("DEBUG: Enemy spawned")
+
+
+func _spawn_debug_king_goblin() -> void:
+	var king: CharacterBody2D = enemy_scene_king_goblin.instantiate() as CharacterBody2D
+	if king == null:
+		_show_debug_status("DEBUG: King spawn failed")
+		return
+	var spawn_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
+	var spawn_distance: float = randf_range(100.0, 145.0)
+	king.global_position = player.global_position + (spawn_direction * spawn_distance)
+	king.defeated.connect(_on_enemy_defeated)
+	king.tree_exiting.connect(_on_king_boss_tree_exiting.bind(king))
+	enemies_root.add_child(king)
+	var king_sprite: AnimatedSprite2D = king.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if king_sprite != null:
+		king_sprite.scale *= DEBUG_KING_EXTRA_SCALE
+	king_boss_spawned = true
+	active_boss_unit = king
+	active_boss_max_hp = max(king.elite_max_health, max(king.current_health, 1))
+	_ensure_boss_bar_ui()
+	boss_bar_host.visible = true
 
 
 func _try_spawn_timed_elite() -> void:
