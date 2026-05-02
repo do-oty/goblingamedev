@@ -1,5 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bt0ceidhaxi8c"]
 
-[ext_resource type="PackedScene" path="res://scenes/maps/ForestMap.tscn" id="1_forest_base"]
+[ext_resource type="PackedScene" uid="uid://dk8gccgvpj6gi" path="res://scenes/maps/ForestMap.tscn" id="1_forest_base"]
 
-[node name="DesertMap" instance=ExtResource("1_forest_base")]
+[node name="DesertMap" unique_id=419677628 instance=ExtResource("1_forest_base")]
+
+[node name="base" parent="." index="6" unique_id=233253197]
+visible = false
+
+[node name="grass" parent="." index="7" unique_id=2047506037]
+visible = false

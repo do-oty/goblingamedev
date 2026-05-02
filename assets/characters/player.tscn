@@ -270,6 +270,7 @@ radius = 13.0
 height = 50.0
 
 [node name="player" type="CharacterBody2D" unique_id=1248724087]
+z_index = 2
 script = ExtResource("1_gmphs")
 dash_start_smoke_vfx_scene = ExtResource("5_dash_smoke")
 
@@ -281,5 +282,5 @@ animation = &"idle_right"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=698145210]
 shape = SubResource("CapsuleShape2D_nwtm7")
 
-[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_AnimatedSprite2D_animation_finished"]
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_AnimatedSprite2D_animation_finished"]
