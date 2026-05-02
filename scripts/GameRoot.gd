@@ -1206,18 +1206,13 @@ func _on_pickup_collected(pickup_type: String, value: int) -> void:
 
 
 func _ensure_runtime_lighting() -> void:
-	if get_node_or_null("ForestCanvasModulate") != null:
-		return
-	var dimmer: CanvasModulate = CanvasModulate.new()
-	dimmer.name = "ForestCanvasModulate"
-	dimmer.color = Color(0.76, 0.83, 0.9, 1.0)
-	add_child(dimmer)
-	var player_light: PointLight2D = PointLight2D.new()
-	player_light.name = "PlayerLight"
-	player_light.energy = 1.15
-	player_light.texture_scale = 1.8
-	player_light.color = Color(1.0, 0.97, 0.85, 1.0)
-	player.add_child(player_light)
+	# Map filters disabled: remove any runtime dimmer/light nodes if they exist.
+	var dimmer: CanvasModulate = get_node_or_null("ForestCanvasModulate") as CanvasModulate
+	if dimmer != null:
+		dimmer.queue_free()
+	var pl: PointLight2D = player.get_node_or_null("PlayerLight") as PointLight2D if player != null else null
+	if pl != null:
+		pl.queue_free()
 
 
 func _show_level_up_panel() -> void:
