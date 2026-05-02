@@ -2,6 +2,11 @@
 
 Current build is a Vampire Survivors-style prototype with a lobby -> portal -> run loop.
 
+## Gameplay Recordings
+
+- [Recording 1 (Google Drive)](https://drive.google.com/file/d/1Azd7qEZaWNg-6dxrSSoIpGJlejQYLr4v/view?usp=sharing)
+- [Recording 2 (Google Drive)](https://drive.google.com/file/d/1Azd7qEZaWNg-6dxrSSoIpGJlejQYLr4v/view?usp=sharing)
+
 ## Recent Updates (May 2026)
 
 - Centralized HUD flow is now handled by `GlobalHud` and shared across lobby + run maps.
