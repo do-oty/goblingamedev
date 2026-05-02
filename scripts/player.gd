@@ -54,6 +54,8 @@ var dash_blur_timer: float = 0.0
 var dash_direction: Vector2 = Vector2.ZERO
 var is_dashing: bool = false
 var dash_buffer_remaining: float = 0.0
+## When true, a directional `dash_*` clip from SpriteFrames is driving the dash (ghost trail throttled).
+var dash_uses_directional_anim: bool = false
 var lobby_mode: bool = false
 var launch_velocity: Vector2 = Vector2.ZERO
 var launch_timer: float = 0.0
@@ -102,6 +104,9 @@ func _physics_process(delta: float) -> void:
 		if dash_duration_remaining <= 0.0:
 			is_dashing = false
 			dash_direction = Vector2.ZERO
+			if dash_uses_directional_anim and not is_attacking:
+				play_idle_animation()
+			dash_uses_directional_anim = false
 			if body_collision != null:
 				body_collision.set_deferred("disabled", false)
 			_show_dash_rematerialize()
@@ -167,6 +172,7 @@ func play_idle_animation():
 
 func start_attack():
 	is_attacking = true
+	dash_uses_directional_anim = false
 	if abs(last_direction.x) > abs(last_direction.y):
 		if last_direction.x > 0:
 			$AnimatedSprite2D.play("attack_right")
@@ -182,6 +188,9 @@ func start_attack():
 
 # This function should be called when attack animation finishes
 func _on_AnimatedSprite2D_animation_finished():
+	var cur: StringName = $AnimatedSprite2D.animation
+	if String(cur).begins_with("dash_"):
+		return
 	if is_attacking:
 		is_attacking = false
 		play_idle_animation()
@@ -495,6 +504,9 @@ func _try_start_dash(move_input_direction: Vector2) -> bool:
 		desired_direction = Vector2.RIGHT
 
 	dash_direction = desired_direction
+	# Cancel an in-flight melee state so looping dash clips cannot strand `is_attacking`.
+	if is_attacking:
+		is_attacking = false
 	is_dashing = true
 	dash_duration_remaining = DASH_BASE_DURATION
 	dash_iframe_remaining = max(0.01, DASH_IFRAME_BASE + dash_iframe_bonus)
@@ -503,7 +515,9 @@ func _try_start_dash(move_input_direction: Vector2) -> bool:
 	if body_collision != null:
 		body_collision.set_deferred("disabled", true)
 	_spawn_dash_start_smoke()
-	_spawn_dash_blur()
+	dash_uses_directional_anim = _try_play_dash_directional_anim(dash_direction)
+	if not dash_uses_directional_anim:
+		_spawn_dash_blur()
 	return true
 
 
@@ -517,11 +531,32 @@ func _get_dash_speed() -> float:
 
 
 func _spawn_dash_blur_if_needed(delta: float) -> void:
+	if dash_uses_directional_anim:
+		return
 	dash_blur_timer -= delta
 	if dash_blur_timer > 0.0:
 		return
 	dash_blur_timer = DASH_BLUR_SPAWN_INTERVAL
 	_spawn_dash_blur()
+
+
+func _try_play_dash_directional_anim(direction: Vector2) -> bool:
+	if body_sprite == null or body_sprite.sprite_frames == null:
+		return false
+	var anim_name: StringName = _dash_animation_name_for_direction(direction)
+	if not body_sprite.sprite_frames.has_animation(anim_name):
+		return false
+	body_sprite.play(anim_name)
+	return true
+
+
+func _dash_animation_name_for_direction(direction: Vector2) -> StringName:
+	var dir: Vector2 = direction
+	if dir == Vector2.ZERO:
+		dir = last_direction
+	if abs(dir.x) > abs(dir.y):
+		return &"dash_right" if dir.x > 0.0 else &"dash_left"
+	return &"dash_front" if dir.y > 0.0 else &"dash_back"
 
 
 func _spawn_dash_blur() -> void:

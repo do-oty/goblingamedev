@@ -10,10 +10,16 @@ var body_sprite: Polygon2D = null
 var outline_sprite: Polygon2D = null
 var ground_shadow: Polygon2D = null
 var visual_time: float = 0.0
+var age_seconds: float = 0.0
+
+
+func set_target_player(p: Node2D) -> void:
+	target_player = p
 
 
 func _ready() -> void:
-	target_player = get_tree().get_first_node_in_group("player") as Node2D
+	if target_player == null or not is_instance_valid(target_player):
+		target_player = get_tree().get_first_node_in_group("player") as Node2D
 	body_sprite = $Body
 	outline_sprite = get_node_or_null("Outline") as Polygon2D
 	_ensure_ground_shadow()
@@ -21,6 +27,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	age_seconds += delta
 	visual_time += delta
 	if target_player == null or not is_instance_valid(target_player):
 		target_player = get_tree().get_first_node_in_group("player") as Node2D
@@ -60,15 +67,16 @@ func _apply_style() -> void:
 		Vector2(-6, -4),
 		Vector2(-7, 1)
 	])
+	var stack_scale: float = 1.0 + clamp(sqrt(float(max(value, 1))) * 0.045, 0.0, 0.35)
 	match pickup_type:
 		"health":
 			body_sprite.color = Color(0.95, 0.26, 0.34, 0.95)
 			body_sprite.polygon = heart_poly
-			body_sprite.scale = Vector2(0.72, 0.72)
+			body_sprite.scale = Vector2(0.72, 0.72) * stack_scale
 		_:
 			body_sprite.color = Color(1.0, 0.86, 0.26, 0.95)
 			body_sprite.polygon = coin_poly
-			body_sprite.scale = Vector2(0.58, 0.58)
+			body_sprite.scale = Vector2(0.58, 0.58) * stack_scale
 	if outline_sprite != null:
 		outline_sprite.polygon = body_sprite.polygon
 		outline_sprite.scale = body_sprite.scale * Vector2(1.42, 1.42)
@@ -109,3 +117,25 @@ func _update_ground_shadow() -> void:
 	var t: float = clamp(bob_abs / 2.0, 0.0, 1.0)
 	ground_shadow.scale = Vector2(lerp(1.08, 0.96, t), lerp(0.6, 0.52, t))
 	ground_shadow.modulate.a = lerp(0.42, 0.32, t)
+
+
+func get_pickup_merge_snapshot() -> Dictionary:
+	return {"pickup_type": pickup_type, "value": value}
+
+
+func get_age_seconds() -> float:
+	return age_seconds
+
+
+func absorb_merge_from(other: Node2D) -> void:
+	if other == null or other == self:
+		return
+	if not other.has_method("get_pickup_merge_snapshot"):
+		return
+	var snap: Dictionary = other.call("get_pickup_merge_snapshot") as Dictionary
+	if str(snap.get("pickup_type", "")) != pickup_type:
+		return
+	value += int(snap.get("value", 0))
+	global_position = global_position.lerp(other.global_position, 0.5)
+	other.queue_free()
+	configure(pickup_type, max(value, 1))

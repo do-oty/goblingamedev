@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://cqj5hc1fiuubn" path="res://assets/characters/hero_idle.png" id="2_plwmo"]
 [ext_resource type="Texture2D" uid="uid://cnhn43uglsouf" path="res://assets/characters/spritesheetknight.png" id="4_gmphs"]
 [ext_resource type="PackedScene" uid="uid://dihbdawkmpo2n" path="res://scenes/vfx/DashStartSmokeVfx.tscn" id="5_dash_smoke"]
+[ext_resource type="Texture2D" uid="uid://dsl1oltnohuyt" path="res://assets/characters/knight dash.png" id="6_sqwyp"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_rmfp4"]
 atlas = ExtResource("2_gmphs")
@@ -70,6 +71,42 @@ region = Rect2(52, 49, 26, 49)
 atlas = ExtResource("4_gmphs")
 region = Rect2(0, 0, 26, 49)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_bl6m5"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(0, 0, 52, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vtl1g"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(52, 0, 52, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5uaii"]
+atlas = ExtResource("4_gmphs")
+region = Rect2(0, 147, 26, 49)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u7m25"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(52, 180, 52, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oqvqo"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(0, 180, 52, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_skp7j"]
+atlas = ExtResource("4_gmphs")
+region = Rect2(0, 98, 26, 49)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jvc4d"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(0, 120, 52, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iykae"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(52, 120, 52, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_05dts"]
+atlas = ExtResource("6_sqwyp")
+region = Rect2(52, 60, 52, 60)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_aw78p"]
 atlas = ExtResource("4_gmphs")
 region = Rect2(26, 0, 26, 49)
@@ -78,10 +115,6 @@ region = Rect2(26, 0, 26, 49)
 atlas = ExtResource("4_gmphs")
 region = Rect2(52, 0, 26, 49)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_5uaii"]
-atlas = ExtResource("4_gmphs")
-region = Rect2(0, 147, 26, 49)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_np0ee"]
 atlas = ExtResource("4_gmphs")
 region = Rect2(26, 147, 26, 49)
@@ -89,10 +122,6 @@ region = Rect2(26, 147, 26, 49)
 [sub_resource type="AtlasTexture" id="AtlasTexture_svkqu"]
 atlas = ExtResource("4_gmphs")
 region = Rect2(52, 147, 26, 49)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_skp7j"]
-atlas = ExtResource("4_gmphs")
-region = Rect2(0, 98, 26, 49)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_5refc"]
 atlas = ExtResource("4_gmphs")
@@ -186,6 +215,62 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_40r61")
 }],
+"loop": false,
+"name": &"dash_back",
+"speed": 18.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_drrhh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bl6m5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vtl1g")
+}],
+"loop": false,
+"name": &"dash_front",
+"speed": 18.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5uaii")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u7m25")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oqvqo")
+}],
+"loop": false,
+"name": &"dash_left",
+"speed": 18.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_skp7j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jvc4d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iykae")
+}],
+"loop": true,
+"name": &"dash_right",
+"speed": 18.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2qap7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nempf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_05dts")
+}],
 "loop": true,
 "name": &"hero_back",
 "speed": 5.0
@@ -277,7 +362,8 @@ dash_start_smoke_vfx_scene = ExtResource("5_dash_smoke")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=758754566]
 texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_m3ey1")
-animation = &"idle_right"
+animation = &"hero_back"
+frame_progress = 0.65914536
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=698145210]
 shape = SubResource("CapsuleShape2D_nwtm7")

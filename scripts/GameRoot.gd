@@ -36,6 +36,16 @@ const HEALTH_DROP_HEAL: int = 22
 const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
 const FLOOR_FILL_INTERVAL: float = 0.18
 const EARLY_GAME_EASY_SECONDS: float = 120.0
+const BRUTE_CHAMPION_UNLOCK_SECONDS: float = 95.0
+const BLINK_STALKER_UNLOCK_SECONDS: float = 155.0
+const PICKUP_MERGE_INTERVAL: float = 0.42
+const XP_ORB_MERGE_COUNT_PRESSURE: int = 88
+const XP_ORB_MERGE_IDLE_SECONDS: float = 15.0
+const PICKUP_MERGE_IDLE_SECONDS: float = 18.0
+const DROP_MERGE_COUNT_PRESSURE: int = 36
+const PICKUP_MERGE_DISTANCE: float = 76.0
+const MAX_PICKUP_MERGES_PER_TICK: int = 18
+const KING_GOBLIN_SPAWN_SECONDS: float = 240.0
 
 @onready var tree_layer = $trees
 @onready var player = $Player
@@ -100,6 +110,9 @@ var enemy_scene_goblin_sword: PackedScene = preload("res://assets/characters/gob
 var enemy_scene_goblin_mage: PackedScene = preload("res://assets/characters/goblinMage.tscn")
 var enemy_scene_goblin_electric_mage: PackedScene = preload("res://assets/characters/goblinElectricMage.tscn")
 var enemy_scene_hobgoblin: PackedScene = preload("res://assets/characters/hobgoblin.tscn")
+var enemy_scene_brute_champion: PackedScene = preload("res://assets/characters/bruteChampion.tscn")
+var enemy_scene_blink_stalker: PackedScene = preload("res://assets/characters/blinkStalker.tscn")
+var enemy_scene_king_goblin: PackedScene = preload("res://assets/characters/kingGoblin.tscn")
 var xp_orb_scene: PackedScene = preload("res://scenes/XpOrb.tscn")
 var pickup_drop_scene: PackedScene = preload("res://scenes/PickupDrop.tscn")
 var run_time_seconds: float = 0.0
@@ -122,6 +135,21 @@ var run_coins: int = 0
 var run_damage_taken: int = 0
 var last_health_sample: int = -1
 var floor_fill_cooldown: float = 0.0
+var pickup_merge_accum: float = 0.0
+var king_boss_spawned: bool = false
+var active_boss_unit: CharacterBody2D = null
+var active_boss_max_hp: int = 1
+var boss_bar_host: MarginContainer = null
+var boss_bar_fill: ProgressBar = null
+var boss_bar_title: Label = null
+
+var tree_tiles = [
+	Vector2i(0, 0),  # replace with your actual atlas coords
+]
+var map_width := 50
+var map_height := 50
+var tree_count := 80
+var source_id := 0
 
 var tree_tiles = [
 	Vector2i(0, 0),  # replace with your actual atlas coords
@@ -176,6 +204,7 @@ func _ready() -> void:
 	_ensure_panel_connections()
 	_ensure_debug_controls_clickable()
 	_make_debug_panel_overlay()
+	_ensure_boss_bar_ui()
 	_setup_hud_mode()
 	if xp_bar != null:
 		xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -362,6 +391,14 @@ func _process(delta: float) -> void:
 	if elite_event_cooldown <= 0.0:
 		_try_spawn_timed_elite()
 		elite_event_cooldown = _get_next_elite_event_interval()
+
+	pickup_merge_accum += delta
+	if pickup_merge_accum >= PICKUP_MERGE_INTERVAL:
+		pickup_merge_accum = 0.0
+		_try_merge_world_pickups()
+
+	if not king_boss_spawned and run_time_seconds >= KING_GOBLIN_SPAWN_SECONDS:
+		_try_spawn_king_goblin_boss()
 
 	_update_hud()
 
@@ -681,6 +718,78 @@ func _update_sprite_hud(
 		sprite_hud_status_label.text = "%s | %s" % [enemy_text, status_text]
 	if sprite_stats_text_label != null:
 		sprite_stats_text_label.text = stats_text
+	_update_boss_bar()
+
+
+func _ensure_boss_bar_ui() -> void:
+	if boss_bar_host != null:
+		return
+	var cl: CanvasLayer = $CanvasLayer as CanvasLayer
+	boss_bar_host = MarginContainer.new()
+	boss_bar_host.visible = false
+	boss_bar_host.z_index = 199
+	boss_bar_host.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	boss_bar_host.add_theme_constant_override("margin_left", 100)
+	boss_bar_host.add_theme_constant_override("margin_right", 100)
+	boss_bar_host.add_theme_constant_override("margin_top", 44)
+	boss_bar_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cl.add_child(boss_bar_host)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	boss_bar_host.add_child(vbox)
+	boss_bar_title = Label.new()
+	boss_bar_title.text = "King Goblin"
+	boss_bar_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boss_bar_title.add_theme_font_size_override("font_size", 15)
+	vbox.add_child(boss_bar_title)
+	boss_bar_fill = ProgressBar.new()
+	boss_bar_fill.min_value = 0.0
+	boss_bar_fill.max_value = 100.0
+	boss_bar_fill.value = 100.0
+	boss_bar_fill.show_percentage = false
+	boss_bar_fill.custom_minimum_size = Vector2(0, 20)
+	vbox.add_child(boss_bar_fill)
+
+
+func _try_spawn_king_goblin_boss() -> void:
+	if king_boss_spawned or run_is_over:
+		return
+	var king: CharacterBody2D = enemy_scene_king_goblin.instantiate() as CharacterBody2D
+	if king == null:
+		return
+	var spawn_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
+	var spawn_distance: float = _get_offscreen_spawn_distance() + 90.0
+	king.global_position = player.global_position + (spawn_direction * spawn_distance)
+	king.defeated.connect(_on_enemy_defeated)
+	king.tree_exiting.connect(_on_king_boss_tree_exiting.bind(king))
+	enemies_root.add_child(king)
+	king_boss_spawned = true
+	active_boss_unit = king
+	active_boss_max_hp = max(king.elite_max_health, max(king.current_health, 1))
+	_ensure_boss_bar_ui()
+	boss_bar_host.visible = true
+	_show_debug_status("King Goblin!")
+
+
+func _on_king_boss_tree_exiting(king_node: Node) -> void:
+	if active_boss_unit != king_node:
+		return
+	active_boss_unit = null
+	if boss_bar_host != null:
+		boss_bar_host.visible = false
+
+
+func _update_boss_bar() -> void:
+	if boss_bar_fill == null or boss_bar_host == null:
+		return
+	if active_boss_unit == null or not is_instance_valid(active_boss_unit):
+		if boss_bar_host.visible:
+			boss_bar_host.visible = false
+		active_boss_unit = null
+		return
+	var hp_now: int = active_boss_unit.current_health
+	boss_bar_fill.max_value = float(max(active_boss_max_hp, 1))
+	boss_bar_fill.value = float(clamp(hp_now, 0, active_boss_max_hp))
 
 
 func _update_brute_offscreen_warning() -> void:
@@ -697,7 +806,7 @@ func _update_brute_offscreen_warning() -> void:
 		if not enemy_node.has_method("get_debug_snapshot"):
 			continue
 		var snap: Dictionary = enemy_node.call("get_debug_snapshot")
-		if snap.get("elite_type", "") != "brute":
+		if not snap.get("brute_mode", false):
 			continue
 		var state: String = snap.get("brute_state", "")
 		if state != "windup" and state != "charge":
@@ -736,10 +845,10 @@ func _update_debug_stats_panel() -> void:
 	var brute_charge: int = 0
 	var brute_recover: int = 0
 	var elite_total: int = 0
-	var elite_brute: int = 0
-	var elite_blink: int = 0
-	var elite_tank: int = 0
 	var goblin_grunt_count: int = 0
+	var brute_champion_count: int = 0
+	var blink_stalker_count: int = 0
+	var king_goblin_count: int = 0
 	var goblin_sword_count: int = 0
 	var goblin_mage_count: int = 0
 	var goblin_electric_mage_count: int = 0
@@ -758,18 +867,16 @@ func _update_debug_stats_panel() -> void:
 				goblin_electric_mage_count += 1
 			"hobgoblin":
 				hobgoblin_count += 1
+			"brute_champion":
+				brute_champion_count += 1
+			"blink_stalker":
+				blink_stalker_count += 1
+			"king_goblin":
+				king_goblin_count += 1
 			_:
 				goblin_grunt_count += 1
 		if snap.get("is_elite", false):
 			elite_total += 1
-			var elite_type: String = snap.get("elite_type", "")
-			match elite_type:
-				"brute":
-					elite_brute += 1
-				"blink":
-					elite_blink += 1
-				"tank":
-					elite_tank += 1
 			var brute_state: String = snap.get("brute_state", "none")
 			match brute_state:
 				"idle":
@@ -781,7 +888,7 @@ func _update_debug_stats_panel() -> void:
 				"recover":
 					brute_recover += 1
 
-	debug_stats_label.text = "Run %.1f%% | T %.0fs | Lv %d\nSpawn i%.2f b%d | Alive %d min%d max%d\nTypes G:%d S:%d F:%d E:%d T:%d\nPlayer HP %d/%d | SPD %.0f | PICK %.0f MAG %.0f\nSword L%d DMG %d AOE %.0f CD %.2f | Slashes x%d\nElites %d (Brt %d Blk %d Tnk %d)\nBrute states idle:%d windup:%d charge:%d recover:%d\nHordeCD %.1f EliteCD %.1f XP %d/%d" % [
+	debug_stats_label.text = "Run %.1f%% | T %.0fs | Lv %d\nSpawn i%.2f b%d | Alive %d min%d max%d\nTypes G:%d S:%d F:%d E:%d T:%d | Brute %d Blink %d K:%d\nPlayer HP %d/%d | SPD %.0f | PICK %.0f MAG %.0f\nSword L%d DMG %d AOE %.0f CD %.2f | Slashes x%d\nTank-style elites %d\nBrute states idle:%d windup:%d charge:%d recover:%d\nHordeCD %.1f EliteCD %.1f XP %d/%d" % [
 		progress_pct,
 		run_time_seconds,
 		current_level,
@@ -795,6 +902,9 @@ func _update_debug_stats_panel() -> void:
 		goblin_mage_count,
 		goblin_electric_mage_count,
 		hobgoblin_count,
+		brute_champion_count,
+		blink_stalker_count,
+		king_goblin_count,
 		player.current_health,
 		player.max_health,
 		player.move_speed,
@@ -806,9 +916,6 @@ func _update_debug_stats_panel() -> void:
 		player.sword_cooldown,
 		1 + player.extra_slash_count,
 		elite_total,
-		elite_brute,
-		elite_blink,
-		elite_tank,
 		brute_idle,
 		brute_windup,
 		brute_charge,
@@ -855,6 +962,9 @@ func _finish_run(survived_to_end: bool) -> void:
 		return
 
 	run_is_over = true
+	active_boss_unit = null
+	if boss_bar_host != null:
+		boss_bar_host.visible = false
 	get_tree().paused = true
 	game_over_panel.visible = true
 	game_over_panel.move_to_front()
@@ -908,6 +1018,8 @@ func _on_enemy_defeated(world_position: Vector2, xp_value: int, xp_tier: String)
 	orb.global_position = world_position
 	if orb.has_method("configure_drop"):
 		orb.call("configure_drop", xp_value, xp_tier)
+	if orb.has_method("set_target_player"):
+		orb.call("set_target_player", player)
 	orb.connect("collected", _on_xp_orb_collected)
 	orbs_root.add_child(orb)
 	_try_spawn_pickup_drop(world_position)
@@ -948,6 +1060,8 @@ func _spawn_pickup_drop(world_position: Vector2, pickup_type: String, value: int
 	pickup.global_position = world_position + Vector2(randf_range(-7.0, 7.0), randf_range(-5.0, 5.0))
 	if pickup.has_method("configure"):
 		pickup.call("configure", pickup_type, value)
+	if pickup.has_method("set_target_player"):
+		pickup.call("set_target_player", player)
 	pickup.connect("collected", _on_pickup_collected)
 	drops_root.add_child(pickup)
 
@@ -1153,21 +1267,21 @@ func _on_debug_elite_button_pressed() -> void:
 func _on_debug_brute_button_pressed() -> void:
 	if run_is_over:
 		return
-	_spawn_debug_elite_variant("brute")
-	_show_debug_status("DEBUG: Brute elite spawned")
+	_spawn_debug_visible_enemy(enemy_scene_brute_champion, false)
+	_show_debug_status("DEBUG: Brute champion spawned")
 
 
 func _on_debug_blink_button_pressed() -> void:
 	if run_is_over:
 		return
-	_spawn_debug_elite_variant("blink")
-	_show_debug_status("DEBUG: Blink elite spawned")
+	_spawn_debug_visible_enemy(enemy_scene_blink_stalker, false)
+	_show_debug_status("DEBUG: Blink stalker spawned")
 
 
 func _on_debug_tank_button_pressed() -> void:
 	if run_is_over:
 		return
-	_spawn_debug_visible_enemy(enemy_scene, true, "tank")
+	_spawn_debug_visible_enemy(enemy_scene, true)
 
 
 func _on_debug_gtank_button_pressed() -> void:
@@ -1175,7 +1289,7 @@ func _on_debug_gtank_button_pressed() -> void:
 		return
 	var hobgoblin_scene: PackedScene = load("res://assets/characters/hobgoblin.tscn") as PackedScene
 	if hobgoblin_scene != null:
-		_spawn_debug_visible_enemy(hobgoblin_scene, false, "")
+		_spawn_debug_visible_enemy(hobgoblin_scene, false)
 		return
 	# Fallback path: use archetype resolver in case direct load fails.
 	_spawn_debug_enemy_variant("hobgoblin")
@@ -1411,21 +1525,21 @@ func _should_spawn_elite() -> bool:
 	return randf() < chance
 
 
-func _configure_enemy_as_elite(enemy: CharacterBody2D, forced_type: String = "") -> void:
+func _configure_enemy_as_elite(enemy: CharacterBody2D, _unused_legacy: String = "") -> void:
 	if enemy != null and enemy.has_method("configure_as_elite"):
-		enemy.call("configure_as_elite", _get_progress_ratio(), forced_type)
+		enemy.call("configure_as_elite", _get_progress_ratio(), "")
 
 
 func _spawn_debug_elite() -> void:
 	_spawn_debug_elite_variant("")
 
 
-func _spawn_debug_elite_variant(elite_type: String) -> void:
+func _spawn_debug_elite_variant(_unused: String = "") -> void:
 	var spawn_direction: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
 	var spawn_distance: float = _get_offscreen_spawn_distance()
 	var enemy: CharacterBody2D = enemy_scene.instantiate() as CharacterBody2D
 	enemy.global_position = player.global_position + (spawn_direction * spawn_distance)
-	_configure_enemy_as_elite(enemy, elite_type)
+	_configure_enemy_as_elite(enemy)
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemies_root.add_child(enemy)
 
@@ -1442,7 +1556,7 @@ func _spawn_debug_enemy_variant(archetype: String, make_elite: bool = false) -> 
 	enemies_root.add_child(enemy)
 
 
-func _spawn_debug_visible_enemy(scene: PackedScene, make_elite: bool = false, elite_type: String = "") -> void:
+func _spawn_debug_visible_enemy(scene: PackedScene, make_elite: bool = false) -> void:
 	if scene == null:
 		_show_debug_status("DEBUG: Spawn failed (scene missing)")
 		return
@@ -1454,17 +1568,18 @@ func _spawn_debug_visible_enemy(scene: PackedScene, make_elite: bool = false, el
 	var spawn_distance: float = randf_range(80.0, 130.0)
 	enemy.global_position = player.global_position + (spawn_direction * spawn_distance)
 	if make_elite:
-		_configure_enemy_as_elite(enemy, elite_type)
+		_configure_enemy_as_elite(enemy)
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemies_root.add_child(enemy)
 	if enemy.has_method("get_enemy_archetype"):
 		var kind: String = enemy.call("get_enemy_archetype")
-		_show_debug_status("DEBUG: Spawned %s" % kind)
+		var elite_note: String = " (elite)" if make_elite else ""
+		_show_debug_status("DEBUG: Spawned %s%s" % [kind, elite_note])
 		return
 	if make_elite:
 		_show_debug_status("DEBUG: Tank elite spawned")
 	else:
-		_show_debug_status("DEBUG: Hobgoblin enemy spawned")
+		_show_debug_status("DEBUG: Enemy spawned")
 
 
 func _try_spawn_timed_elite() -> void:
@@ -1488,19 +1603,24 @@ func _get_next_elite_event_interval() -> float:
 
 func _pick_enemy_scene_for_progress() -> PackedScene:
 	var progress: float = _get_progress_ratio()
-	var sword_weight: float = lerp(0.0, 0.24, progress) if run_time_seconds >= SWORD_UNLOCK_SECONDS else 0.0
-	var mage_weight: float = lerp(0.0, 0.18, progress) if run_time_seconds >= FIRE_MAGE_UNLOCK_SECONDS else 0.0
-	var electric_mage_weight: float = lerp(0.0, 0.16, progress) if run_time_seconds >= ELECTRIC_MAGE_UNLOCK_SECONDS else 0.0
-	var tank_weight: float = lerp(0.0, 0.12, progress) if run_time_seconds >= TANK_ENEMY_UNLOCK_SECONDS else 0.0
-	# Keep early game overwhelmingly grunt-heavy, then layer in types over time.
+	var brute_weight: float = lerp(0.0, 0.055, progress) if run_time_seconds >= BRUTE_CHAMPION_UNLOCK_SECONDS else 0.0
+	var blink_weight: float = lerp(0.0, 0.048, progress) if run_time_seconds >= BLINK_STALKER_UNLOCK_SECONDS else 0.0
+	var sword_weight: float = lerp(0.0, 0.22, progress) if run_time_seconds >= SWORD_UNLOCK_SECONDS else 0.0
+	var mage_weight: float = lerp(0.0, 0.17, progress) if run_time_seconds >= FIRE_MAGE_UNLOCK_SECONDS else 0.0
+	var electric_mage_weight: float = lerp(0.0, 0.15, progress) if run_time_seconds >= ELECTRIC_MAGE_UNLOCK_SECONDS else 0.0
+	var tank_weight: float = lerp(0.0, 0.11, progress) if run_time_seconds >= TANK_ENEMY_UNLOCK_SECONDS else 0.0
 	var roll: float = randf()
-	if roll < tank_weight:
+	if roll < brute_weight:
+		return enemy_scene_brute_champion
+	if roll < brute_weight + blink_weight:
+		return enemy_scene_blink_stalker
+	if roll < brute_weight + blink_weight + tank_weight:
 		return enemy_scene_hobgoblin
-	if roll < tank_weight + electric_mage_weight:
+	if roll < brute_weight + blink_weight + tank_weight + electric_mage_weight:
 		return enemy_scene_goblin_electric_mage
-	if roll < tank_weight + electric_mage_weight + mage_weight:
+	if roll < brute_weight + blink_weight + tank_weight + electric_mage_weight + mage_weight:
 		return enemy_scene_goblin_mage
-	if roll < tank_weight + electric_mage_weight + mage_weight + sword_weight:
+	if roll < brute_weight + blink_weight + tank_weight + electric_mage_weight + mage_weight + sword_weight:
 		return enemy_scene_goblin_sword
 	return enemy_scene
 
@@ -1515,8 +1635,91 @@ func _get_enemy_scene_by_archetype(archetype: String) -> PackedScene:
 			return enemy_scene_goblin_electric_mage
 		"hobgoblin":
 			return enemy_scene_hobgoblin
+		"brute_champion":
+			return enemy_scene_brute_champion
+		"blink_stalker":
+			return enemy_scene_blink_stalker
+		"king_goblin":
+			return enemy_scene_king_goblin
 		_:
 			return enemy_scene
+
+
+func _try_merge_world_pickups() -> void:
+	if run_is_over:
+		return
+	_merge_xp_orb_pickups()
+	_merge_pickup_drops()
+
+
+func _merge_xp_orb_pickups() -> void:
+	var pressure: bool = orbs_root.get_child_count() >= XP_ORB_MERGE_COUNT_PRESSURE
+	var merge_radius_sq: float = PICKUP_MERGE_DISTANCE * PICKUP_MERGE_DISTANCE
+	var merges: int = 0
+	while merges < MAX_PICKUP_MERGES_PER_TICK:
+		var best_a: Node2D = null
+		var best_b: Node2D = null
+		var best_d: float = INF
+		for child_a in orbs_root.get_children():
+			if not is_instance_valid(child_a) or child_a.is_queued_for_deletion():
+				continue
+			if not child_a.has_method("absorb_merge_from"):
+				continue
+			for child_b in orbs_root.get_children():
+				if child_a == child_b or not is_instance_valid(child_b) or child_b.is_queued_for_deletion():
+					continue
+				if not child_b.has_method("get_merge_xp_value"):
+					continue
+				var age_a: float = float(child_a.call("get_age_seconds")) if child_a.has_method("get_age_seconds") else 0.0
+				var age_b: float = float(child_b.call("get_age_seconds")) if child_b.has_method("get_age_seconds") else 0.0
+				if not pressure and age_a < XP_ORB_MERGE_IDLE_SECONDS and age_b < XP_ORB_MERGE_IDLE_SECONDS:
+					continue
+				var d: float = child_a.global_position.distance_squared_to(child_b.global_position)
+				if d > merge_radius_sq:
+					continue
+				if d < best_d:
+					best_d = d
+					best_a = child_a as Node2D
+					best_b = child_b as Node2D
+		if best_a == null or best_b == null:
+			break
+		best_a.call("absorb_merge_from", best_b)
+		merges += 1
+
+
+func _merge_pickup_drops() -> void:
+	var pressure: bool = drops_root.get_child_count() >= DROP_MERGE_COUNT_PRESSURE
+	var merge_radius_sq: float = PICKUP_MERGE_DISTANCE * PICKUP_MERGE_DISTANCE
+	var merges: int = 0
+	while merges < MAX_PICKUP_MERGES_PER_TICK:
+		var best_a: Node2D = null
+		var best_b: Node2D = null
+		var best_d: float = INF
+		for child_a in drops_root.get_children():
+			if not is_instance_valid(child_a) or child_a.is_queued_for_deletion():
+				continue
+			if not child_a.has_method("absorb_merge_from"):
+				continue
+			for child_b in drops_root.get_children():
+				if child_a == child_b or not is_instance_valid(child_b) or child_b.is_queued_for_deletion():
+					continue
+				if not child_b.has_method("get_pickup_merge_snapshot"):
+					continue
+				var age_a: float = float(child_a.call("get_age_seconds")) if child_a.has_method("get_age_seconds") else 0.0
+				var age_b: float = float(child_b.call("get_age_seconds")) if child_b.has_method("get_age_seconds") else 0.0
+				if not pressure and age_a < PICKUP_MERGE_IDLE_SECONDS and age_b < PICKUP_MERGE_IDLE_SECONDS:
+					continue
+				var d: float = child_a.global_position.distance_squared_to(child_b.global_position)
+				if d > merge_radius_sq:
+					continue
+				if d < best_d:
+					best_d = d
+					best_a = child_a as Node2D
+					best_b = child_b as Node2D
+		if best_a == null or best_b == null:
+			break
+		best_a.call("absorb_merge_from", best_b)
+		merges += 1
 
 
 func _get_non_horde_enemy_count() -> int:

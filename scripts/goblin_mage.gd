@@ -16,8 +16,9 @@ const MAGE_PROJECTILE_HEIGHT: float = 46.0
 const MAGE_VISUAL_SCALE: float = 1.24
 const MAGE_INCANTATION_BASE_SCALE: float = 0.58
 const MAGE_PROJECTILE_BASE_SCALE: float = 0.28
-const MAGE_ELITE_INCANTATION_SCALE: float = 1.12
-const MAGE_ELITE_AOE_RADIUS_MULT: float = 1.22
+const MAGE_ELITE_INCANTATION_SCALE: float = 1.32
+const MAGE_ELITE_AOE_RADIUS_MULT: float = 1.38
+const MAGE_ELITE_PROJECTILE_SCALE: float = 1.28
 const MAGE_TELEGRAPH_COLOR: Color = Color(0.58, 0.04, 0.04, 0.12)
 const MAGE_TELEGRAPH_ALPHA_MIN: float = 0.08
 const MAGE_TELEGRAPH_ALPHA_MAX: float = 0.24
@@ -147,6 +148,12 @@ func _show_incantation_circle() -> void:
 	if cast_fire_particles != null:
 		cast_fire_particles.visible = true
 		cast_fire_particles.emitting = true
+		if is_elite:
+			cast_fire_particles.emission_ring_radius = 17.0
+			cast_fire_particles.emission_ring_inner_radius = 6.5
+		else:
+			cast_fire_particles.emission_ring_radius = 13.0
+			cast_fire_particles.emission_ring_inner_radius = 5.0
 
 
 func _hide_incantation_circle() -> void:
@@ -161,7 +168,8 @@ func _show_cast_projectile() -> void:
 	if cast_projectile_sprite_node != null:
 		cast_projectile_sprite_node.visible = true
 		cast_projectile_sprite_node.position = Vector2(0.0, -MAGE_PROJECTILE_HEIGHT)
-		cast_projectile_sprite_node.scale = Vector2(MAGE_PROJECTILE_BASE_SCALE, MAGE_PROJECTILE_BASE_SCALE)
+		var pscale: float = MAGE_PROJECTILE_BASE_SCALE * (MAGE_ELITE_PROJECTILE_SCALE if is_elite else 1.0)
+		cast_projectile_sprite_node.scale = Vector2(pscale, pscale)
 		if cast_projectile_sprite_node.sprite_frames != null and cast_projectile_sprite_node.sprite_frames.has_animation(&"projectile_loop"):
 			cast_projectile_sprite_node.play(&"projectile_loop")
 

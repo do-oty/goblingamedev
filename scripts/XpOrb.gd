@@ -12,11 +12,19 @@ var outline_sprite: Polygon2D = null
 var ground_shadow: Polygon2D = null
 var visual_time: float = 0.0
 var core_base_scale: Vector2 = Vector2(0.72, 0.72)
+var age_seconds: float = 0.0
+## Squared distance beyond which bob/pulse visuals are skipped (still magnet when in range).
+const VISUAL_LOD_DIST_SQ: float = 640000.0 # 800^2
+
+
+func set_target_player(p: Node2D) -> void:
+	target_player = p
 
 
 func _ready() -> void:
 	add_to_group("xp_orbs")
-	target_player = get_tree().get_first_node_in_group("player") as Node2D
+	if target_player == null or not is_instance_valid(target_player):
+		target_player = get_tree().get_first_node_in_group("player") as Node2D
 	body_sprite = $Polygon2D
 	core_sprite = $Core
 	outline_sprite = get_node_or_null("Outline") as Polygon2D
@@ -24,7 +32,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	visual_time += delta
+	age_seconds += delta
 	_ensure_visual_nodes()
 	if target_player == null or not is_instance_valid(target_player):
 		target_player = get_tree().get_first_node_in_group("player") as Node2D
@@ -32,6 +40,7 @@ func _physics_process(delta: float) -> void:
 
 	var to_player: Vector2 = target_player.global_position - global_position
 	var distance: float = to_player.length()
+	var dist_sq: float = to_player.length_squared()
 	var pickup_radius: float = target_player.get_pickup_radius() if target_player.has_method("get_pickup_radius") else 20.0
 	var magnet_radius: float = target_player.get_magnet_range() if target_player.has_method("get_magnet_range") else 80.0
 	var magnet_speed: float = target_player.get_magnet_strength() if target_player.has_method("get_magnet_strength") else 160.0
@@ -44,15 +53,24 @@ func _physics_process(delta: float) -> void:
 	if distance <= magnet_radius and distance > 0.001:
 		global_position += to_player.normalized() * magnet_speed * delta
 
-	# Subtle bob/pulse so XP is easier to read.
-	var bob: float = sin(visual_time * 5.0) * 1.6
-	body_sprite.position.y = bob
-	core_sprite.position.y = bob
-	if outline_sprite != null:
-		outline_sprite.position.y = bob
-	_update_ground_shadow(bob)
-	var pulse: float = 1.0 + (sin(visual_time * 8.0) * 0.08)
-	core_sprite.scale = core_base_scale * pulse
+	if dist_sq < VISUAL_LOD_DIST_SQ:
+		visual_time += delta
+		# Subtle bob/pulse so XP is easier to read.
+		var bob: float = sin(visual_time * 5.0) * 1.6
+		body_sprite.position.y = bob
+		core_sprite.position.y = bob
+		if outline_sprite != null:
+			outline_sprite.position.y = bob
+		_update_ground_shadow(bob)
+		var pulse: float = 1.0 + (sin(visual_time * 8.0) * 0.08)
+		core_sprite.scale = core_base_scale * pulse
+	elif body_sprite != null and core_sprite != null:
+		body_sprite.position.y = 0.0
+		core_sprite.position.y = 0.0
+		if outline_sprite != null:
+			outline_sprite.position.y = 0.0
+		core_sprite.scale = core_base_scale
+		_update_ground_shadow(0.0)
 
 
 func configure_drop(value: int, tier: String) -> void:
@@ -78,13 +96,44 @@ func configure_drop(value: int, tier: String) -> void:
 		_:
 			body_sprite.color = Color(0.7, 0.8, 1.0, 0.95)
 			core_sprite.color = Color(0.95, 0.96, 1.0, 0.98)
-	body_sprite.scale = Vector2(0.66, 0.66)
-	core_base_scale = Vector2(0.54, 0.54)
+	var size_boost: float = clamp(sqrt(float(max(xp_value, 1))) * 0.028, 0.0, 0.22)
+	body_sprite.scale = Vector2(0.66, 0.66) * (1.0 + size_boost)
+	core_base_scale = Vector2(0.54, 0.54) * (1.0 + size_boost)
 	core_sprite.scale = core_base_scale
 	if outline_sprite != null:
 		outline_sprite.polygon = body_sprite.polygon
 		outline_sprite.scale = Vector2(0.98, 0.98)
 		outline_sprite.color = Color(0.0, 0.0, 0.0, 0.92)
+
+
+func get_merge_xp_value() -> int:
+	return xp_value
+
+
+func get_age_seconds() -> float:
+	return age_seconds
+
+
+static func tier_for_total_xp(total: int) -> String:
+	if total >= 30:
+		return "rainbow"
+	if total >= 14:
+		return "red"
+	if total >= 6:
+		return "green"
+	return "blue"
+
+
+## Merge `other` into this orb (keeps target_player wiring on this node).
+func absorb_merge_from(other: Node2D) -> void:
+	if other == null or other == self:
+		return
+	if not other.has_method("get_merge_xp_value"):
+		return
+	xp_value += int(other.call("get_merge_xp_value"))
+	global_position = global_position.lerp((other as Node2D).global_position, 0.5)
+	other.queue_free()
+	configure_drop(xp_value, tier_for_total_xp(xp_value))
 
 
 func _ensure_visual_nodes() -> void:
