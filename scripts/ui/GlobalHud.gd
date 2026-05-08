@@ -29,18 +29,18 @@ const HP_HIT_FLASH_SECONDS: float = 0.22
 @onready var run_timer_label: Label = $SpriteHud/RunTimerLabel
 @onready var level_chip_label: Label = $SpriteHud/LevelChipLabel
 @onready var quick_stats_label: Label = get_node_or_null("SpriteHud/QuickStatsLabel") as Label
-@onready var item_stacks_label: Label = get_node_or_null("SpriteHud/ItemStacksLabel") as Label
+@onready var item_grid_hud: HBoxContainer = null # Created in _ready
 @onready var items_toggle_button: Button = $SpriteHud/ItemsToggleButton
 @onready var talents_toggle_button: Button = $SpriteHud/TalentsToggleButton
 @onready var stats_toggle_button_left: Button = $SpriteHud/StatsToggleButtonLeft
 @onready var items_modal: PanelContainer = $SpriteHud/ItemsModal
-@onready var items_list: VBoxContainer = $SpriteHud/ItemsModal/Margin/ItemsList
-@onready var item_detail_label: Label = $SpriteHud/ItemsModal/Margin/ItemDetailLabel
+@onready var items_list: Control = $SpriteHud/ItemsModal/Margin/ItemsList
+@onready var item_detail_label: Control = $SpriteHud/ItemsModal/Margin/ItemDetailLabel
 @onready var talents_modal: PanelContainer = $SpriteHud/TalentsModal
-@onready var talents_list: VBoxContainer = $SpriteHud/TalentsModal/Margin/TalentsList
-@onready var talent_detail_label: Label = $SpriteHud/TalentsModal/Margin/TalentDetailLabel
+@onready var talents_list: Control = $SpriteHud/TalentsModal/Margin/TalentsList
+@onready var talent_detail_label: Control = $SpriteHud/TalentsModal/Margin/TalentDetailLabel
 @onready var stats_modal_left: PanelContainer = $SpriteHud/StatsModalLeft
-@onready var stats_modal_left_text: Label = $SpriteHud/StatsModalLeft/Margin/StatsText
+@onready var stats_grid: GridContainer = null # Created in _ready
 @onready var status_frame: Control = get_node_or_null("SpriteHud/StatusFrame") as Control
 @onready var legacy_stats_toggle_button: Button = get_node_or_null("SpriteHud/StatsToggleButton") as Button
 @onready var legacy_stats_modal: PanelContainer = get_node_or_null("SpriteHud/StatsModal") as PanelContainer
@@ -78,22 +78,140 @@ func _ready() -> void:
 		if not mobile_dash_button.button_up.is_connected(_on_mobile_dash_button_up):
 			mobile_dash_button.button_up.connect(_on_mobile_dash_button_up)
 		_style_mobile_dash_button()
-	if items_modal != null:
-		items_modal.visible = false
-	if talents_modal != null:
-		talents_modal.visible = false
+	if items_list != null:
+		var parent = items_list.get_parent()
+		var scroll = ScrollContainer.new()
+		scroll.name = "ItemsScroll"
+		scroll.custom_minimum_size.y = 350
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		
+		var vbox = VBoxContainer.new()
+		vbox.name = "ItemsVBox"
+		vbox.add_theme_constant_override("separation", 10)
+		scroll.add_child(vbox)
+		
+		parent.add_child(scroll)
+		items_list.queue_free()
+		items_list = vbox
+	
+	if talents_list != null:
+		var parent = talents_list.get_parent()
+		var scroll = ScrollContainer.new()
+		scroll.name = "TalentsScroll"
+		scroll.custom_minimum_size.y = 350
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		
+		var vbox = VBoxContainer.new()
+		vbox.name = "TalentsVBox"
+		vbox.add_theme_constant_override("separation", 10)
+		scroll.add_child(vbox)
+		
+		parent.add_child(scroll)
+		talents_list.queue_free()
+		talents_list = vbox
+
+	# Position and size the modals for side-by-side layout
 	if stats_modal_left != null:
-		stats_modal_left.visible = false
-	if legacy_stats_toggle_button != null:
-		legacy_stats_toggle_button.visible = false
-	if legacy_stats_modal != null:
-		legacy_stats_modal.visible = false
-	if run_timer_label != null:
-		run_timer_label.visible = true
-	if level_chip_label != null:
-		level_chip_label.visible = true
+		stats_modal_left.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+		stats_modal_left.custom_minimum_size = Vector2(200, 400)
+		stats_modal_left.position.x = 20
+		_style_modal_panel(stats_modal_left)
+		
+	if items_modal != null:
+		items_modal.set_anchors_preset(Control.PRESET_CENTER)
+		items_modal.custom_minimum_size = Vector2(280, 400)
+		_style_modal_panel(items_modal)
+		
+	if talents_modal != null:
+		talents_modal.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+		talents_modal.custom_minimum_size = Vector2(280, 400)
+		talents_modal.position.x -= 20
+		_style_modal_panel(talents_modal)
+
+	# Replace detail labels with RichTextLabels for BBCode support
+	
+	# Replace detail labels with RichTextLabels for BBCode support
+	for lbl_name in ["item_detail_label", "talent_detail_label"]:
+		var old_lbl = get(lbl_name)
+		if old_lbl != null:
+			var parent = old_lbl.get_parent()
+			var rich := RichTextLabel.new()
+			rich.name = old_lbl.name
+			rich.bbcode_enabled = true
+			rich.fit_content = true
+			rich.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			parent.add_child(rich)
+			old_lbl.queue_free()
+			set(lbl_name, rich)
+
+	# Create tiny card HUD for weapons
+	var hud_parent = $SpriteHud
+	var old_stacks = hud_parent.get_node_or_null("ItemStacksLabel")
+	var hud_grid = HBoxContainer.new()
+	hud_grid.name = "ItemGridHud"
+	hud_grid.add_theme_constant_override("separation", 6)
+	hud_parent.add_child(hud_grid)
+	if old_stacks != null:
+		old_stacks.queue_free()
+	item_grid_hud = hud_grid
+
+	_style_modal_panel(stats_modal_left)
+	_style_web_button(items_toggle_button)
+	_style_web_button(talents_toggle_button)
+	_style_web_button(stats_toggle_button_left)
+
 	_request_modal_relayout()
+	
+	# Create Dialogue Panel for NPCs
+	var dialogue_panel := PanelContainer.new()
+	dialogue_panel.name = "DialoguePanel"
+	dialogue_panel.visible = false
+	dialogue_panel.custom_minimum_size = Vector2(500, 120)
+	dialogue_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	# Center it and offset from bottom
+	dialogue_panel.anchor_left = 0.5
+	dialogue_panel.anchor_right = 0.5
+	dialogue_panel.anchor_top = 1.0
+	dialogue_panel.anchor_bottom = 1.0
+	dialogue_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	dialogue_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	dialogue_panel.position.y = -140
+	dialogue_panel.position.x = -250
+	
+	var hox := HBoxContainer.new()
+	hox.name = "Hbox"
+	dialogue_panel.add_child(hox)
+	
+	var portrait := TextureRect.new()
+	portrait.name = "Portrait"
+	portrait.custom_minimum_size = Vector2(96, 96)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	hox.add_child(portrait)
+	
+	var text_label := RichTextLabel.new()
+	text_label.name = "DialogueText"
+	text_label.bbcode_enabled = true
+	text_label.fit_content = true
+	text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hox.add_child(text_label)
+	
+	add_child(dialogue_panel)
+	
 	set_ui_mode(MODE_COMBAT)
+
+
+func show_dialogue(text: String, portrait_sprite: Texture2D = null) -> void:
+	var panel = $DialoguePanel
+	if panel:
+		panel.visible = true
+		var label = panel.get_node("Hbox/DialogueText")
+		if label:
+			label.text = text
+		var portrait = panel.get_node("Hbox/Portrait")
+		if portrait:
+			portrait.texture = portrait_sprite
 
 
 func set_ui_mode(mode: String) -> void:
@@ -137,8 +255,8 @@ func set_ui_mode(mode: String) -> void:
 		mobile_dash_button.visible = true
 	if quick_stats_label != null:
 		quick_stats_label.visible = false
-	if item_stacks_label != null:
-		item_stacks_label.visible = false
+	if item_grid_hud != null:
+		item_grid_hud.visible = combat_visible
 	if items_modal != null:
 		items_modal.visible = false
 	if talents_modal != null:
@@ -198,7 +316,7 @@ func update_combat_bars(
 
 func update_combat_meta(
 	coins: int,
-	item_stacks_text: String,
+	_item_stacks_text: String,
 	stats_modal_text: String,
 	item_entries: Array[Dictionary],
 	talent_entries: Array[Dictionary],
@@ -214,11 +332,14 @@ func update_combat_meta(
 	if level_chip_label != null:
 		level_chip_label.text = level_chip_text
 		level_chip_label.visible = true
-	if item_stacks_label != null:
-		item_stacks_label.text = item_stacks_text
-	if stats_modal_left_text != null:
-		var with_damage: String = "%s | DMG TAKEN %d" % [stats_modal_text, run_damage_taken]
-		stats_modal_left_text.text = _format_stats_vertical(with_damage)
+	if item_grid_hud != null:
+		_rebuild_hud_item_cards(item_entries)
+	
+	if stats_grid != null:
+		_rebuild_stats_modal(stats_modal_text, run_damage_taken)
+		
+	_style_modal_panel(items_modal)
+	_style_modal_panel(talents_modal)
 	_rebuild_items_modal(item_entries)
 	_rebuild_talents_modal(talent_entries)
 	_request_modal_relayout()
@@ -325,92 +446,244 @@ func _update_xp_wrap_anim(delta: float) -> void:
 			xp_wrap_anim_timer = 0.0
 
 
+func _rebuild_hud_item_cards(item_entries: Array[Dictionary]) -> void:
+	for child in item_grid_hud.get_children():
+		child.queue_free()
+	for entry in item_entries:
+		var card := _create_tiny_card(entry)
+		item_grid_hud.add_child(card)
+
+
+func _create_tiny_card(entry: Dictionary) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(34, 34)
+	
+	# Prepare for sprites: Add a TextureRect
+	var tex := TextureRect.new()
+	tex.name = "Icon"
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	panel.add_child(tex)
+	
+	var icon_tex = entry.get("icon", null)
+	if icon_tex is Texture2D:
+		tex.texture = icon_tex
+	elif icon_tex is String and icon_tex != "":
+		tex.texture = load(icon_tex)
+	
+	var label := Label.new()
+	var name_text: String = entry.get("name", "??")
+	label.text = name_text.substr(0, 1).to_upper()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	panel.add_child(label)
+	
+	var lv_label := Label.new()
+	lv_label.text = entry.get("stacks", "").replace("Lv", "")
+	lv_label.add_theme_font_size_override("font_size", 9)
+	lv_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+	lv_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	lv_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	panel.add_child(lv_label)
+	return panel
+
+
 func _rebuild_items_modal(item_entries: Array[Dictionary]) -> void:
-	if items_list == null:
-		return
-	var key: String = JSON.stringify(item_entries)
-	if key == items_modal_cache_key:
-		return
-	items_modal_cache_key = key
+	if items_list == null: return
 	for child in items_list.get_children():
 		child.queue_free()
-	var first_effect: String = ""
 	for entry in item_entries:
-		var row: HBoxContainer = HBoxContainer.new()
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_theme_constant_override("separation", 12)
-		var icon_rect: TextureRect = TextureRect.new()
-		icon_rect.custom_minimum_size = Vector2(10, 10)
-		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		var icon_path: String = entry.get("icon_path", "")
-		if icon_path != "":
-			var tex: Texture2D = load(icon_path) as Texture2D
-			if tex != null:
-				icon_rect.texture = tex
-		row.add_child(icon_rect)
-		var item_button: Button = Button.new()
-		item_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		item_button.flat = true
-		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		item_button.focus_mode = Control.FOCUS_NONE
-		var icon_text: String = entry.get("icon", "")
-		var name_text: String = entry.get("name", "Item")
-		var stacks_text: String = entry.get("stacks", "x1")
-		item_button.text = ("%s %s (%s)" % [icon_text, name_text, stacks_text]).strip_edges()
-		var effects_text: String = entry.get("effects", "")
-		item_button.pressed.connect(_on_item_entry_pressed.bind(effects_text))
-		row.tooltip_text = effects_text
-		row.add_child(item_button)
+		var row := _create_info_row(entry)
 		items_list.add_child(row)
-		if first_effect == "":
-			first_effect = effects_text
 	if item_detail_label != null:
-		item_detail_label.text = first_effect if first_effect != "" else "Tap an item to view effects."
+		item_detail_label.visible = false
 
 
 func _rebuild_talents_modal(talent_entries: Array[Dictionary]) -> void:
-	if talents_list == null:
-		return
-	var key: String = JSON.stringify(talent_entries)
-	if key == talents_modal_cache_key:
-		return
-	talents_modal_cache_key = key
+	if talents_list == null: return
 	for child in talents_list.get_children():
 		child.queue_free()
-	var first_effect: String = ""
 	for entry in talent_entries:
-		var row: HBoxContainer = HBoxContainer.new()
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_theme_constant_override("separation", 12)
-		var icon_rect: TextureRect = TextureRect.new()
-		icon_rect.custom_minimum_size = Vector2(10, 10)
-		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		var icon_path: String = entry.get("icon_path", "")
-		if icon_path != "":
-			var tex: Texture2D = load(icon_path) as Texture2D
-			if tex != null:
-				icon_rect.texture = tex
-		row.add_child(icon_rect)
-		var talent_button: Button = Button.new()
-		talent_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		talent_button.flat = true
-		talent_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		talent_button.focus_mode = Control.FOCUS_NONE
-		var icon_text: String = entry.get("icon", "")
-		var name_text: String = entry.get("name", "Talent")
-		var stacks_text: String = entry.get("stacks", "x1")
-		talent_button.text = ("%s %s (%s)" % [icon_text, name_text, stacks_text]).strip_edges()
-		var effects_text: String = entry.get("effects", "")
-		talent_button.pressed.connect(_on_talent_entry_pressed.bind(effects_text))
-		row.tooltip_text = effects_text
-		row.add_child(talent_button)
+		var row := _create_info_row(entry)
 		talents_list.add_child(row)
-		if first_effect == "":
-			first_effect = effects_text
 	if talent_detail_label != null:
-		talent_detail_label.text = first_effect if first_effect != "" else "No active talents yet."
+		talent_detail_label.visible = false
+
+
+func _create_info_row(entry: Dictionary) -> VBoxContainer:
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	
+	var name_text: String = entry.get("name", "??")
+	var lv_text: String = entry.get("stacks", "")
+	
+	var title_label := RichTextLabel.new()
+	title_label.bbcode_enabled = true
+	title_label.text = "[b]%s[/b] [color=#ffcc33]%s[/color]" % [name_text.to_upper(), lv_text]
+	title_label.fit_content = true
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.add_theme_font_size_override("normal_font_size", 13)
+	vbox.add_child(title_label)
+	
+	var desc_label := RichTextLabel.new()
+	desc_label.bbcode_enabled = true
+	var effects_text: String = entry.get("effects", "")
+	var body = effects_text
+	if ":" in effects_text:
+		body = effects_text.split(":", true, 1)[1].strip_edges()
+	desc_label.text = body
+	desc_label.add_theme_font_size_override("normal_font_size", 11)
+	desc_label.add_theme_color_override("default_color", Color(0.8, 0.8, 0.9, 0.8))
+	desc_label.fit_content = true
+	vbox.add_child(desc_label)
+	
+	var line = ColorRect.new()
+	line.custom_minimum_size.y = 1
+	line.color = Color(1, 1, 1, 0.05)
+	vbox.add_child(line)
+	
+	return vbox
+
+
+func _rebuild_stats_modal(stats_text: String, damage_taken: int) -> void:
+	if stats_grid == null: return
+	for child in stats_grid.get_children():
+		child.queue_free()
+	
+	var parts = stats_text.split("|")
+	for p in parts:
+		var s = p.strip_edges()
+		if s == "": continue
+		var label := Label.new()
+		label.text = s.to_upper()
+		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_color_override("font_color", Color(0.7, 0.8, 1.0))
+		stats_grid.add_child(label)
+	
+	var dmg_label := Label.new()
+	dmg_label.text = "DMG TAKEN: %d" % damage_taken
+	dmg_label.add_theme_font_size_override("font_size", 12)
+	dmg_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
+	stats_grid.add_child(dmg_label)
+
+
+func _create_stat_card(stat_str: String, bg_col: Color = Color(0.15, 0.18, 0.25, 0.9)) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(86, 54) # Slightly larger
+	
+	var style := _get_card_style()
+	style.bg_color = bg_col
+	panel.add_theme_stylebox_override("panel", style)
+	
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 2)
+	panel.add_child(vbox)
+	
+	var parts = stat_str.split(" ", true, 1)
+	var stat_name = parts[0]
+	var stat_val = parts[1] if parts.size() > 1 else ""
+	
+	var name_label := Label.new()
+	name_label.text = stat_name.to_upper()
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_size_override("font_size", 9)
+	name_label.add_theme_color_override("font_color", Color(0.7, 0.8, 1.0, 0.6))
+	vbox.add_child(name_label)
+	
+	var val_label := Label.new()
+	val_label.text = stat_val
+	val_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	val_label.add_theme_font_size_override("font_size", 16)
+	val_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	vbox.add_child(val_label)
+	
+	return panel
+
+
+func _create_card(entry: Dictionary) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(80, 80)
+	
+	# Prepare for sprites: Add a TextureRect
+	var tex := TextureRect.new()
+	tex.name = "Icon"
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	btn.add_child(tex)
+	
+	var icon_tex = entry.get("icon", null)
+	if icon_tex is Texture2D:
+		tex.texture = icon_tex
+	elif icon_tex is String and icon_tex != "":
+		tex.texture = load(icon_tex)
+	
+	var label := Label.new()
+	var name_text: String = entry.get("name", "??")
+	label.text = name_text.substr(0, 2).to_upper()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.add_theme_font_size_override("font_size", 28)
+	btn.add_child(label)
+	
+	var lv_label := Label.new()
+	lv_label.text = entry.get("stacks", "")
+	lv_label.add_theme_font_size_override("font_size", 12)
+	lv_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2))
+	lv_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	lv_label.offset_right = -8
+	lv_label.offset_top = 6
+	btn.add_child(lv_label)
+	
+	var effects_text: String = entry.get("effects", "")
+	btn.pressed.connect(_on_item_entry_pressed.bind(effects_text))
+	
+	return btn
+
+
+func _get_card_style(is_hover: bool = false) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.14, 0.16, 0.24, 0.95) if not is_hover else Color(0.22, 0.26, 0.38, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.4, 0.7, 1.0, 0.3) if not is_hover else Color(0.5, 0.8, 1.0, 0.7)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.shadow_size = 4
+	style.shadow_color = Color(0, 0, 0, 0.2)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
+
+
+func _style_modal_panel(panel: PanelContainer) -> void:
+	if panel == null: return
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.04, 0.05, 0.08, 0.92)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.4, 0.7, 1.0, 0.2)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.content_margin_left = 15
+	style.content_margin_right = 15
+	style.content_margin_top = 15
+	style.content_margin_bottom = 15
+	panel.add_theme_stylebox_override("panel", style)
+
 
 
 func _on_items_toggle_pressed() -> void:
@@ -436,12 +709,26 @@ func _on_stats_toggle_left_pressed() -> void:
 
 func _on_item_entry_pressed(effects_text: String) -> void:
 	if item_detail_label != null:
-		item_detail_label.text = effects_text if effects_text != "" else "No effects."
+		item_detail_label.bbcode_enabled = true
+		var bb = ""
+		if ":" in effects_text:
+			var parts = effects_text.split(":", true, 1)
+			bb = "[b]%s[/b]\n%s" % [parts[0].strip_edges(), parts[1].strip_edges()]
+		else:
+			bb = effects_text
+		item_detail_label.text = bb
 
 
 func _on_talent_entry_pressed(effects_text: String) -> void:
 	if talent_detail_label != null:
-		talent_detail_label.text = effects_text if effects_text != "" else "No effects."
+		talent_detail_label.bbcode_enabled = true
+		var bb = ""
+		if ":" in effects_text:
+			var parts = effects_text.split(":", true, 1)
+			bb = "[b]%s[/b]\n%s" % [parts[0].strip_edges(), parts[1].strip_edges()]
+		else:
+			bb = effects_text
+		talent_detail_label.text = bb
 
 
 func _request_modal_relayout() -> void:
@@ -471,13 +758,6 @@ func _relayout_open_modals() -> void:
 		panel.position = Vector2(x, y)
 		panel.move_to_front()
 		y += panel.size.y + spacing
-
-
-func _format_stats_vertical(stats_modal_text: String) -> String:
-	if stats_modal_text == "":
-		return "Stats unavailable."
-	var step_one: String = stats_modal_text.replace(" | ", "\n")
-	return step_one.replace("  ", "\n")
 
 
 func set_lobby_last_run_text(text: String) -> void:
@@ -540,4 +820,46 @@ func _spawn_hp_hit_particles() -> void:
 	cleanup_timer.timeout.connect(func() -> void:
 		if is_instance_valid(hit_fx):
 			hit_fx.queue_free()
+	)
+
+func _style_web_button(btn: Button, is_accent: bool = false) -> void:
+	if btn == null: return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.12, 0.15, 0.22, 0.95) if not is_accent else Color(0.2, 0.4, 0.8, 0.95)
+	normal.border_width_left = 1
+	normal.border_width_top = 1
+	normal.border_width_right = 1
+	normal.border_width_bottom = 1
+	normal.border_color = Color(0.4, 0.7, 1.0, 0.3)
+	normal.corner_radius_top_left = 20
+	normal.corner_radius_top_right = 20
+	normal.corner_radius_bottom_left = 20
+	normal.corner_radius_bottom_right = 20
+	normal.content_margin_left = 14
+	normal.content_margin_right = 14
+	normal.content_margin_top = 6
+	normal.content_margin_bottom = 6
+	
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.18, 0.22, 0.32, 0.95) if not is_accent else Color(0.3, 0.5, 0.9, 0.95)
+	hover.border_color = Color(0.5, 0.8, 1.0, 0.8)
+	
+	btn.add_theme_stylebox_override('normal', normal)
+	btn.add_theme_stylebox_override('hover', hover)
+	btn.add_theme_stylebox_override('pressed', hover)
+	btn.add_theme_stylebox_override('focus', StyleBoxEmpty.new())
+	btn.add_theme_font_size_override('font_size', 12)
+	btn.add_theme_color_override('font_color', Color(0.9, 0.95, 1.0, 0.9))
+	
+	btn.pivot_offset = btn.size / 2.0
+	if not btn.item_rect_changed.is_connected(func(): btn.pivot_offset = btn.size / 2.0):
+		btn.item_rect_changed.connect(func(): btn.pivot_offset = btn.size / 2.0)
+	
+	btn.button_down.connect(func():
+		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		t.tween_property(btn, "scale", Vector2(0.92, 0.92), 0.05)
+	)
+	btn.button_up.connect(func():
+		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		t.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.05)
 	)

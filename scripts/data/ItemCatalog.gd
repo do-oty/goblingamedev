@@ -57,9 +57,18 @@ static func get_item_by_id(item_id: String) -> Dictionary:
 				"name": "Hunter Bow",
 				"type": "weapon",
 				"max_level": 8,
-				"implemented": false,
-				"description": "Placeholder item. Planned: fires piercing arrows at nearest target.",
-				"stats_by_level": []
+				"implemented": true,
+				"description": "Fires piercing arrows at the nearest enemy.",
+				"stats_by_level": [
+					{"damage": 8, "aoe_radius": 0.0, "cooldown": 1.2, "projectiles": 1, "duration": 4.0, "crit_chance": 0.05},
+					{"damage": 12, "aoe_radius": 0.0, "cooldown": 1.0, "projectiles": 1, "duration": 4.0, "crit_chance": 0.05},
+					{"damage": 18, "aoe_radius": 0.0, "cooldown": 0.85, "projectiles": 1, "duration": 4.5, "crit_chance": 0.05},
+					{"damage": 26, "aoe_radius": 0.0, "cooldown": 0.7, "projectiles": 2, "duration": 4.5, "crit_chance": 0.10},
+					{"damage": 38, "aoe_radius": 0.0, "cooldown": 0.6, "projectiles": 2, "duration": 5.0, "crit_chance": 0.10},
+					{"damage": 54, "aoe_radius": 0.0, "cooldown": 0.5, "projectiles": 2, "duration": 5.0, "crit_chance": 0.15},
+					{"damage": 78, "aoe_radius": 0.0, "cooldown": 0.4, "projectiles": 3, "duration": 5.5, "crit_chance": 0.15},
+					{"damage": 110, "aoe_radius": 0.0, "cooldown": 0.3, "projectiles": 3, "duration": 6.0, "crit_chance": 0.20}
+				]
 			}
 		"wand_placeholder":
 			return {
@@ -67,9 +76,18 @@ static func get_item_by_id(item_id: String) -> Dictionary:
 				"name": "Arcane Wand",
 				"type": "weapon",
 				"max_level": 8,
-				"implemented": false,
-				"description": "Placeholder item. Planned: shoots homing projectiles.",
-				"stats_by_level": []
+				"implemented": true,
+				"description": "Shoots homing arcane orbs at the nearest enemy.",
+				"stats_by_level": [
+					{"damage": 6, "aoe_radius": 24.0, "cooldown": 1.4, "projectiles": 1, "duration": 5.0},
+					{"damage": 9, "aoe_radius": 28.0, "cooldown": 1.25, "projectiles": 1, "duration": 5.0},
+					{"damage": 14, "aoe_radius": 34.0, "cooldown": 1.1, "projectiles": 1, "duration": 5.5},
+					{"damage": 20, "aoe_radius": 40.0, "cooldown": 0.9, "projectiles": 2, "duration": 5.5},
+					{"damage": 28, "aoe_radius": 48.0, "cooldown": 0.75, "projectiles": 2, "duration": 6.0},
+					{"damage": 38, "aoe_radius": 56.0, "cooldown": 0.6, "projectiles": 2, "duration": 6.0},
+					{"damage": 52, "aoe_radius": 68.0, "cooldown": 0.45, "projectiles": 3, "duration": 6.5},
+					{"damage": 72, "aoe_radius": 80.0, "cooldown": 0.3, "projectiles": 3, "duration": 7.0}
+				]
 			}
 		_:
 			return {}
@@ -112,5 +130,11 @@ static func get_talent_pool() -> Array[Dictionary]:
 			"name": "Longstep",
 			"description": "+45 dash distance.",
 			"stats": {"dash_distance_bonus": 45.0}
+		},
+		{
+			"id": "magnet_pulse",
+			"name": "Magnet Pulse",
+			"description": "Periodically pulses to pull all nearby XP orbs closer.",
+			"stats": {"magnet_pulse": 1}
 		}
 	]

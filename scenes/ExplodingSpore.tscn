@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://d3m5x7p2k6y1v"]
+
+[ext_resource type="Script" path="res://scripts/ExplodingSpore.gd" id="1_spore"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 20.0
+
+[node name="ExplodingSpore" type="Area2D"]
+collision_layer = 0
+collision_mask = 3
+script = ExtResource("1_spore")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_1")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Body" type="Polygon2D" parent="Visual"]
+color = Color(0.85, 0.4, 0.1, 0.9)
+polygon = PackedVector2Array(-12, -8, -5, -14, 5, -14, 12, -8, 14, 0, 10, 10, 0, 14, -10, 10, -14, 0)
+
+[node name="Core" type="Polygon2D" parent="Visual"]
+color = Color(1, 0.7, 0.2, 1)
+scale = Vector2(0.5, 0.5)
+polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+
+[node name="Dots" type="Node2D" parent="Visual"]
+
+[node name="D1" type="Polygon2D" parent="Visual/Dots"]
+position = Vector2(-6, -4)
+scale = Vector2(0.3, 0.3)
+color = Color(0.6, 0.2, 0.05, 1)
+polygon = PackedVector2Array(-4, -4, 4, -4, 4, 4, -4, 4)
+
+[node name="D2" type="Polygon2D" parent="Visual/Dots"]
+position = Vector2(6, 4)
+scale = Vector2(0.3, 0.3)
+color = Color(0.6, 0.2, 0.05, 1)
+polygon = PackedVector2Array(-4, -4, 4, -4, 4, 4, -4, 4)

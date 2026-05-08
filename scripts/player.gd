@@ -60,6 +60,12 @@ var dash_uses_directional_anim: bool = false
 var dash_directional_anim_name: StringName = &""
 var dash_directional_anim_frame_count: int = 0
 var lobby_mode: bool = false
+var has_magnet_pulse: bool = false
+var magnet_pulse_cooldown: float = 0.0
+var bow_level: int = 0
+var wand_level: int = 0
+var wand_cooldown_timer: float = 0.0
+var bow_cooldown_timer: float = 0.0
 var launch_velocity: Vector2 = Vector2.ZERO
 var launch_timer: float = 0.0
 var launch_duration: float = 0.0
@@ -81,11 +87,28 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
 	attack_cooldown = max(attack_cooldown - delta, 0.0)
+	wand_cooldown_timer = max(wand_cooldown_timer - delta, 0.0)
 	invulnerability_cooldown = max(invulnerability_cooldown - delta, 0.0)
 	dash_cooldown_remaining = max(dash_cooldown_remaining - delta, 0.0)
 	dash_iframe_remaining = max(dash_iframe_remaining - delta, 0.0)
 	dash_buffer_remaining = max(dash_buffer_remaining - delta, 0.0)
 	launch_timer = max(launch_timer - delta, 0.0)
+	
+	if has_magnet_pulse:
+		magnet_pulse_cooldown -= delta
+		if magnet_pulse_cooldown <= 0:
+			_trigger_magnet_pulse()
+			magnet_pulse_cooldown = 4.5
+	
+	if bow_level > 0:
+		bow_cooldown_timer -= delta
+		if bow_cooldown_timer <= 0:
+			_fire_bow()
+			bow_cooldown_timer = _get_bow_cooldown()
+			
+	if wand_level > 0 and wand_cooldown_timer <= 0:
+		_fire_wand()
+
 	_update_aim_from_cursor()
 
 	# Allow movement at all times, including while attacking.
@@ -219,6 +242,7 @@ func receive_damage(amount: int) -> void:
 	current_health = max(current_health - amount, 0)
 	invulnerability_cooldown = INVULNERABILITY_SECONDS
 	_show_player_hit_feedback()
+	GameState.hit_stop(0.12, 0.01)
 	health_changed.emit(current_health, max_health)
 
 	if current_health <= 0:
@@ -478,7 +502,7 @@ func _show_player_hit_feedback() -> void:
 	var flash_tween: Tween = create_tween()
 	flash_tween.tween_property($AnimatedSprite2D, "modulate", Color(1, 1, 1, 1), 0.24)
 
-	add_screen_shake(10.0, 0.18)
+	add_screen_shake(18.0, 0.22)
 
 	# Quick blood-like droplets to make collision hits feel impactful.
 	for i in range(8):
@@ -690,3 +714,154 @@ func _build_circle_polygon(radius: float, segments: int) -> PackedVector2Array:
 		var angle: float = t * TAU
 		points.append(Vector2(cos(angle), sin(angle)) * radius)
 	return points
+
+
+func _trigger_magnet_pulse() -> void:
+	# Visual effect
+	var pulse := Polygon2D.new()
+	pulse.polygon = _build_circle_polygon(1.0, 32)
+	pulse.color = Color(0.4, 0.7, 1.0, 0.4)
+	pulse.z_index = -1
+	add_child(pulse)
+	
+	var pulse_radius: float = 380.0
+	var tween: Tween = create_tween()
+	tween.tween_property(pulse, "scale", Vector2(pulse_radius, pulse_radius), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(pulse, "modulate:a", 0.0, 0.45)
+	tween.tween_callback(pulse.queue_free)
+	
+	# Mechanic logic: push all orbs in range toward player
+	var orbs: Array[Node] = get_tree().get_nodes_in_group("xp_orbs")
+	for orb in orbs:
+		if orb is Node2D:
+			var dist: float = global_position.distance_to(orb.global_position)
+			if dist <= pulse_radius:
+				if orb.has_method("magnet_pulse_pull"):
+					orb.call("magnet_pulse_pull", global_position)
+				elif orb.has_method("set_target_player"):
+					# Fallback: force magnet mode if it exists
+					orb.call("set_target_player", self)
+
+
+func activate_magnet_pulse() -> void:
+	has_magnet_pulse = true
+	magnet_pulse_cooldown = 0.5
+
+
+func upgrade_wand() -> void:
+	wand_level = min(wand_level + 1, 8)
+	# Reusing or placeholder signal
+	# bow_level_changed.emit(wand_level, 8)
+
+
+func _fire_wand() -> void:
+	var enemies = get_tree().get_nodes_in_group("enemy")
+	if enemies.is_empty():
+		return
+		
+	var nearest = _get_nearest_enemy(enemies)
+	if nearest == null:
+		return
+		
+	var stats = ItemCatalog.get_item_by_id("wand_placeholder").get("stats_by_level", [])
+	var level_stats = stats[wand_level-1] if wand_level <= stats.size() else {}
+	
+	var wand_scene = load("res://scenes/vfx/ArcaneOrb.tscn")
+	var wand_script = load("res://scripts/ArcaneProjectile.gd")
+	
+	var count = level_stats.get("projectiles", 1)
+	var base_damage = level_stats.get("damage", 16)
+	var final_damage = int(base_damage * talent_damage_multiplier)
+	
+	for i in range(count):
+		var orb: Area2D
+		if wand_scene:
+			orb = wand_scene.instantiate()
+		else:
+			orb = Area2D.new()
+			orb.set_script(wand_script)
+			
+		orb.global_position = global_position
+		
+		var dir = (nearest.global_position - global_position).normalized()
+		if count > 1:
+			dir = dir.rotated(randf_range(-0.4, 0.4))
+			
+		orb.direction = dir
+		orb.damage = final_damage
+		orb.target = nearest
+		orb.player_ref = self # Set player for orbiting
+		if orb.has_method("set"):
+			orb.set("wand_level", wand_level)
+		
+		get_parent().add_child(orb)
+	
+	wand_cooldown_timer = level_stats.get("cooldown", 1.5) * (1.0 / max(talent_attack_speed_multiplier, 0.01))
+
+
+func _get_nearest_enemy(enemies: Array) -> Node2D:
+	var nearest: Node2D = null
+	var min_dist = INF
+	for e in enemies:
+		if e is Node2D:
+			var d = global_position.distance_to(e.global_position)
+			if d < min_dist:
+				min_dist = d
+				nearest = e
+	return nearest
+
+
+func upgrade_bow() -> void:
+	bow_level = min(bow_level + 1, 8)
+	if bow_level == 1:
+		bow_cooldown_timer = 0.5
+
+
+func _get_bow_cooldown() -> float:
+	var stats = ItemCatalog.get_item_by_id("bow_placeholder").get("stats_by_level", [])
+	if bow_level > 0 and bow_level <= stats.size():
+		return stats[bow_level-1].get("cooldown", 1.0)
+	return 1.0
+
+
+func _fire_bow() -> void:
+	var enemies = get_tree().get_nodes_in_group("enemy")
+	if enemies.is_empty():
+		return
+	
+	var nearest = _get_nearest_enemy(enemies)
+	if nearest == null:
+		return
+		
+	var stats = ItemCatalog.get_item_by_id("bow_placeholder").get("stats_by_level", [])
+	var level_stats = stats[bow_level-1] if bow_level <= stats.size() else {}
+	
+	var arrow_scene = load("res://scenes/vfx/HunterArrow.tscn")
+	var arrow_script = load("res://scripts/Arrow.gd")
+	
+	var count = level_stats.get("projectiles", 1)
+	var base_damage = level_stats.get("damage", 12)
+	var final_damage = int(base_damage * talent_damage_multiplier)
+	
+	for i in range(count):
+		var arrow: Area2D
+		if arrow_scene:
+			arrow = arrow_scene.instantiate()
+		else:
+			arrow = Area2D.new()
+			arrow.set_script(arrow_script)
+			
+		arrow.global_position = global_position
+		# Spread logic
+		var spread = 0.0
+		if count > 1:
+			spread = deg_to_rad(randf_range(-12.0, 12.0))
+		
+		var dir = (nearest.global_position - global_position).normalized()
+		arrow.direction = dir.rotated(spread)
+		arrow.damage = final_damage
+		if arrow.has_method("set"):
+			arrow.set("bow_level", bow_level) # Arrow handles its own pierce scaling
+		get_parent().add_child(arrow)
+	
+	bow_cooldown_timer = level_stats.get("cooldown", 1.0) * (1.0 / max(talent_attack_speed_multiplier, 0.01))

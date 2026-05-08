@@ -12,6 +12,20 @@ const DEFAULT_SAVE_DATA := {
 }
 
 var latest_save_data: Dictionary = {}
+var is_hit_stopping: bool = false
+var played_intro: bool = false
+
+
+func hit_stop(duration: float = 0.08, timescale: float = 0.02) -> void:
+	if is_hit_stopping:
+		return
+	is_hit_stopping = true
+	var old_scale: float = Engine.time_scale
+	Engine.time_scale = timescale
+	# We use a real-time timer so it completes even when time_scale is near zero.
+	await get_tree().create_timer(duration * timescale, true, false, true).timeout
+	Engine.time_scale = old_scale
+	is_hit_stopping = false
 
 
 func has_save() -> bool:

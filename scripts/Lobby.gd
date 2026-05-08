@@ -46,6 +46,11 @@ func _ready() -> void:
 	button_speed.pressed.connect(_on_speed_upgrade_pressed)
 	button_luck.pressed.connect(_on_luck_upgrade_pressed)
 	button_dash.pressed.connect(_on_dash_upgrade_pressed)
+	
+	for btn in [button_hp, button_speed, button_luck, button_dash]:
+		_style_web_button(btn)
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		
 	_refresh_ui()
 
 
@@ -148,14 +153,18 @@ func _try_buy_upgrade(upgrade_id: String, base_cost: int, max_level: int) -> voi
 
 func _refresh_ui() -> void:
 	_refresh_coins()
-	var hp_level: int = GameState.get_upgrade_level("max_health")
-	var speed_level: int = GameState.get_upgrade_level("move_speed")
-	var luck_level: int = GameState.get_upgrade_level("luck")
-	var dash_level: int = GameState.get_upgrade_level("dash_mastery")
-	button_hp.text = "Max HP Lv.%d (cost %d)" % [hp_level, 22 + hp_level * 12]
-	button_speed.text = "Move Speed Lv.%d (cost %d)" % [speed_level, 24 + speed_level * 12]
-	button_luck.text = "Luck Lv.%d (cost %d)" % [luck_level, 26 + luck_level * 12]
-	button_dash.text = "Dash Mastery Lv.%d (cost %d)" % [dash_level, 34 + dash_level * 12]
+	_refresh_upgrade_button(button_hp, "max_health", "Vitality", "Increases your maximum health capacity.", 22, 10)
+	_refresh_upgrade_button(button_speed, "move_speed", "Swiftness", "Run faster across all maps.", 24, 10)
+	_refresh_upgrade_button(button_luck, "luck", "Fortune", "Find better items and more coins.", 26, 8)
+	_refresh_upgrade_button(button_dash, "dash_mastery", "Agility", "Reduces dash cooldown and increases i-frames.", 34, 8)
+
+
+func _refresh_upgrade_button(btn: Button, id: String, title: String, desc: String, base_cost: int, max_lv: int) -> void:
+	var lv: int = GameState.get_upgrade_level(id)
+	var cost: int = base_cost + (lv * 12)
+	var status: String = "MAXED" if lv >= max_lv else "Cost: %d" % cost
+	btn.text = "%s (Lv.%d/%d)\n%s\n%s" % [title, lv, max_lv, desc, status]
+	btn.disabled = (lv >= max_lv)
 
 
 func _refresh_coins() -> void:
@@ -194,3 +203,44 @@ func _set_upgrade_panel_visible(is_open: bool) -> void:
 
 func _deferred_change_scene(destination_scene: String) -> void:
 	get_tree().change_scene_to_file(destination_scene)
+func _style_web_button(btn: Button, is_accent: bool = false) -> void:
+	if btn == null: return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.12, 0.15, 0.22, 0.95) if not is_accent else Color(0.2, 0.4, 0.8, 0.95)
+	normal.border_width_left = 1
+	normal.border_width_top = 1
+	normal.border_width_right = 1
+	normal.border_width_bottom = 1
+	normal.border_color = Color(0.4, 0.7, 1.0, 0.3)
+	normal.corner_radius_top_left = 20
+	normal.corner_radius_top_right = 20
+	normal.corner_radius_bottom_left = 20
+	normal.corner_radius_bottom_right = 20
+	normal.content_margin_left = 18
+	normal.content_margin_right = 18
+	normal.content_margin_top = 8
+	normal.content_margin_bottom = 8
+	
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.18, 0.22, 0.32, 0.95) if not is_accent else Color(0.3, 0.5, 0.9, 0.95)
+	hover.border_color = Color(0.5, 0.8, 1.0, 0.8)
+	
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", hover)
+	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	btn.add_theme_font_size_override("font_size", 13)
+	btn.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0, 0.9))
+	
+	btn.pivot_offset = btn.size / 2.0
+	if not btn.item_rect_changed.is_connected(func(): btn.pivot_offset = btn.size / 2.0):
+		btn.item_rect_changed.connect(func(): btn.pivot_offset = btn.size / 2.0)
+	
+	btn.button_down.connect(func():
+		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		t.tween_property(btn, "scale", Vector2(0.92, 0.92), 0.05)
+	)
+	btn.button_up.connect(func():
+		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		t.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.05)
+	)
