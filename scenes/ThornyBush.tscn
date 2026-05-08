@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://b8s6x4j7n8v1y"]
+
+[ext_resource type="Script" path="res://scripts/ThornyBush.gd" id="1_bush"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 28.0
+
+[node name="ThornyBush" type="Area2D"]
+collision_layer = 0
+collision_mask = 3
+script = ExtResource("1_bush")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_1")
+
+[node name="Visual" type="Polygon2D" parent="."]
+color = Color(0.133333, 0.258824, 0.14902, 0.8)
+polygon = PackedVector2Array(-18, -12, -8, -22, 8, -21, 19, -10, 22, 6, 11, 20, -9, 21, -21, 7)
+
+[node name="Thorns" type="Line2D" parent="Visual"]
+points = PackedVector2Array(-10, -5, -15, -15, -5, -10, 0, -20, 5, -10, 15, -15, 10, -5, 20, 0, 10, 5, 15, 15, 5, 10, 0, 20, -5, 10, -15, 15, -10, 5, -20, 0, -10, -5)
+width = 2.0
+default_color = Color(0.0980392, 0.164706, 0.105882, 1)

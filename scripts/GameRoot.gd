@@ -4,11 +4,11 @@ const RUN_DURATION_SECONDS: float = 15.0 * 60.0
 const START_SPAWN_INTERVAL: float = 1.35
 const END_SPAWN_INTERVAL: float = 0.07
 const START_MAX_ENEMIES: int = 55
-const END_MAX_ENEMIES: int = 1200
+const END_MAX_ENEMIES: int = 300
 const START_MIN_ENEMIES_ALIVE: int = 6
-const END_MIN_ENEMIES_ALIVE: int = 760
+const END_MIN_ENEMIES_ALIVE: int = 180
 const START_SPAWN_BURST: int = 2
-const END_SPAWN_BURST: int = 20
+const END_SPAWN_BURST: int = 8
 const SPAWN_DISTANCE_MIN: float = 360.0
 const SPAWN_DISTANCE_MAX: float = 760.0
 const BASE_XP_TO_LEVEL: int = 5
@@ -39,9 +39,10 @@ const EARLY_GAME_EASY_SECONDS: float = 120.0
 const BRUTE_CHAMPION_UNLOCK_SECONDS: float = 95.0
 const BLINK_STALKER_UNLOCK_SECONDS: float = 155.0
 const PICKUP_MERGE_INTERVAL: float = 0.42
-const XP_ORB_MERGE_COUNT_PRESSURE: int = 88
+const XP_ORB_MERGE_COUNT_PRESSURE: int = 40
 const XP_ORB_MERGE_IDLE_SECONDS: float = 15.0
 const PICKUP_MERGE_IDLE_SECONDS: float = 18.0
+const HAZARD_SPAWN_INTERVAL: float = 24.0
 const DROP_MERGE_COUNT_PRESSURE: int = 36
 const PICKUP_MERGE_DISTANCE: float = 76.0
 const MAX_PICKUP_MERGES_PER_TICK: int = 18
@@ -121,6 +122,7 @@ var run_time_seconds: float = 0.0
 var spawn_cooldown: float = 0.0
 var horde_event_cooldown: float = 45.0
 var elite_event_cooldown: float = 30.0
+var hazard_spawn_cooldown: float = 12.0
 var run_is_over: bool = false
 var current_level: int = 1
 var current_xp: int = 0
@@ -148,20 +150,13 @@ var pause_menu_panel: PanelContainer = null
 var pause_return_lobby_button: Button = null
 var pause_return_menu_button: Button = null
 
-var tree_tiles = [
-	Vector2i(0, 0),  # replace with your actual atlas coords
-]
-var map_width := 50
-var map_height := 50
-var tree_count := 80
-var source_id := 0
 
 
 
 
 func _ready() -> void:
 	randomize()
-	spawn_trees()
+	_process_existing_objects()
 	run_coins = 0
 	run_damage_taken = 0
 	last_health_sample = -1
@@ -233,18 +228,93 @@ func _ready() -> void:
 	drops_root.z_index = 1
 	enemies_root.z_index = 2
 	_ensure_runtime_lighting()
+	# Style and Center the modals
+	for p in [level_up_panel, game_over_panel]:
+		p.set_anchors_preset(Control.PRESET_CENTER)
+		p.anchor_left = 0.5
+		p.anchor_top = 0.5
+		p.anchor_right = 0.5
+		p.anchor_bottom = 0.5
+		p.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		p.grow_vertical = Control.GROW_DIRECTION_BOTH
+		_style_modal_panel(p)
+
+	_ensure_pause_menu_ui()
+	_style_modal_panel(pause_menu_panel)
+	
+	# Rework level up container to horizontal
+	var container = level_up_panel.get_node("Margin/VBox")
+	var hbox = HBoxContainer.new()
+	hbox.name = "OptionsHBox"
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 45)
+	container.add_child(hbox)
+	
+	for btn in [upgrade_button_1, upgrade_button_2, upgrade_button_3]:
+		btn.get_parent().remove_child(btn)
+		hbox.add_child(btn)
+		btn.custom_minimum_size = Vector2(220, 280)
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn.add_theme_font_size_override("font_size", 16)
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		btn.mouse_entered.connect(func(): btn.modulate = Color(1.3, 1.3, 1.1))
+		btn.mouse_exited.connect(func(): btn.modulate = Color.WHITE)
+		# Prepare for sprites: Add a TextureRect
+		var tex := TextureRect.new()
+		tex.name = "Icon"
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.custom_minimum_size = Vector2(64, 64)
+		btn.add_child(tex)
 	horde_warning_label.visible = false
 	brute_charge_warning_label.visible = false
 	_on_player_health_changed(player.current_health, player.max_health)
 	_on_sword_level_changed(player.sword_level, player.sword_max_level)
 	_update_hud()
 	
-func spawn_trees():
-	for i in tree_count:
-		var x = randi_range(-map_width, map_width)
-		var y = randi_range(-map_height, map_height)
-		var random_tree = tree_tiles[randi() % tree_tiles.size()]
-		tree_layer.set_cell(Vector2i(x, y), source_id, random_tree)
+func _process_existing_objects():
+	# 1. Process TileMap tiles (for pre-built maps)
+	var obj_layer = get_node_or_null("objects") as TileMapLayer
+	if obj_layer:
+		for cell in obj_layer.get_used_cells():
+			var world_pos = obj_layer.map_to_local(cell)
+			_add_tree_extras(world_pos)
+	
+	# 2. Process individual Sprite2D nodes (for hand-placed props)
+	# We look for children of the map root or nodes in a 'props' group
+	var props = get_tree().get_nodes_in_group("props")
+	for prop in props:
+		if prop is Node2D and not prop.has_node("TreeShadow"):
+			_add_tree_extras(prop.global_position)
+
+
+func _add_tree_extras(pos: Vector2):
+	# Procedural Shadow
+	var shadow := Polygon2D.new()
+	shadow.name = "TreeShadow"
+	var points := PackedVector2Array()
+	var steps := 12
+	var radius_x := 22.0
+	var radius_y := 11.0
+	for j in range(steps):
+		var angle = float(j) / steps * TAU
+		points.append(Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
+	shadow.polygon = points
+	shadow.color = Color(0, 0, 0, 0.4)
+	shadow.position = pos + Vector2(0, 8)
+	shadow.z_index = -2
+	add_child(shadow)
+	
+	# Coded Collision
+	var body := StaticBody2D.new()
+	body.name = "TreeCollision"
+	var col := CollisionShape2D.new()
+	var shape := CircleShape2D.new()
+	shape.radius = 14.0
+	col.shape = shape
+	body.add_child(col)
+	body.position = pos
+	add_child(body)
 		
 func _setup_hud_mode() -> void:
 	if sprite_hud != null:
@@ -257,8 +327,6 @@ func _setup_hud_mode() -> void:
 		xp_bar.visible = not use_sprite_hud
 	if hp_bar != null:
 		hp_bar.visible = not use_sprite_hud
-	if sprite_stats_modal != null:
-		sprite_stats_modal.visible = false
 	if sprite_stats_toggle_button != null:
 		sprite_stats_toggle_button.visible = use_sprite_hud
 
@@ -408,6 +476,7 @@ func _process(delta: float) -> void:
 	floor_fill_cooldown = max(floor_fill_cooldown - delta, 0.0)
 	horde_event_cooldown = max(horde_event_cooldown - delta, 0.0)
 	elite_event_cooldown = max(elite_event_cooldown - delta, 0.0)
+	hazard_spawn_cooldown = max(hazard_spawn_cooldown - delta, 0.0)
 
 	if spawn_cooldown <= 0.0:
 		_try_spawn_enemy(_get_spawn_burst_count())
@@ -428,6 +497,10 @@ func _process(delta: float) -> void:
 	if pickup_merge_accum >= PICKUP_MERGE_INTERVAL:
 		pickup_merge_accum = 0.0
 		_try_merge_world_pickups()
+
+	if hazard_spawn_cooldown <= 0.0:
+		_spawn_random_hazard()
+		hazard_spawn_cooldown = HAZARD_SPAWN_INTERVAL
 
 	if not king_boss_spawned and run_time_seconds >= KING_GOBLIN_SPAWN_SECONDS:
 		_try_spawn_king_goblin_boss()
@@ -682,49 +755,68 @@ func _update_sprite_hud(
 	var level_chip_text: String = "Lv %d" % current_level
 	var item_entries: Array[Dictionary] = []
 	item_entries.append({
-		"icon": "[S]",
 		"name": "Sword Slash",
 		"stacks": "Lv %d" % player.sword_level,
-		"effects": "Damage %d\nAOE %.0f\nCooldown %.2fs\nExtra slashes x%d" % [
+		"effects": "Auto-slashes toward cursor.\nDamage %d\nAOE %.0f\nCooldown %.2fs\nExtra slashes x%d" % [
 			player.sword_damage,
 			player.sword_aoe_radius,
 			player.sword_cooldown,
 			1 + player.extra_slash_count
 		]
 	})
-	var item_stack_text: String = "Items: [S] Lv%d" % player.sword_level
+	
+	if player.bow_level > 0:
+		item_entries.append({
+			"name": "Hunter Bow",
+			"stacks": "Lv %d" % player.bow_level,
+			"effects": "Fires piercing arrows at nearest enemy.\nBounces at Lv5, Explodes at Lv8."
+		})
+	
+	if player.wand_level > 0:
+		item_entries.append({
+			"name": "Arcane Wand",
+			"stacks": "Lv %d" % player.wand_level,
+			"effects": "Fires homing orbs.\nLingers at Lv1, Pulls enemies at Lv8."
+		})
+
+
+	var item_stack_text: String = "S%d" % player.sword_level
+	if player.bow_level > 0:
+		item_stack_text += " B%d" % player.bow_level
+	if player.wand_level > 0:
+		item_stack_text += " W%d" % player.wand_level
 	var talent_entries: Array[Dictionary] = []
 	if player.extra_slash_count > 0:
 		talent_entries.append({
-			"icon": "[F]",
+			"icon": "",
 			"name": "Blade Fan",
 			"stacks": "x%d" % player.extra_slash_count,
 			"effects": "Adds extra angled slashes (%d)." % player.extra_slash_count
 		})
 	if player.dash_cooldown_multiplier < 0.99:
 		talent_entries.append({
-			"icon": "[D]",
+			"icon": "",
 			"name": "Dash Mastery",
 			"stacks": "Lv 1",
 			"effects": "Dash cooldown improved (x%.2f)." % player.dash_cooldown_multiplier
 		})
 	if player.dash_iframe_bonus > 0.001:
 		talent_entries.append({
-			"icon": "[I]",
+			"icon": "",
 			"name": "I-Frame Boost",
 			"stacks": "+%.2fs" % player.dash_iframe_bonus,
 			"effects": "Extra dash invulnerability: +%.2fs." % player.dash_iframe_bonus
 		})
 	if player.dash_distance_bonus > 0.001:
 		talent_entries.append({
-			"icon": "[L]",
+			"icon": "",
 			"name": "Longstep",
 			"stacks": "+%.0f" % player.dash_distance_bonus,
 			"effects": "Adds dash distance by %.0f." % player.dash_distance_bonus
 		})
 	if talent_entries.is_empty():
 		talent_entries.append({
-			"icon": "[ ]",
+			"icon": "",
 			"name": "No Talents Yet",
 			"stacks": "-",
 			"effects": "Reach Lv 5 milestones to unlock talents."
@@ -799,41 +891,98 @@ func _ensure_pause_menu_ui() -> void:
 	pause_menu_panel.visible = false
 	pause_menu_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	pause_menu_panel.z_index = 260
+	
+	# Center alignment fix
 	pause_menu_panel.set_anchors_preset(Control.PRESET_CENTER)
-	pause_menu_panel.custom_minimum_size = Vector2(320, 160)
+	pause_menu_panel.anchor_left = 0.5
+	pause_menu_panel.anchor_top = 0.5
+	pause_menu_panel.anchor_right = 0.5
+	pause_menu_panel.anchor_bottom = 0.5
+	pause_menu_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	pause_menu_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	
+	pause_menu_panel.custom_minimum_size = Vector2(340, 220)
 	cl.add_child(pause_menu_panel)
 
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
 	pause_menu_panel.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.add_theme_constant_override("separation", 12)
 	margin.add_child(vbox)
 
 	var title: Label = Label.new()
-	title.text = "Paused"
+	title.text = "PAUSED"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(title)
+
+	var resume_btn: Button = Button.new()
+	resume_btn.text = "Return to Game"
+	resume_btn.custom_minimum_size.y = 48
+	resume_btn.pressed.connect(_toggle_pause_menu)
+	vbox.add_child(resume_btn)
 
 	pause_return_lobby_button = Button.new()
 	pause_return_lobby_button.text = "Return to Lobby"
-	pause_return_lobby_button.focus_mode = Control.FOCUS_ALL
-	pause_return_lobby_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_return_lobby_button.custom_minimum_size.y = 42
 	pause_return_lobby_button.pressed.connect(_on_pause_return_lobby_pressed)
 	vbox.add_child(pause_return_lobby_button)
 
 	pause_return_menu_button = Button.new()
 	pause_return_menu_button.text = "Return to Main Menu"
-	pause_return_menu_button.focus_mode = Control.FOCUS_ALL
-	pause_return_menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_return_menu_button.custom_minimum_size.y = 42
 	pause_return_menu_button.pressed.connect(_on_pause_return_menu_pressed)
 	vbox.add_child(pause_return_menu_button)
+	_style_web_button(resume_btn, true)
+	_style_web_button(pause_return_lobby_button)
+	_style_web_button(pause_return_menu_button)
+
+
+func _get_card_style(is_hover: bool = false) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.14, 0.2, 0.95) if not is_hover else Color(0.18, 0.22, 0.3, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.4, 0.7, 1.0, 0.4) if not is_hover else Color(0.6, 0.8, 1.0, 0.8)
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
+
+
+func _style_modal_panel(panel: PanelContainer) -> void:
+	if panel == null: return
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.06, 0.07, 0.1, 0.98) # Darker, more opaque
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = Color(0.3, 0.6, 1.0, 0.7)
+	style.corner_radius_top_left = 16
+	style.corner_radius_top_right = 16
+	style.corner_radius_bottom_left = 16
+	style.corner_radius_bottom_right = 16
+	style.shadow_size = 20
+	style.shadow_color = Color(0, 0, 0, 0.6)
+	style.content_margin_left = 24
+	style.content_margin_right = 24
+	style.content_margin_top = 24
+	style.content_margin_bottom = 24
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _try_spawn_king_goblin_boss() -> void:
@@ -854,6 +1003,32 @@ func _try_spawn_king_goblin_boss() -> void:
 	_ensure_boss_bar_ui()
 	boss_bar_host.visible = true
 	_show_debug_status("King Goblin!")
+	_boss_spawn_intro()
+
+
+func _boss_spawn_intro() -> void:
+	var camera: Camera2D = player.get_node_or_null("Camera2D") as Camera2D
+	if camera == null:
+		return
+	
+	var old_zoom: Vector2 = camera.zoom
+	var target_zoom: Vector2 = old_zoom * 1.35
+	var old_time_scale: float = Engine.time_scale
+	
+	var t: Tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	# Dramatic slow down and zoom in
+	t.tween_property(Engine, "time_scale", 0.15, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.parallel().tween_property(camera, "zoom", target_zoom, 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Hold the moment
+	t.tween_interval(0.12) # This is real time because of TWEEN_PAUSE_PROCESS? No, Engine.time_scale affects it unless we use a specific timer.
+	# Actually Tweens are affected by time_scale by default. 
+	# If we want it to be dramatic, 0.12 * 0.15 is very short.
+	# Let's just use a decent interval.
+	
+	# Restore
+	t.tween_property(Engine, "time_scale", old_time_scale, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.parallel().tween_property(camera, "zoom", old_zoom, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _on_king_boss_tree_exiting(king_node: Node) -> void:
@@ -938,6 +1113,10 @@ func _update_debug_stats_panel() -> void:
 	var goblin_mage_count: int = 0
 	var goblin_electric_mage_count: int = 0
 	var hobgoblin_count: int = 0
+	# Unique Scaling Mechanic: Pierce Count
+	# Lv1 = 2 hits, Lv8 = 16 hits.
+	var _pierce_count = player.bow_level * 2
+	var _z_index_val = 5
 	for enemy_node in enemies_root.get_children():
 		if not enemy_node.has_method("get_debug_snapshot"):
 			continue
@@ -1138,7 +1317,10 @@ func _notification(what: int) -> void:
 func _on_enemy_defeated(world_position: Vector2, xp_value: int, xp_tier: String) -> void:
 	if run_is_over:
 		return
+	_on_enemy_defeated_deferred.call_deferred(world_position, xp_value, xp_tier)
 
+
+func _on_enemy_defeated_deferred(world_position: Vector2, xp_value: int, xp_tier: String) -> void:
 	var orb: Node2D = xp_orb_scene.instantiate() as Node2D
 	orb.global_position = world_position
 	if orb.has_method("configure_drop"):
@@ -1231,11 +1413,49 @@ func _show_level_up_panel() -> void:
 	else:
 		level_up_title.text = "Item Upgrade"
 		level_up_subtitle.text = "Choose 1 item"
+	var tex1 = upgrade_button_1.get_node_or_null("Icon")
+	if tex1:
+		var icon = queued_upgrades[0].get("icon", null)
+		if icon is Texture2D:
+			tex1.texture = icon
+		elif icon is String and icon != "":
+			tex1.texture = load(icon)
+			
+	var tex2 = upgrade_button_2.get_node_or_null("Icon")
+	if tex2:
+		var icon = queued_upgrades[1].get("icon", null)
+		if icon is Texture2D:
+			tex2.texture = icon
+		elif icon is String and icon != "":
+			tex2.texture = load(icon)
+			
+	var tex3 = upgrade_button_3.get_node_or_null("Icon")
+	if tex3:
+		var icon = queued_upgrades[2].get("icon", null)
+		if icon is Texture2D:
+			tex3.texture = icon
+		elif icon is String and icon != "":
+			tex3.texture = load(icon)
+
 	upgrade_button_1.text = queued_upgrades[0].get("label", "Upgrade 1")
 	upgrade_button_2.text = queued_upgrades[1].get("label", "Upgrade 2")
 	upgrade_button_3.text = queued_upgrades[2].get("label", "Upgrade 3")
 	level_up_panel.visible = true
 	level_up_panel.move_to_front()
+	
+	# Celebration flash
+	var flash := ColorRect.new()
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.color = Color(1, 1, 1, 0.4)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$CanvasLayer.add_child(flash)
+	
+	# Ensure cleanup
+	var splash = flash
+	var t := create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	t.tween_property(splash, "modulate:a", 0.0, 0.3)
+	t.tween_callback(splash.queue_free)
+	
 	get_tree().paused = true
 
 
@@ -1317,6 +1537,12 @@ func _apply_item_choice(id: String) -> void:
 	match id:
 		"sword_slash":
 			player.upgrade_sword()
+		"bow_placeholder":
+			if player.has_method("upgrade_bow"):
+				player.call("upgrade_bow")
+		"wand_placeholder":
+			if player.has_method("upgrade_wand"):
+				player.call("upgrade_wand")
 		_:
 			# Placeholder items have UI/data presence but no runtime behavior yet.
 			pass
@@ -1339,6 +1565,9 @@ func _apply_talent_choice(id: String) -> void:
 		"longstep":
 			if player.has_method("apply_dash_talent"):
 				player.call("apply_dash_talent", 0.0, 0.0, 45.0)
+		"magnet_pulse":
+			if player.has_method("activate_magnet_pulse"):
+				player.call("activate_magnet_pulse")
 		_:
 			pass
 
@@ -1594,6 +1823,23 @@ func _show_horde_warning(entry_direction: Vector2) -> void:
 		if is_instance_valid(warning_label):
 			warning_label.queue_free()
 	)
+
+
+func _spawn_random_hazard() -> void:
+	if run_is_over:
+		return
+	
+	var is_spore: bool = randf() < 0.38
+	var scene_path: String = "res://scenes/ExplodingSpore.tscn" if is_spore else "res://scenes/ThornyBush.tscn"
+	var hazard_scene: PackedScene = load(scene_path)
+	if hazard_scene == null:
+		return
+	
+	var spawn_dir: Vector2 = Vector2.RIGHT.rotated(randf() * TAU)
+	var spawn_dist: float = _get_offscreen_spawn_distance() * 0.88
+	var hazard: Node2D = hazard_scene.instantiate() as Node2D
+	hazard.global_position = player.global_position + (spawn_dir * spawn_dist)
+	get_parent().add_child(hazard)
 
 
 func _get_horde_warning_burst_count() -> int:
@@ -1877,3 +2123,43 @@ func _get_non_horde_enemy_count() -> int:
 			continue
 		count += 1
 	return count
+func _style_web_button(btn: Button, is_accent: bool = false) -> void:
+	if btn == null: return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.12, 0.15, 0.22, 0.95) if not is_accent else Color(0.2, 0.4, 0.8, 0.95)
+	normal.border_width_left = 1
+	normal.border_width_top = 1
+	normal.border_width_right = 1
+	normal.border_width_bottom = 1
+	normal.border_color = Color(0.4, 0.7, 1.0, 0.3)
+	normal.corner_radius_top_left = 20
+	normal.corner_radius_top_right = 20
+	normal.corner_radius_bottom_left = 20
+	normal.corner_radius_bottom_right = 20
+	normal.content_margin_left = 18
+	normal.content_margin_right = 18
+	normal.content_margin_top = 8
+	normal.content_margin_bottom = 8
+	
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.18, 0.22, 0.32, 0.95) if not is_accent else Color(0.3, 0.5, 0.9, 0.95)
+	hover.border_color = Color(0.5, 0.8, 1.0, 0.8)
+	
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("pressed", hover)
+	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	btn.add_theme_font_size_override("font_size", 13)
+	btn.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0, 0.9))
+	
+	btn.pivot_offset = btn.size / 2.0
+	if not btn.item_rect_changed.is_connected(func(): btn.pivot_offset = btn.size / 2.0):
+		btn.item_rect_changed.connect(func(): btn.pivot_offset = btn.size / 2.0)
+	
+	btn.button_down.connect(func():
+		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		t.tween_property(btn, "scale", Vector2(0.92, 0.92), 0.05)
+	)
+	btn.button_up.connect(func():
+		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		t.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.05)
+	)

@@ -13,6 +13,7 @@ var ground_shadow: Polygon2D = null
 var visual_time: float = 0.0
 var core_base_scale: Vector2 = Vector2(0.72, 0.72)
 var age_seconds: float = 0.0
+var forced_magnet: bool = false
 ## Squared distance beyond which bob/pulse visuals are skipped (still magnet when in range).
 const VISUAL_LOD_DIST_SQ: float = 640000.0 # 800^2
 
@@ -46,12 +47,14 @@ func _physics_process(delta: float) -> void:
 	var magnet_speed: float = target_player.get_magnet_strength() if target_player.has_method("get_magnet_strength") else 160.0
 
 	if distance <= pickup_radius:
+		_show_collection_pop()
 		collected.emit(xp_value)
-		queue_free()
+		set_physics_process(false) # Stop moving
 		return
 
-	if distance <= magnet_radius and distance > 0.001:
-		global_position += to_player.normalized() * magnet_speed * delta
+	if (forced_magnet or distance <= magnet_radius) and distance > 0.001:
+		var speed_mult: float = 1.62 if forced_magnet else 1.0
+		global_position += to_player.normalized() * magnet_speed * speed_mult * delta
 
 	if dist_sq < VISUAL_LOD_DIST_SQ:
 		visual_time += delta
@@ -71,6 +74,13 @@ func _physics_process(delta: float) -> void:
 			outline_sprite.position.y = 0.0
 		core_sprite.scale = core_base_scale
 		_update_ground_shadow(0.0)
+
+
+func _show_collection_pop() -> void:
+	var t: Tween = create_tween()
+	t.tween_property(self, "scale", Vector2(1.5, 1.5), 0.08)
+	t.parallel().tween_property(self, "modulate:a", 0.0, 0.08)
+	t.tween_callback(queue_free)
 
 
 func configure_drop(value: int, tier: String) -> void:
@@ -174,3 +184,11 @@ func _update_ground_shadow(bob: float) -> void:
 	ground_shadow.position = Vector2(0.0, 7.0)
 	ground_shadow.scale = Vector2(lerp(1.0, 0.9, t), lerp(0.58, 0.5, t))
 	ground_shadow.modulate.a = lerp(0.4, 0.3, t)
+
+
+func magnet_pulse_pull(_player_pos: Vector2) -> void:
+	forced_magnet = true
+	# Optional: small hop effect
+	var hop_tween: Tween = create_tween()
+	hop_tween.tween_property(self, "scale", Vector2(1.25, 1.25), 0.12)
+	hop_tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.12)

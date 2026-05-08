@@ -248,8 +248,10 @@ func _update_electric_impacts(delta: float) -> void:
 			var ring_scale: float = lerp(0.98, 1.08, pulse * 0.5)
 			telegraph_outer.scale = Vector2(ring_scale, ring_scale)
 			if telegraph_inner != null:
-				telegraph_inner.modulate.a = lerp(0.12, 0.32, pulse)
-				telegraph_inner.scale = Vector2(ring_scale * 1.02, ring_scale * 1.02)
+				# Fill progress visual
+				var fill_scale: float = progress * ring_scale
+				telegraph_inner.scale = Vector2(fill_scale, fill_scale)
+				telegraph_inner.modulate.a = lerp(0.12, 0.42, progress)
 			if telegraph_outline_red != null:
 				telegraph_outline_red.default_color = Color(0.58, 0.04, 0.04, clamp(0.22 + telegraph_outer.modulate.a, 0.2, 0.82))
 				telegraph_outline_red.scale = Vector2(ring_scale, ring_scale)

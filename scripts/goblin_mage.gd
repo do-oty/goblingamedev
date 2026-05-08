@@ -246,8 +246,10 @@ func _update_mage_impacts(delta: float) -> void:
 			var ring_scale: float = lerp(0.98, 1.08, pulse * 0.5)
 			telegraph_outer.scale = Vector2(ring_scale, ring_scale)
 			if telegraph_inner != null:
-				telegraph_inner.modulate.a = lerp(MAGE_TELEGRAPH_ALPHA_MIN * 0.8, MAGE_TELEGRAPH_ALPHA_MAX * 0.85, pulse)
-				telegraph_inner.scale = Vector2(ring_scale * 1.02, ring_scale * 1.02)
+				# Fill progress visual
+				var fill_scale: float = progress * ring_scale
+				telegraph_inner.scale = Vector2(fill_scale, fill_scale)
+				telegraph_inner.modulate.a = lerp(0.12, 0.45, progress)
 			if telegraph_outline_red != null:
 				telegraph_outline_red.default_color = Color(0.58, 0.04, 0.04, clamp(0.22 + alpha, 0.2, 0.82))
 				telegraph_outline_red.scale = Vector2(ring_scale, ring_scale)

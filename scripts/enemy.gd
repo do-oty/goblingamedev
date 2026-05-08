@@ -92,6 +92,7 @@ var elite_magic_particles: CPUParticles2D = null
 var elite_fx_phase: float = 0.0
 var blink_tp_vfx_scene: PackedScene = preload(BLINK_TP_VFX_SCENE_PATH)
 @export var brute_charge_start_smoke_vfx_scene: PackedScene
+var death_vfx_scene: PackedScene = preload("res://scenes/vfx/DashStartSmokeVfx.tscn")
 
 
 func _ready() -> void:
@@ -171,24 +172,40 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		if attack_anim_timer <= 0.0:
 			_play_walk_animation(horde_direction)
-		var horde_distance_to_player: float = global_position.distance_to(target_player.global_position)
-		if horde_distance_to_player > HORDE_DESPAWN_DISTANCE:
+	var dist_sq: float = global_position.distance_squared_to(target_player.global_position)
+	var contact_range_sq: float = _get_contact_range() * _get_contact_range()
+
+	if is_horde_runner:
+		horde_despawn_grace_timer = max(horde_despawn_grace_timer - delta, 0.0)
+		if horde_despawn_grace_timer <= 0.0 and _is_offscreen_from_player():
 			queue_free()
 			return
-		if horde_distance_to_player <= _get_contact_range() and contact_cooldown <= 0.0 and target_player.has_method("receive_damage"):
+		var horde_side: Vector2 = horde_direction.orthogonal()
+		var swarm_wave: float = sin((Time.get_ticks_msec() * 0.001 * horde_swarm_frequency) + horde_swarm_phase) * horde_swarm_amplitude
+		var horde_velocity: Vector2 = (horde_direction * HORDE_RUN_SPEED * elite_speed_multiplier) + (horde_side * swarm_wave)
+		if external_launch_timer > 0.0:
+			horde_velocity += external_launch_velocity
+			external_launch_velocity = external_launch_velocity.lerp(Vector2.ZERO, 7.0 * delta)
+		velocity = horde_velocity + knockback_velocity
+		move_and_slide()
+		if attack_anim_timer <= 0.0:
+			_play_walk_animation(horde_direction)
+		
+		if dist_sq > (HORDE_DESPAWN_DISTANCE * HORDE_DESPAWN_DISTANCE):
+			queue_free()
+			return
+		if dist_sq <= contact_range_sq and contact_cooldown <= 0.0 and target_player.has_method("receive_damage"):
 			target_player.call("receive_damage", _get_contact_damage())
 			if target_player.has_method("apply_launch_force"):
 				target_player.call("apply_launch_force", global_position, 300.0, 24.0, 0.22)
-			_push_nearby_enemies(global_position, 78.0, 250.0, 20.0, 0.2)
 			_on_elite_contact_hit()
 			_play_attack_animation(horde_direction)
 			contact_cooldown = _get_contact_cooldown()
 		return
 
 	if _is_brute_charging():
-		# Force lunge movement; bypass chase steering so charge is unmistakable.
-		var dist_to_target: float = global_position.distance_to(brute_charge_target_position)
-		if dist_to_target <= BRUTE_CHARGE_TARGET_REACHED_DISTANCE:
+		var dist_to_target_sq: float = global_position.distance_squared_to(brute_charge_target_position)
+		if dist_to_target_sq <= (BRUTE_CHARGE_TARGET_REACHED_DISTANCE * BRUTE_CHARGE_TARGET_REACHED_DISTANCE):
 			brute_is_charging = false
 			brute_recover_timer = BRUTE_RECOVER_DURATION
 			$AnimatedSprite2D.modulate = Color(0.95, 0.55, 0.55, 1.0)
@@ -200,9 +217,8 @@ func _physics_process(delta: float) -> void:
 				_play_brute_charge_animation(brute_charge_direction)
 		return
 
-	var to_player: Vector2 = target_player.global_position - global_position
-	var distance: float = to_player.length()
-	var direction: Vector2 = to_player.normalized() if distance > 0.001 else Vector2.ZERO
+	var distance: float = sqrt(dist_sq)
+	var direction: Vector2 = (target_player.global_position - global_position).normalized() if dist_sq > 1.0 else Vector2.ZERO
 	_update_archetype_behavior(delta, direction, distance)
 	if blink_mode:
 		_update_blink_teleport_logic(direction, distance)
@@ -211,34 +227,27 @@ func _physics_process(delta: float) -> void:
 
 	var move_direction: Vector2 = direction
 	var move_speed_multiplier: float = elite_speed_multiplier
-	if _should_hold_position():
+	if _should_hold_position() or _is_brute_charge_windup() or _is_brute_recovering():
 		move_direction = Vector2.ZERO
 		move_speed_multiplier = 0.0
 		knockback_velocity = Vector2.ZERO
-	elif _is_brute_charge_windup():
-		# Brute should visibly stop before a charge.
-		move_direction = Vector2.ZERO
-		move_speed_multiplier = 0.0
-		knockback_velocity = Vector2.ZERO
-	elif _is_brute_recovering():
-		move_direction = Vector2.ZERO
-		move_speed_multiplier = 0.0
-	elif _is_brute_charging():
-		# Force charge vector so chase/knockback can't override it.
-		move_direction = brute_charge_direction
-		move_speed_multiplier *= BRUTE_CHARGE_SPEED_MULTIPLIER
-		knockback_velocity = Vector2.ZERO
-	if _has_forced_velocity():
-		velocity = _get_forced_velocity()
-	else:
-		velocity = (move_direction * BASE_SPEED * move_speed_multiplier)
+	
+	velocity = (move_direction * BASE_SPEED * move_speed_multiplier)
 	if not (_is_brute_charge_windup() or _is_brute_charging()):
-			velocity += knockback_velocity
-	move_and_slide()
-	if attack_anim_timer <= 0.0 and not _is_brute_charge_windup():
-		_play_walk_animation(move_direction)
-
-	if not _disable_contact_damage() and distance <= _get_contact_range() and contact_cooldown <= 0.0 and target_player.has_method("receive_damage"):
+		velocity += knockback_velocity
+		
+	if velocity.length_squared() > 1.0:
+		move_and_slide()
+		
+	if dist_sq < 360000: # Within 600px
+		_update_ground_shadow()
+		if attack_anim_timer <= 0.0:
+			if is_horde_runner:
+				_play_walk_animation(horde_direction)
+			else:
+				_play_walk_animation(move_direction)
+	
+	if not _disable_contact_damage() and dist_sq <= contact_range_sq and contact_cooldown <= 0.0 and target_player.has_method("receive_damage"):
 		target_player.call("receive_damage", _get_contact_damage())
 		_on_elite_contact_hit()
 		_play_attack_animation(direction)
@@ -250,6 +259,10 @@ func take_damage(amount: int, source_position: Vector2 = Vector2.ZERO, knockback
 		amount = int(round(float(amount) * BRUTE_RECOVER_DAMAGE_TAKEN_MULTIPLIER))
 	current_health = max(current_health - amount, 0)
 	_show_hit_feedback(amount)
+	if amount >= 15:
+		GameState.hit_stop(0.06, 0.02)
+	elif amount >= 5:
+		GameState.hit_stop(0.03, 0.05)
 	if knockback_force > 0.0 and source_position != Vector2.ZERO:
 		# Don't let knockback cancel brute windup/charge behavior.
 		if not (brute_mode and (_is_brute_charge_windup() or _is_brute_charging())):
@@ -260,8 +273,23 @@ func take_damage(amount: int, source_position: Vector2 = Vector2.ZERO, knockback
 	if current_health <= 0:
 		if is_elite:
 			_spawn_elite_death_effect()
+		_spawn_death_vfx()
 		defeated.emit(global_position, xp_reward, xp_tier)
 		queue_free()
+
+
+func _spawn_death_vfx() -> void:
+	if death_vfx_scene == null or get_parent() == null:
+		return
+	var vfx: Node2D = death_vfx_scene.instantiate() as Node2D
+	vfx.global_position = global_position
+	vfx.scale = Vector2(0.85, 0.85)
+	if is_elite:
+		vfx.scale *= 1.5
+		vfx.modulate = Color(1.2, 1.2, 1.5, 1.0)
+	get_parent().add_child(vfx)
+	if vfx.has_method("play_smoke"):
+		vfx.call("play_smoke")
 
 
 func _play_walk_animation(direction: Vector2) -> void:
@@ -324,9 +352,14 @@ func _show_hit_feedback(damage: int) -> void:
 	label_settings.outline_color = Color(0.0, 0.0, 0.0, 0.96)
 	damage_label.label_settings = label_settings
 	add_child(damage_label)
+	
+	var drift_x: float = randf_range(-25.0, 25.0)
+	var drift_y: float = randf_range(-45.0, -65.0)
 	var dmg_tween: Tween = create_tween()
-	dmg_tween.tween_property(damage_label, "position:y", -52.0, 0.24)
-	dmg_tween.parallel().tween_property(damage_label, "modulate:a", 0.0, 0.24)
+	dmg_tween.tween_property(damage_label, "position", damage_label.position + Vector2(drift_x, drift_y), 0.32)
+	dmg_tween.parallel().tween_property(damage_label, "modulate:a", 0.0, 0.32)
+	dmg_tween.parallel().tween_property(damage_label, "scale", Vector2(1.2, 1.2), 0.1)
+	dmg_tween.tween_property(damage_label, "scale", Vector2(1.0, 1.0), 0.1)
 	dmg_tween.tween_callback(damage_label.queue_free)
 
 func _play_attack_animation(direction: Vector2) -> void:
@@ -345,12 +378,10 @@ func configure_as_horde_runner(direction: Vector2) -> void:
 	is_horde_runner = true
 	horde_direction = direction.normalized() if direction != Vector2.ZERO else Vector2.RIGHT
 	horde_despawn_grace_timer = 10.0
-	# Hordes ignore body collisions with each other to avoid expensive clump stalls.
-	var collision: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
-	if collision != null:
-		collision.set_deferred("disabled", true)
-	collision_layer = 0
-	collision_mask = 0
+	# Hordes ignore body collisions with each other to avoid expensive clump stalls,
+	# but we keep the shape enabled so projectiles can still hit them.
+	collision_layer = 2 # Stay on enemy layer
+	collision_mask = 0  # But don't collide with anything
 	# Use per-unit lateral wave so they still read as a flowing swarm.
 	horde_swarm_phase = randf() * TAU
 	horde_swarm_amplitude = randf_range(10.0, 34.0)
