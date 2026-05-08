@@ -4,18 +4,6 @@
 [ext_resource type="Texture2D" uid="uid://ccwia5yk1xskb" path="res://assets/ui/megaUisheet.png" id="2_tsmiw"]
 [ext_resource type="Texture2D" uid="uid://dl43n7beo8t18" path="res://assets/ui/cooldown.png" id="3_ykvjm"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_8xpbk"]
-atlas = ExtResource("2_tsmiw")
-region = Rect2(772.7278, -0.018096924, 52.727356, 67.059555)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_f3ebr"]
-atlas = ExtResource("2_tsmiw")
-region = Rect2(452.8854, 68.81835, 55.59735, 55.59735)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_1ffoq"]
-atlas = ExtResource("2_tsmiw")
-region = Rect2(513.00055, -0.9090195, 63.63452, 65.11082)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_ykvjm"]
 atlas = ExtResource("2_tsmiw")
 region = Rect2(642.169, 3538.15, 59.418274, 48.34424)
@@ -116,6 +104,12 @@ offset_top = -190.0
 offset_right = 420.0
 offset_bottom = 190.0
 
+[node name="Background" type="TextureRect" parent="GameOverPanel" unique_id=349358857]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
 [node name="Margin" type="MarginContainer" parent="GameOverPanel" unique_id=1454927750]
 layout_mode = 2
 theme_override_constants/margin_left = 24
@@ -146,11 +140,11 @@ theme_override_constants/separation = 10
 [node name="Title" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=2010870751]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "Run Over"
+text = "YOU DIED"
 
 [node name="Description" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=613759810]
 layout_mode = 2
-text = "Try again?"
+text = "The forest claimed your soul. Try again?"
 autowrap_mode = 3
 
 [node name="SummaryText" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=1119619598]
@@ -169,14 +163,14 @@ layout_mode = 2
 focus_mode = 0
 text = "Retry"
 
-[node name="RetryIcon" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/RetryButton" unique_id=2132673007]
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 0
-offset_left = 8.0
-offset_top = 19.0
-offset_right = 26.0
-offset_bottom = 37.0
-texture = SubResource("AtlasTexture_8xpbk")
+[node name="Background" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/RetryButton" unique_id=859220508]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
@@ -186,14 +180,14 @@ layout_mode = 2
 focus_mode = 0
 text = "Return To Dungeon"
 
-[node name="DungeonIcon" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/DungeonButton" unique_id=1705377324]
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 0
-offset_left = 8.0
-offset_top = 19.0
-offset_right = 26.0
-offset_bottom = 37.0
-texture = SubResource("AtlasTexture_f3ebr")
+[node name="Background" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/DungeonButton" unique_id=823488377]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
@@ -203,14 +197,14 @@ layout_mode = 2
 focus_mode = 0
 text = "Back To Menu"
 
-[node name="MenuIcon" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/MenuButton" unique_id=822349996]
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 0
-offset_left = 8.0
-offset_top = 19.0
-offset_right = 26.0
-offset_bottom = 37.0
-texture = SubResource("AtlasTexture_1ffoq")
+[node name="Background" type="TextureRect" parent="GameOverPanel/Margin/RootRow/ActionsVBox/MenuButton" unique_id=902566506]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
@@ -226,6 +220,12 @@ offset_left = -300.0
 offset_top = -180.0
 offset_right = 300.0
 offset_bottom = 180.0
+
+[node name="Background" type="TextureRect" parent="LevelUpPanel" unique_id=1018130908]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Margin" type="MarginContainer" parent="LevelUpPanel" unique_id=1657961338]
 layout_mode = 2
@@ -348,6 +348,17 @@ grow_horizontal = 2
 value = 100.0
 show_percentage = false
 
+[node name="Cover" type="TextureRect" parent="SpriteHud/TopBars/HpSpriteBar" unique_id=16426890]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
 [node name="XpSpriteBar" type="ProgressBar" parent="SpriteHud/TopBars" unique_id=432707044]
 layout_mode = 0
 anchor_right = 1.0
@@ -356,6 +367,17 @@ offset_bottom = 28.0
 grow_horizontal = 2
 max_value = 5.0
 show_percentage = false
+
+[node name="Cover" type="TextureRect" parent="SpriteHud/TopBars/XpSpriteBar" unique_id=1070343232]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="DebugToggleButtonSprite" type="Button" parent="SpriteHud" unique_id=191834220]
 custom_minimum_size = Vector2(112, 34)
@@ -516,10 +538,16 @@ stretch_mode = 5
 visible = false
 z_index = 520
 layout_mode = 0
-offset_left = 60.0
+offset_left = 14.0
 offset_top = 132.0
-offset_right = 520.0
+offset_right = 314.0
 offset_bottom = 300.0
+
+[node name="Background" type="TextureRect" parent="SpriteHud/ItemsModal" unique_id=196305442]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Margin" type="MarginContainer" parent="SpriteHud/ItemsModal" unique_id=2056967233]
 layout_mode = 2
@@ -528,75 +556,34 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="ItemsList" type="VBoxContainer" parent="SpriteHud/ItemsModal/Margin" unique_id=167915216]
+[node name="ContentVBox" type="VBoxContainer" parent="SpriteHud/ItemsModal/Margin" unique_id=975112003]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ItemDetailLabel" type="Label" parent="SpriteHud/ItemsModal/Margin" unique_id=1411169270]
+[node name="ItemsList" type="VBoxContainer" parent="SpriteHud/ItemsModal/Margin/ContentVBox" unique_id=167915216]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ItemDetailLabel" type="Label" parent="SpriteHud/ItemsModal/Margin/ContentVBox" unique_id=1411169270]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Tap an item to view effects."
-autowrap_mode = 3
-
-[node name="TalentsToggleButton" type="Button" parent="SpriteHud" unique_id=1588452042]
-custom_minimum_size = Vector2(112, 36)
-layout_mode = 0
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -56.0
-offset_top = -46.0
-offset_right = 56.0
-offset_bottom = -10.0
-tooltip_text = "Talents"
-focus_mode = 0
-text = "Talents"
-
-[node name="Icon" type="TextureRect" parent="SpriteHud/TalentsToggleButton" unique_id=1405079253]
-custom_minimum_size = Vector2(14, 14)
-layout_mode = 0
-offset_left = 6.0
-offset_top = 7.0
-offset_right = 20.0
-offset_bottom = 21.0
-expand_mode = 1
-stretch_mode = 5
-
-[node name="TalentsModal" type="PanelContainer" parent="SpriteHud" unique_id=443453218]
-visible = false
-z_index = 530
-layout_mode = 0
-offset_left = 60.0
-offset_top = 308.0
-offset_right = 520.0
-offset_bottom = 476.0
-
-[node name="Margin" type="MarginContainer" parent="SpriteHud/TalentsModal" unique_id=433823922]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
-
-[node name="TalentsList" type="VBoxContainer" parent="SpriteHud/TalentsModal/Margin" unique_id=1141740153]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="TalentDetailLabel" type="Label" parent="SpriteHud/TalentsModal/Margin" unique_id=2128083554]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "No active talents yet."
 autowrap_mode = 3
 
 [node name="StatsModalLeft" type="PanelContainer" parent="SpriteHud" unique_id=1659641653]
 visible = false
 z_index = 540
 layout_mode = 0
-offset_left = 60.0
-offset_top = 484.0
-offset_right = 520.0
-offset_bottom = 652.0
+offset_left = 14.0
+offset_top = 310.0
+offset_right = 314.0
+offset_bottom = 478.0
+
+[node name="Background" type="TextureRect" parent="SpriteHud/StatsModalLeft" unique_id=1321490484]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Margin" type="MarginContainer" parent="SpriteHud/StatsModalLeft" unique_id=350925096]
 layout_mode = 2
@@ -609,6 +596,7 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 text = "Stats"
+horizontal_alignment = 0
 autowrap_mode = 3
 
 [node name="TopRightFrame" type="TextureRect" parent="SpriteHud" unique_id=806951418]
@@ -657,6 +645,12 @@ offset_right = 260.0
 offset_bottom = 95.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="Background" type="TextureRect" parent="SpriteHud/StatsModal" unique_id=1538919818]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Margin" type="MarginContainer" parent="SpriteHud/StatsModal" unique_id=526364368]
 layout_mode = 2

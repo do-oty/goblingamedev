@@ -15,8 +15,10 @@ extends Control
 @onready var skip_control: Control = $SequenceControl/SkipControl
 @onready var sequence_bg: ColorRect = $SequenceControl/Background
 
-@onready var menu_video_player: VideoStreamPlayer = $MenuVideoPlayer
-@onready var menu_music_player: AudioStreamPlayer = $MenuMusicPlayer
+@onready var menu_video_player: VideoStreamPlayer = $MenuScreen/MenuVideoPlayer
+@onready var menu_music_player: AudioStreamPlayer = $MenuScreen/MenuMusicPlayer
+@onready var start_button: Button = $MenuScreen/CenterContainer/Panel/PanelMargin/VBox/StartButton
+@onready var settings_button: Button = $MenuScreen/CenterContainer/Panel/PanelMargin/VBox/SettingsButton
 
 func _ready() -> void:
 	menu_screen.visible = false # Hide initially
@@ -24,6 +26,9 @@ func _ready() -> void:
 	vibration_check.button_pressed = true
 	notifications_check.button_pressed = false
 	_update_settings_summary()
+	
+	# Button Squish Effect
+	_apply_squish_recursively(self)
 	
 	# Setup sequence nodes
 	splash_rect.texture = load("res://assets/cutscenes/ubihard.png")
@@ -102,16 +107,18 @@ func _end_sequence() -> void:
 	if cutscene_player:
 		cutscene_player.stop()
 		cutscene_player.stream = null # Release stream to stop audio for sure
-	sequence_control.visible = false
+	# Don't hide sequence_control instantly, keep it as background during transition!
 	
 	# Now show and slide in the menu!
 	menu_screen.visible = true
 	
 	# Play background video and music!
-	if menu_video_player:
+	if menu_video_player and menu_video_player.stream:
 		menu_video_player.play()
-	if menu_music_player:
+	if menu_music_player and menu_music_player.stream:
+		menu_music_player.volume_db = -20.0
 		menu_music_player.play()
+		create_tween().tween_property(menu_music_player, "volume_db", 0.0, 2.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	
 	var screen_width = get_viewport_rect().size.x
 	menu_screen.offset_left = screen_width
@@ -122,6 +129,13 @@ func _end_sequence() -> void:
 	var t = create_tween()
 	t.tween_property(menu_screen, "offset_left", 0.0, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	t.parallel().tween_property(menu_screen, "offset_right", 0.0, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	t.parallel().tween_property(sequence_control, "offset_left", -screen_width, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	t.parallel().tween_property(sequence_control, "offset_right", -screen_width, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	
+	# Hide sequence control after transition completes!
+	t.tween_callback(func():
+		sequence_control.visible = false
+	)
 
 
 	
@@ -155,6 +169,11 @@ func _on_close_settings_button_pressed() -> void:
 
 
 func _on_music_slider_value_changed(_value: float) -> void:
+	if menu_music_player:
+		if _value == 0:
+			menu_music_player.volume_db = -80.0
+		else:
+			menu_music_player.volume_db = linear_to_db(_value / 100.0)
 	_update_settings_summary()
 
 
@@ -177,3 +196,19 @@ func _update_settings_summary() -> void:
 		"On" if vibration_check.button_pressed else "Off",
 		"On" if notifications_check.button_pressed else "Off"
 	]
+
+
+func _apply_squish_recursively(node: Node) -> void:
+	if node is Button:
+		if not node.button_down.is_connected(func(): pass): # Avoid duplicate connections if called again
+			node.button_down.connect(func():
+				node.pivot_offset = node.size / 2
+				var t = node.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+				t.tween_property(node, "scale", Vector2(0.95, 0.95), 0.05)
+			)
+			node.button_up.connect(func():
+				var t = node.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+				t.tween_property(node, "scale", Vector2(1.0, 1.0), 0.05)
+			)
+	for child in node.get_children():
+		_apply_squish_recursively(child)

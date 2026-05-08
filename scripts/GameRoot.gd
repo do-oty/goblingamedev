@@ -72,20 +72,7 @@ const DEBUG_KING_EXTRA_SCALE: float = 1.2
 @onready var sprite_hud_xp_label: Label = $"CanvasLayer/HUD/SpriteHud/TopLeftStack/XpFrame/XpLabel"
 @onready var sprite_hud_status_label: Label = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatusFrame/StatusLabel") as Label
 @onready var sprite_stats_toggle_button: Button = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsToggleButton") as Button
-@onready var sprite_stats_modal: PanelContainer = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsModal") as PanelContainer
-@onready var sprite_stats_text_label: Label = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsModal/Margin/StatsText") as Label
-@onready var horde_warning_label: Label = $"CanvasLayer/HUD/HordeWarning"
-@onready var brute_charge_warning_label: Label = $"CanvasLayer/HUD/BruteChargeWarning"
-@onready var game_over_panel: PanelContainer = $"CanvasLayer/HUD/GameOverPanel"
-@onready var game_over_title: Label = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox/Title"
-@onready var game_over_desc: Label = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox/Description"
-@onready var game_over_summary_text: Label = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox/SummaryText"
-@onready var level_up_panel: PanelContainer = $"CanvasLayer/HUD/LevelUpPanel"
-@onready var level_up_title: Label = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/Title"
-@onready var level_up_subtitle: Label = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/SubTitle"
-@onready var upgrade_button_1: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton1"
-@onready var upgrade_button_2: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton2"
-@onready var upgrade_button_3: Button = $"CanvasLayer/HUD/LevelUpPanel/Margin/VBox/UpgradeButton3"
+
 @onready var debug_toggle_button: Button = $"CanvasLayer/HUD/SpriteHud/DebugToggleButtonSprite"
 @onready var debug_panel: PanelContainer = $"CanvasLayer/HUD/DebugPanel"
 @onready var debug_skip_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSkipButton"
@@ -107,6 +94,8 @@ const DEBUG_KING_EXTRA_SCALE: float = 1.2
 @onready var debug_level_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugLevelButton"
 @onready var debug_heal_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHealButton"
 @onready var debug_stats_label: Label = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugStatsLabel"
+@onready var horde_warning_label: Label = $"CanvasLayer/HUD/HordeWarning"
+@onready var brute_charge_warning_label: Label = $"CanvasLayer/HUD/BruteChargeWarning"
 
 var enemy_scene: PackedScene = preload("res://assets/characters/enemy.tscn")
 var enemy_scene_goblin_sword: PackedScene = preload("res://assets/characters/goblinSword.tscn")
@@ -146,9 +135,7 @@ var active_boss_max_hp: int = 1
 var boss_bar_host: MarginContainer = null
 var boss_bar_fill: Control = null
 var boss_bar_title: Label = null
-var pause_menu_panel: PanelContainer = null
-var pause_return_lobby_button: Button = null
-var pause_return_menu_button: Button = null
+
 
 
 
@@ -160,18 +147,31 @@ func _ready() -> void:
 	run_coins = 0
 	run_damage_taken = 0
 	last_health_sample = -1
-	if global_hud != null and global_hud.has_method("set_ui_mode"):
-		global_hud.call("set_ui_mode", "combat")
+	if global_hud != null:
+		if global_hud.has_method("set_ui_mode"):
+			global_hud.call("set_ui_mode", "combat")
+		if global_hud.has_signal("return_to_lobby_requested"):
+			global_hud.return_to_lobby_requested.connect(_on_pause_return_lobby_pressed)
+		if global_hud.has_signal("return_to_menu_requested"):
+			global_hud.return_to_menu_requested.connect(_on_pause_return_menu_pressed)
 	player.add_to_group("player")
 	player.health_changed.connect(_on_player_health_changed)
 	player.died.connect(_on_player_died)
 	player.sword_level_changed.connect(_on_sword_level_changed)
 	item_pool = ItemCatalog.get_item_pool()
 	talent_pool = ItemCatalog.get_talent_pool()
-	game_over_panel.visible = false
-	level_up_panel.visible = false
-	game_over_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	level_up_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	
+	# Remove unwanted UI nodes
+	var hud_node = get_node_or_null("CanvasLayer/HUD")
+	if hud_node:
+		var dialogue = hud_node.get_node_or_null("DialoguePanel")
+		if dialogue: dialogue.queue_free()
+		var level_up = hud_node.get_node_or_null("LevelUpPanel")
+		if level_up: level_up.queue_free()
+		var game_over = hud_node.get_node_or_null("GameOverPanel")
+		if game_over: game_over.queue_free()
+
+
 	debug_skip_button.visible = true
 	debug_horde_button.visible = true
 	debug_elite_button.visible = true
@@ -202,7 +202,6 @@ func _ready() -> void:
 	_ensure_debug_controls_clickable()
 	_make_debug_panel_overlay()
 	_ensure_boss_bar_ui()
-	_ensure_pause_menu_ui()
 	_setup_hud_mode()
 	if xp_bar != null:
 		xp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -229,45 +228,15 @@ func _ready() -> void:
 	enemies_root.z_index = 2
 	_ensure_runtime_lighting()
 	# Style and Center the modals
-	for p in [level_up_panel, game_over_panel]:
-		p.set_anchors_preset(Control.PRESET_CENTER)
-		p.anchor_left = 0.5
-		p.anchor_top = 0.5
-		p.anchor_right = 0.5
-		p.anchor_bottom = 0.5
-		p.grow_horizontal = Control.GROW_DIRECTION_BOTH
-		p.grow_vertical = Control.GROW_DIRECTION_BOTH
-		_style_modal_panel(p)
 
-	_ensure_pause_menu_ui()
-	_style_modal_panel(pause_menu_panel)
-	
-	# Rework level up container to horizontal
-	var container = level_up_panel.get_node("Margin/VBox")
-	var hbox = HBoxContainer.new()
-	hbox.name = "OptionsHBox"
-	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 45)
-	container.add_child(hbox)
-	
-	for btn in [upgrade_button_1, upgrade_button_2, upgrade_button_3]:
-		btn.get_parent().remove_child(btn)
-		hbox.add_child(btn)
-		btn.custom_minimum_size = Vector2(220, 280)
-		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		btn.add_theme_font_size_override("font_size", 16)
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.mouse_entered.connect(func(): btn.modulate = Color(1.3, 1.3, 1.1))
-		btn.mouse_exited.connect(func(): btn.modulate = Color.WHITE)
-		# Prepare for sprites: Add a TextureRect
-		var tex := TextureRect.new()
-		tex.name = "Icon"
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.custom_minimum_size = Vector2(64, 64)
-		btn.add_child(tex)
-	horde_warning_label.visible = false
-	brute_charge_warning_label.visible = false
+
+
+
+
+
+
+
+
 	_on_player_health_changed(player.current_health, player.max_health)
 	_on_sword_level_changed(player.sword_level, player.sword_max_level)
 	_update_hud()
@@ -334,8 +303,7 @@ func _setup_hud_mode() -> void:
 func _ensure_debug_connections() -> void:
 	if not debug_toggle_button.pressed.is_connected(_on_debug_toggle_button_pressed):
 		debug_toggle_button.pressed.connect(_on_debug_toggle_button_pressed)
-	if sprite_stats_toggle_button != null and not sprite_stats_toggle_button.pressed.is_connected(_on_stats_toggle_button_pressed):
-		sprite_stats_toggle_button.pressed.connect(_on_stats_toggle_button_pressed)
+
 	if not debug_skip_button.pressed.is_connected(_on_debug_skip_button_pressed):
 		debug_skip_button.pressed.connect(_on_debug_skip_button_pressed)
 	if not debug_horde_button.pressed.is_connected(_on_debug_horde_button_pressed):
@@ -398,21 +366,8 @@ func _ensure_debug_king_button() -> void:
 
 
 func _ensure_panel_connections() -> void:
-	if not upgrade_button_1.pressed.is_connected(_on_upgrade_button_1_pressed):
-		upgrade_button_1.pressed.connect(_on_upgrade_button_1_pressed)
-	if not upgrade_button_2.pressed.is_connected(_on_upgrade_button_2_pressed):
-		upgrade_button_2.pressed.connect(_on_upgrade_button_2_pressed)
-	if not upgrade_button_3.pressed.is_connected(_on_upgrade_button_3_pressed):
-		upgrade_button_3.pressed.connect(_on_upgrade_button_3_pressed)
-	var retry_button: Button = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/ActionsVBox/RetryButton"
-	var dungeon_button: Button = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/ActionsVBox/DungeonButton"
-	var menu_button: Button = $"CanvasLayer/HUD/GameOverPanel/Margin/RootRow/ActionsVBox/MenuButton"
-	if retry_button != null and not retry_button.pressed.is_connected(_on_retry_button_pressed):
-		retry_button.pressed.connect(_on_retry_button_pressed)
-	if dungeon_button != null and not dungeon_button.pressed.is_connected(_on_return_to_dungeon_button_pressed):
-		dungeon_button.pressed.connect(_on_return_to_dungeon_button_pressed)
-	if menu_button != null and not menu_button.pressed.is_connected(_on_menu_button_pressed):
-		menu_button.pressed.connect(_on_menu_button_pressed)
+	pass
+
 
 
 func _ensure_debug_controls_clickable() -> void:
@@ -682,23 +637,20 @@ func _update_hud() -> void:
 	var level_text: String = "Lv %d  XP %d/%d  Coins %d" % [current_level, current_xp, xp_to_next_level, GameState.get_coins()]
 	var hp_text: String = "HP: %d / %d" % [player.current_health, player.max_health]
 	var status_text: String = "Sword stacks to Lv8. Milestones: Lv5 = +1 slash, Lv8 = +2 slashes."
-
-	if time_label != null:
-		time_label.text = remaining_time_text
-	if enemy_count_label != null:
-		enemy_count_label.text = enemy_text
-	if level_label != null:
-		level_label.text = level_text
-	if hp_label != null:
-		hp_label.text = hp_text
-	if xp_bar != null:
-		xp_bar.max_value = float(xp_to_next_level)
-		xp_bar.value = float(current_xp)
-	if hp_bar != null:
-		hp_bar.max_value = float(player.max_health)
-		hp_bar.value = float(player.current_health)
-	if status_label != null:
-		status_label.text = status_text
+	
+	var data = {
+		"time": remaining_time_text,
+		"enemy_count": enemy_text,
+		"level": level_text,
+		"hp_text": hp_text,
+		"xp_max": float(xp_to_next_level),
+		"xp_current": float(current_xp),
+		"hp_max": float(player.max_health),
+		"hp_current": float(player.current_health)
+	}
+	
+	if global_hud:
+		global_hud.update_hud_data(data)
 	if Time.get_ticks_msec() < debug_status_until_ms:
 		status_text = debug_status_text
 		if status_label != null:
@@ -846,10 +798,7 @@ func _update_sprite_hud(
 			level_chip_text,
 			run_damage_taken
 		)
-	if sprite_hud_status_label != null:
-		sprite_hud_status_label.text = "%s | %s" % [enemy_text, status_text]
-	if sprite_stats_text_label != null:
-		sprite_stats_text_label.text = stats_text
+
 	_update_boss_bar()
 
 
@@ -882,66 +831,7 @@ func _ensure_boss_bar_ui() -> void:
 	vbox.add_child(boss_bar_fill)
 
 
-func _ensure_pause_menu_ui() -> void:
-	if pause_menu_panel != null:
-		return
-	var cl: CanvasLayer = $CanvasLayer as CanvasLayer
-	pause_menu_panel = PanelContainer.new()
-	pause_menu_panel.name = "PauseMenuPanel"
-	pause_menu_panel.visible = false
-	pause_menu_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	pause_menu_panel.z_index = 260
-	
-	# Center alignment fix
-	pause_menu_panel.set_anchors_preset(Control.PRESET_CENTER)
-	pause_menu_panel.anchor_left = 0.5
-	pause_menu_panel.anchor_top = 0.5
-	pause_menu_panel.anchor_right = 0.5
-	pause_menu_panel.anchor_bottom = 0.5
-	pause_menu_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	pause_menu_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	
-	pause_menu_panel.custom_minimum_size = Vector2(340, 220)
-	cl.add_child(pause_menu_panel)
 
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	pause_menu_panel.add_child(margin)
-
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 12)
-	margin.add_child(vbox)
-
-	var title: Label = Label.new()
-	title.text = "PAUSED"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(title)
-
-	var resume_btn: Button = Button.new()
-	resume_btn.text = "Return to Game"
-	resume_btn.custom_minimum_size.y = 48
-	resume_btn.pressed.connect(_toggle_pause_menu)
-	vbox.add_child(resume_btn)
-
-	pause_return_lobby_button = Button.new()
-	pause_return_lobby_button.text = "Return to Lobby"
-	pause_return_lobby_button.custom_minimum_size.y = 42
-	pause_return_lobby_button.pressed.connect(_on_pause_return_lobby_pressed)
-	vbox.add_child(pause_return_lobby_button)
-
-	pause_return_menu_button = Button.new()
-	pause_return_menu_button.text = "Return to Main Menu"
-	pause_return_menu_button.custom_minimum_size.y = 42
-	pause_return_menu_button.pressed.connect(_on_pause_return_menu_pressed)
-	vbox.add_child(pause_return_menu_button)
-	_style_web_button(resume_btn, true)
-	_style_web_button(pause_return_lobby_button)
-	_style_web_button(pause_return_menu_button)
 
 
 func _get_card_style(is_hover: bool = false) -> StyleBoxFlat:
@@ -1211,10 +1101,7 @@ func _on_sword_level_changed(level: int, max_level: int) -> void:
 		weapon_label.text = "Sword Slash Lv %d/%d" % [level, max_level]
 
 
-func _on_stats_toggle_button_pressed() -> void:
-	if sprite_stats_modal == null:
-		return
-	sprite_stats_modal.visible = not sprite_stats_modal.visible
+
 
 
 func _on_player_died() -> void:
@@ -1227,20 +1114,6 @@ func _finish_run(survived_to_end: bool) -> void:
 
 	run_is_over = true
 	active_boss_unit = null
-	if pause_menu_panel != null:
-		pause_menu_panel.visible = false
-	if boss_bar_host != null:
-		boss_bar_host.visible = false
-	get_tree().paused = true
-	game_over_panel.visible = true
-	game_over_panel.move_to_front()
-
-	if survived_to_end:
-		game_over_title.text = "Run Complete"
-		game_over_desc.text = "You survived 15:00. Great baseline loop."
-	else:
-		game_over_title.text = "You Died"
-		game_over_desc.text = "Try again and push your survival build farther."
 
 	var elapsed_text: String = _format_time(run_time_seconds)
 	var summary_data: Dictionary = {
@@ -1251,14 +1124,13 @@ func _finish_run(survived_to_end: bool) -> void:
 		"damage_taken": run_damage_taken
 	}
 	GameState.record_last_run_summary(summary_data)
-	if game_over_summary_text != null:
-		game_over_summary_text.text = "Result: %s\nLevel Reached: %d\nTime Survived: %s\nRun Coins: %d\nDamage Taken: %d" % [
-			summary_data.get("result", "Run"),
-			current_level,
-			elapsed_text,
-			run_coins,
-			run_damage_taken
-		]
+
+	if boss_bar_host != null:
+		boss_bar_host.visible = false
+	get_tree().paused = true
+	if global_hud:
+		global_hud.show_game_over(survived_to_end)
+
 
 
 func _on_retry_button_pressed() -> void:
@@ -1288,24 +1160,17 @@ func _is_pause_menu_toggle_event(event: InputEvent) -> bool:
 
 
 func _toggle_pause_menu() -> void:
-	if run_is_over or level_up_panel.visible:
+	if run_is_over:
 		return
-	if pause_menu_panel == null:
-		return
-	var opening: bool = not pause_menu_panel.visible
-	pause_menu_panel.visible = opening
-	if opening:
-		pause_menu_panel.move_to_front()
-	get_tree().paused = opening
+	if global_hud:
+		global_hud.toggle_pause_menu()
 
 
 func _on_pause_return_lobby_pressed() -> void:
-	pause_menu_panel.visible = false
 	_on_return_to_dungeon_button_pressed()
 
 
 func _on_pause_return_menu_pressed() -> void:
-	pause_menu_panel.visible = false
 	_on_menu_button_pressed()
 
 
@@ -1343,10 +1208,12 @@ func _on_xp_orb_collected(xp_value: int) -> void:
 			"is_talent": _is_talent_level(current_level)
 		})
 
-	if pending_level_queue.size() > 0 and not level_up_panel.visible:
+	if pending_level_queue.size() > 0:
 		_show_level_up_panel()
 
 	_update_hud()
+
+
 
 
 func _try_spawn_pickup_drop(world_position: Vector2) -> void:
@@ -1398,65 +1265,20 @@ func _ensure_runtime_lighting() -> void:
 
 
 func _show_level_up_panel() -> void:
-	if run_is_over:
-		return
-	if pending_level_queue.is_empty():
-		return
-
 	queued_upgrades = _build_upgrade_choices()
-	var level_entry: Dictionary = pending_level_queue[0]
-	var queued_level: int = level_entry.get("level", current_level)
-	var is_talent_pick: bool = level_entry.get("is_talent", false)
-	if is_talent_pick:
-		level_up_title.text = "Talent Upgrade"
-		level_up_subtitle.text = "Level %d milestone - choose 1 talent" % queued_level
-	else:
-		level_up_title.text = "Item Upgrade"
-		level_up_subtitle.text = "Choose 1 item"
-	var tex1 = upgrade_button_1.get_node_or_null("Icon")
-	if tex1:
-		var icon = queued_upgrades[0].get("icon", null)
-		if icon is Texture2D:
-			tex1.texture = icon
-		elif icon is String and icon != "":
-			tex1.texture = load(icon)
-			
-	var tex2 = upgrade_button_2.get_node_or_null("Icon")
-	if tex2:
-		var icon = queued_upgrades[1].get("icon", null)
-		if icon is Texture2D:
-			tex2.texture = icon
-		elif icon is String and icon != "":
-			tex2.texture = load(icon)
-			
-	var tex3 = upgrade_button_3.get_node_or_null("Icon")
-	if tex3:
-		var icon = queued_upgrades[2].get("icon", null)
-		if icon is Texture2D:
-			tex3.texture = icon
-		elif icon is String and icon != "":
-			tex3.texture = load(icon)
+	if global_hud != null:
+		global_hud.show_level_up(queued_upgrades)
 
-	upgrade_button_1.text = queued_upgrades[0].get("label", "Upgrade 1")
-	upgrade_button_2.text = queued_upgrades[1].get("label", "Upgrade 2")
-	upgrade_button_3.text = queued_upgrades[2].get("label", "Upgrade 3")
-	level_up_panel.visible = true
-	level_up_panel.move_to_front()
+
+			
+
+
+
+
 	
-	# Celebration flash
-	var flash := ColorRect.new()
-	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
-	flash.color = Color(1, 1, 1, 0.4)
-	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	$CanvasLayer.add_child(flash)
-	
-	# Ensure cleanup
-	var splash = flash
-	var t := create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	t.tween_property(splash, "modulate:a", 0.0, 0.3)
-	t.tween_callback(splash.queue_free)
-	
-	get_tree().paused = true
+
+
+
 
 
 func _build_upgrade_choices() -> Array[Dictionary]:
@@ -1521,14 +1343,9 @@ func _apply_upgrade(choice_index: int) -> void:
 	else:
 		_apply_item_choice(id)
 
-	if pending_level_queue.size() > 0:
-		pending_level_queue.remove_at(0)
+	pending_level_queue.clear()
 	queued_upgrades.clear()
-	level_up_panel.visible = false
 	get_tree().paused = false
-
-	if pending_level_queue.size() > 0:
-		_show_level_up_panel()
 
 	_update_hud()
 
