@@ -2,7 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://dgot1tc7up8r2" path="res://assets/characters/enemy.png" id="1_1a4b3"]
 [ext_resource type="Script" uid="uid://dhec2weptapkq" path="res://scripts/enemy.gd" id="1_nbma8"]
-[ext_resource type="PackedScene" path="res://scenes/vfx/BruteChargeStartSmokeVfx.tscn" id="2_brute_smoke"]
+[ext_resource type="PackedScene" uid="uid://dybuwfdmbjnng" path="res://scenes/vfx/BruteChargeStartSmokeVfx.tscn" id="2_brute_smoke"]
+[ext_resource type="AudioStream" uid="uid://c1qfk0um7f3hd" path="res://assets/sfx/goblin_attack.mp3" id="2_mfhox"]
+[ext_resource type="AudioStream" uid="uid://de6ndvjaadnmy" path="res://assets/sfx/goblin_hurt.mp3" id="2_vadtu"]
+[ext_resource type="AudioStream" uid="uid://c3g3l43rhkft2" path="res://assets/sfx/goblin_dead.mp3" id="3_mfhox"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fxwma"]
 atlas = ExtResource("1_1a4b3")
@@ -226,6 +229,9 @@ height = 20.0
 
 [node name="enemy" type="CharacterBody2D" unique_id=1491725651]
 script = ExtResource("1_nbma8")
+sfx_enemy_attack = ExtResource("2_mfhox")
+sfx_enemy_hurt = ExtResource("2_vadtu")
+sfx_enemy_die = ExtResource("3_mfhox")
 brute_charge_start_smoke_vfx_scene = ExtResource("2_brute_smoke")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1369071536]
