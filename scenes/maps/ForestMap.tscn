@@ -1,17 +1,22 @@
 [gd_scene format=4 uid="uid://dk8gccgvpj6gi"]
 
 [ext_resource type="Script" uid="uid://cas23h4uysrk0" path="res://scripts/GameRoot.gd" id="1_root_script"]
-[ext_resource type="Script" uid="uid://d00qpjug8sutq" path="res://scenes/maps/ForestObjective.gd" id="2_forest_objective"]
+[ext_resource type="Script" path="res://scenes/maps/ForestObjective.gd" id="2_forest_objective"]
 [ext_resource type="PackedScene" uid="uid://m8d1e3t1dw60" path="res://assets/characters/player.tscn" id="2_player_scene"]
+[ext_resource type="AudioStream" uid="uid://c3sjshu31luth" path="res://assets/sfx/step_complete.mp3" id="3_2017c"]
 [ext_resource type="PackedScene" uid="uid://buf3cr0tftoq0" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
 [ext_resource type="Script" uid="uid://ba7djsqfk121o" path="res://scripts/MapDifficultyApplier.gd" id="3_map_difficulty"]
 [ext_resource type="Texture2D" uid="uid://cub1thtcv0i7c" path="res://assets/tilesets/terrain.png" id="4_aea4l"]
 [ext_resource type="Texture2D" uid="uid://dy62ujbd2544d" path="res://assets/tilesets/plant repack (1).png" id="4_scukt"]
+[ext_resource type="AudioStream" uid="uid://0sf3cvmbg852" path="res://assets/sfx/all_complete.mp3" id="4_spyjb"]
 [ext_resource type="AudioStream" uid="uid://dnwleav5r8el5" path="res://assets/sfx/sword_swing.mp3" id="5_2pacb"]
+[ext_resource type="AudioStream" uid="uid://vw2pb8unnwrx" path="res://assets/sfx/enemy_match.mp3" id="5_14ukj"]
 [ext_resource type="AudioStream" uid="uid://r6urvahrwgcy" path="res://assets/sfx/grunt_male.mp3" id="6_ccwu3"]
+[ext_resource type="AudioStream" uid="uid://c6d8tp677rkit" path="res://assets/sfx/boss_spawn.mp3" id="6_clsgp"]
 [ext_resource type="AudioStream" uid="uid://dsdmyatpii041" path="res://assets/sfx/dash.mp3" id="6_kms7t"]
 [ext_resource type="AudioStream" uid="uid://clnkjuya2ts0n" path="res://assets/sfx/levelup.mp3" id="7_ccwu3"]
 [ext_resource type="AudioStream" uid="uid://bjeviegah3l4" path="res://assets/sfx/forest.mp3" id="12_ccwu3"]
+[ext_resource type="AudioStream" uid="uid://d1fuf6add2624" path="res://assets/sfx/sfx_pickup.mp3" id="13_45gc2"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6s2hn"]
 texture = ExtResource("4_scukt")
@@ -1958,6 +1963,10 @@ script = ExtResource("1_root_script")
 
 [node name="ForestObjective" type="Node" parent="." unique_id=975125963]
 script = ExtResource("2_forest_objective")
+sfx_step_complete = ExtResource("3_2017c")
+sfx_all_complete = ExtResource("4_spyjb")
+sfx_enemy_match = ExtResource("5_14ukj")
+sfx_boss_spawn = ExtResource("6_clsgp")
 
 [node name="MapDifficultyApplier" type="Node" parent="." unique_id=2038781969]
 script = ExtResource("3_map_difficulty")
@@ -1980,6 +1989,7 @@ sfx_attack = ExtResource("5_2pacb")
 sfx_hurt = ExtResource("6_ccwu3")
 sfx_dash = ExtResource("6_kms7t")
 sfx_level_up = ExtResource("7_ccwu3")
+sfx_pickup = ExtResource("13_45gc2")
 dash_start_smoke_vfx_scene = null
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=1900327636]
