@@ -3,7 +3,7 @@ extends Control
 const MODE_COMBAT: String = "combat"
 const MODE_LOBBY: String = "lobby"
 const LOW_HP_PULSE_THRESHOLD: float = 0.35
-const HP_HIT_FLASH_SECONDS: float = 0.22
+const HP_HIT_FLASH_SECONDS: float = 0.1
 
 @export var pause_card_texture: Texture2D
 @export var death_card_texture: Texture2D
@@ -40,6 +40,9 @@ const HP_HIT_FLASH_SECONDS: float = 0.22
 var combat_mode_active: bool = false
 var hp_current: int = 1
 var hp_max: int = 1
+var hp_ghost_ratio: float = 1.0
+var hp_ghost_delay_timer: float = 0.0
+var hp_shake_amount: float = 0.0
 var xp_current: int = 0
 var xp_max: int = 1
 var hp_previous: int = 1
@@ -151,6 +154,8 @@ func update_combat_bars(
 	if current_hp < hp_previous:
 		hp_hit_flash_until = (float(Time.get_ticks_msec()) / 1000.0) + HP_HIT_FLASH_SECONDS
 		_spawn_hp_hit_particles()
+		hp_ghost_delay_timer = 0.6
+		hp_shake_amount = 6.0
 	hp_current = max(current_hp, 0)
 	hp_max = max(max_hp, 1)
 	xp_current = max(current_xp, 0)
@@ -229,14 +234,20 @@ func _draw() -> void:
 	var hp_color = Color(1, 1, 1) if flash_active else (Color(1, 0.3, 0.3) if low_hp_flash else Color(0.85, 0.15, 0.15))
 	var hp_color_dark = Color(1, 1, 1) if is_flashing else (Color(0.5, 0.05, 0.05) if low_hp_flash else Color(0.3, 0.05, 0.05))
 	
+	# Apply shake to HP bar
+	var hp_pos := Vector2(0, hp_y)
+	if hp_shake_amount > 0.1:
+		hp_pos += Vector2(randf_range(-hp_shake_amount, hp_shake_amount), randf_range(-hp_shake_amount, hp_shake_amount))
+	
 	_draw_segmented_bar(
-		Vector2(0, hp_y),
+		hp_pos,
 		Vector2(width, bar_height),
 		hp_ratio,
+		hp_ghost_ratio,
 		hp_color,
 		hp_color_dark,
 		Color(0.1, 0.02, 0.02),
-		90
+		40
 	)
 	
 	# Draw XP Bar (Green/Lime)
@@ -244,38 +255,62 @@ func _draw() -> void:
 		Vector2(0, xp_y),
 		Vector2(width, bar_height),
 		xp_display_ratio,
+		xp_display_ratio, # Ghost ratio same as ratio for XP
 		Color(0.15, 0.85, 0.15),
 		Color(0.05, 0.4, 0.05),
 		Color(0.02, 0.1, 0.02),
-		120
+		50
 	)
 
-func _draw_segmented_bar(pos: Vector2, bar_size: Vector2, ratio: float, fill_color: Color, fill_color_dark: Color, bg_color: Color, segments: int) -> void:
-	# Draw black outline
-	draw_rect(Rect2(pos - Vector2(1,1), bar_size + Vector2(2,2)), Color(0,0,0))
+func _draw_segmented_bar(pos: Vector2, size: Vector2, ratio: float, ghost_ratio: float, fill_color: Color, fill_color_dark: Color, bg_color: Color, segments: int) -> void:
+	# Draw black outline (thicker, 2px)
+	draw_rect(Rect2(pos - Vector2(2,2), size + Vector2(4,4)), Color(0,0,0))
 	
 	# Draw background
-	draw_rect(Rect2(pos, bar_size), bg_color)
+	draw_rect(Rect2(pos, size), bg_color)
 	
-	# Draw fill with a lighter left-to-right gradient.
-	var fill_width: float = bar_size.x * ratio
+	# Draw fill
+	var fill_width: float = size.x * ratio
+	var ghost_width: float = size.x * ghost_ratio
+	
+	if ghost_width > fill_width:
+		# Draw ghost bar (damage lag)
+		draw_rect(Rect2(pos + Vector2(fill_width, 0), Vector2(ghost_width - fill_width, size.y)), Color(1, 1, 1, 0.6))
+		
 	if fill_width > 0:
-		var x_steps: int = max(int(fill_width), 1)
-		for x in range(x_steps):
-			var t: float = float(x) / float(x_steps)
-			var c = fill_color.lerp(fill_color_dark, t * 0.45)
-			draw_line(Vector2(pos.x + x, pos.y), Vector2(pos.x + x, pos.y + bar_size.y), c)
+		# Use a solid fill with a highlight for a cleaner look
+		draw_rect(Rect2(pos, Vector2(fill_width, size.y)), fill_color)
+		
+		# Top highlight (glossy look)
+		draw_line(Vector2(pos.x, pos.y + 1), Vector2(pos.x + fill_width, pos.y + 1), Color(1, 1, 1, 0.4), 1.0)
+		
+		# Inner outline for the filled part
+		draw_rect(Rect2(pos, Vector2(fill_width, size.y)), Color(0, 0, 0, 0.3), false, 1.0)
 		
 	# Draw segment separators
-	var seg_w: float = bar_size.x / float(segments)
+	var seg_w: float = size.x / float(segments)
 	for i in range(1, segments):
 		var sep_x: float = pos.x + (i * seg_w)
-		draw_line(Vector2(sep_x, pos.y), Vector2(sep_x, pos.y + bar_size.y), Color(0, 0, 0, 0.55), 2.0)
+		draw_line(Vector2(sep_x, pos.y), Vector2(sep_x, pos.y + size.y), Color(0, 0, 0, 0.6), 2.0)
 
 
 func _process(_delta: float) -> void:
 	if combat_mode_active:
 		_update_xp_wrap_anim(_delta)
+		
+		# Update HP Ghost Bar
+		var current_hp_ratio: float = float(hp_current) / float(hp_max)
+		if hp_ghost_delay_timer > 0.0:
+			hp_ghost_delay_timer -= _delta
+		else:
+			hp_ghost_ratio = lerp(hp_ghost_ratio, current_hp_ratio, _delta * 3.0)
+			
+		# Update HP Bar Shake
+		if hp_shake_amount > 0.1:
+			hp_shake_amount = lerp(hp_shake_amount, 0.0, _delta * 10.0)
+		else:
+			hp_shake_amount = 0.0
+			
 		queue_redraw()
 
 
@@ -655,7 +690,7 @@ func show_game_over(survived_to_end: bool) -> void:
 		initial_card.custom_minimum_size = Vector2(460, 250)
 		initial_center.add_child(initial_card)
 		var blank_style := StyleBoxFlat.new()
-		blank_style.bg_color = Color(1, 1, 1, 0)
+		blank_style.bg_color = Color(0, 0, 0, 0.9)
 		blank_style.content_margin_left = 20
 		blank_style.content_margin_top = 18
 		blank_style.content_margin_right = 20
@@ -771,6 +806,20 @@ func show_game_over(survived_to_end: bool) -> void:
 				gameroot._on_retry_button_pressed()
 		)
 		_apply_squish_to_button(retry_btn)
+	var lobby_btn = right_panel.get_node_or_null("LobbyButton") as Button
+	if lobby_btn == null:
+		lobby_btn = Button.new()
+		lobby_btn.name = "LobbyButton"
+		lobby_btn.text = "Return to Lobby"
+		lobby_btn.custom_minimum_size = Vector2(0, 46)
+		right_panel.add_child(lobby_btn)
+		lobby_btn.pressed.connect(func():
+			get_tree().paused = false
+			death_menu.visible = false
+			GameState.go_to_lobby()
+		)
+		_apply_squish_to_button(lobby_btn)
+
 	var menu_btn = right_panel.get_node_or_null("MenuButton") as Button
 	if menu_btn == null:
 		menu_btn = Button.new()
@@ -786,7 +835,7 @@ func show_game_over(survived_to_end: bool) -> void:
 		_apply_squish_to_button(menu_btn)
 	# Remove duplicate retry buttons from old versions.
 	for child in right_panel.get_children():
-		if child is Button and child.name != "RetryButton" and child.name != "MenuButton":
+		if child is Button and child.name != "RetryButton" and child.name != "MenuButton" and child.name != "LobbyButton":
 			child.queue_free()
 	var death_bg = card.get_node_or_null("CardTexture") as TextureRect
 	if death_bg == null:
@@ -798,7 +847,7 @@ func show_game_over(survived_to_end: bool) -> void:
 		death_bg.stretch_mode = TextureRect.STRETCH_SCALE
 		card.add_child(death_bg)
 		card.move_child(death_bg, 0)
-	death_bg.texture = death_card_texture
+	death_bg.texture = null
 	title.text = "Victory!" if survived_to_end else "You Died!"
 	var last_summary: Dictionary = GameState.get_last_run_summary()
 	if last_summary.is_empty():

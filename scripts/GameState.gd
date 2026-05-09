@@ -54,6 +54,11 @@ func go_to_main_menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 
+func go_to_lobby() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/maps/LobbyMap.tscn")
+
+
 func load_save() -> Dictionary:
 	if not has_save():
 		return _with_defaults({})
@@ -100,6 +105,20 @@ func add_coins(amount: int) -> void:
 	var save_data: Dictionary = _ensure_save_loaded()
 	save_data["coins"] = int(save_data.get("coins", 0)) + amount
 	save_game(save_data)
+
+
+func save_map_progress(map_name: String, index: int, count: int) -> void:
+	var s_data = _ensure_save_loaded()
+	var progress = s_data.get("map_progress", {})
+	progress[map_name] = {"index": index, "count": count}
+	s_data["map_progress"] = progress
+	save_game(s_data)
+
+
+func get_map_progress(map_name: String) -> Dictionary:
+	var s_data = _ensure_save_loaded()
+	var progress = s_data.get("map_progress", {})
+	return progress.get(map_name, {"index": 0, "count": 0})
 
 
 func try_spend_coins(amount: int) -> bool:
