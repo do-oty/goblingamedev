@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://cdwxsv8vk81bm" path="res://scripts/ui/GlobalHud.gd" id="1_global_hud_script"]
 [ext_resource type="Texture2D" uid="uid://ccwia5yk1xskb" path="res://assets/ui/megaUisheet.png" id="2_tsmiw"]
 [ext_resource type="Texture2D" uid="uid://dl43n7beo8t18" path="res://assets/ui/cooldown.png" id="3_ykvjm"]
+[ext_resource type="AudioStream" uid="uid://bgce4rsd4tks3" path="res://assets/sfx/GameOver.mp3" id="4_4b3ps"]
+[ext_resource type="AudioStream" uid="uid://ck36dpqk81uxy" path="res://assets/sfx/kingfight.mp3" id="5_8xpbk"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ykvjm"]
 atlas = ExtResource("2_tsmiw")
@@ -31,6 +33,9 @@ offset_top = -34.0
 offset_right = 260.0
 offset_bottom = -10.0
 grow_vertical = 0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Coins: 0"
 
 [node name="HintLabel" type="Label" parent="." unique_id=1148969958]
@@ -40,6 +45,9 @@ offset_left = 18.0
 offset_top = 44.0
 offset_right = 300.0
 offset_bottom = 74.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Press E to talk"
 
 [node name="LastRunLabel" type="Label" parent="." unique_id=589348300]
@@ -49,6 +57,9 @@ offset_left = 18.0
 offset_top = 74.0
 offset_right = 980.0
 offset_bottom = 106.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Last Run: -"
 autowrap_mode = 3
 
@@ -73,6 +84,9 @@ theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="UpgradePanel/Margin/VBox" unique_id=1814536679]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Upgrade Merchant"
 
 [node name="HpButton" type="Button" parent="UpgradePanel/Margin/VBox" unique_id=189434768]
@@ -139,16 +153,25 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=2010870751]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 32
 text = "YOU DIED"
 
 [node name="Description" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=613759810]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "The forest claimed your soul. Try again?"
 autowrap_mode = 3
 
 [node name="SummaryText" type="Label" parent="GameOverPanel/Margin/RootRow/SummaryPanel/SummaryMargin/SummaryVBox" unique_id=1119619598]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Summary"
 autowrap_mode = 3
 
@@ -240,12 +263,18 @@ theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="LevelUpPanel/Margin/VBox" unique_id=181984128]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 32
 text = "Level Up!"
 horizontal_alignment = 1
 
 [node name="SubTitle" type="Label" parent="LevelUpPanel/Margin/VBox" unique_id=871925135]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Pick one upgrade"
 horizontal_alignment = 1
 
@@ -274,7 +303,6 @@ grow_vertical = 2
 mouse_filter = 1
 
 [node name="TopLeftStack" type="VBoxContainer" parent="SpriteHud" unique_id=708213714]
-visible = false
 layout_mode = 1
 offset_left = 18.0
 offset_top = 16.0
@@ -296,12 +324,15 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -12.0
-offset_right = 160.0
-offset_bottom = 12.0
+offset_left = -284.0
+offset_top = 36.0
+offset_right = 36.0
+offset_bottom = 60.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 21
 text = "HP 100 / 100"
 horizontal_alignment = 1
@@ -320,12 +351,15 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -10.0
-offset_right = 160.0
-offset_bottom = 10.0
+offset_left = -294.0
+offset_top = 15.0
+offset_right = 26.0
+offset_bottom = 35.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 17
 text = "Lv 1  XP 0/5"
 horizontal_alignment = 1
@@ -395,28 +429,35 @@ text = "Debug (Open)"
 
 [node name="RunTimerLabel" type="Label" parent="SpriteHud" unique_id=1499394660]
 layout_mode = 0
-offset_left = 79.0
-offset_top = 58.0
-offset_right = 231.0
-offset_bottom = 78.0
+offset_left = 7.0
+offset_top = 115.0
+offset_right = 159.0
+offset_bottom = 135.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 14
 text = "Run 00:00"
 
 [node name="LevelChipLabel" type="Label" parent="SpriteHud" unique_id=2139539933]
+visible = false
 layout_mode = 0
-offset_left = 19.0
-offset_top = 59.0
-offset_right = 87.0
-offset_bottom = 79.0
+offset_left = -132.0
+offset_top = 76.0
+offset_right = -64.0
+offset_bottom = 96.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 14
 text = "Lv 1"
 
 [node name="DashPanel" type="Control" parent="SpriteHud" unique_id=1551174066]
 anchors_preset = 0
-offset_left = 15.0
-offset_top = 50.0
-offset_right = 331.0
-offset_bottom = 86.0
+offset_left = 5.0
+offset_top = 69.0
+offset_right = 321.0
+offset_bottom = 105.0
 mouse_filter = 2
 
 [node name="DashCountLabel" type="Label" parent="SpriteHud/DashPanel" unique_id=781587649]
@@ -425,6 +466,9 @@ offset_left = 28.0
 offset_top = -12.0
 offset_right = 112.0
 offset_bottom = 10.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Dash 1/1"
 
 [node name="DashIcon" type="TextureRect" parent="SpriteHud/DashPanel" unique_id=985282940]
@@ -566,6 +610,9 @@ theme_override_constants/separation = 8
 
 [node name="ItemDetailLabel" type="Label" parent="SpriteHud/ItemsModal/Margin/ContentVBox" unique_id=1411169270]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 14
 text = "Tap an item to view effects."
 autowrap_mode = 3
@@ -594,9 +641,11 @@ theme_override_constants/margin_bottom = 12
 
 [node name="StatsText" type="Label" parent="SpriteHud/StatsModalLeft/Margin" unique_id=2022170712]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 15
 text = "Stats"
-horizontal_alignment = 0
 autowrap_mode = 3
 
 [node name="TopRightFrame" type="TextureRect" parent="SpriteHud" unique_id=806951418]
@@ -627,6 +676,9 @@ offset_right = 161.0
 offset_bottom = 4.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 22
 text = "15:00"
 horizontal_alignment = 1
@@ -661,6 +713,9 @@ theme_override_constants/margin_bottom = 14
 
 [node name="StatsText" type="Label" parent="SpriteHud/StatsModal/Margin" unique_id=1451723868]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 15
 text = "Stats"
 autowrap_mode = 3
@@ -692,6 +747,9 @@ theme_override_constants/separation = 8
 
 [node name="DebugTitle" type="Label" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=485954403]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 18
 text = "Debug Actions"
 horizontal_alignment = 1
@@ -788,6 +846,9 @@ text = "Heal"
 
 [node name="DebugStatsLabel" type="Label" parent="DebugPanel/DebugMargin/DebugVBox" unique_id=489236039]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 12
 text = "DBG"
 autowrap_mode = 3
@@ -796,6 +857,9 @@ clip_text = true
 [node name="HordeWarning" type="Label" parent="." unique_id=1849546806]
 visible = false
 layout_mode = 0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 28
 text = "▲ HORDE"
 horizontal_alignment = 1
@@ -803,6 +867,15 @@ horizontal_alignment = 1
 [node name="BruteChargeWarning" type="Label" parent="." unique_id=1465199435]
 visible = false
 layout_mode = 0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 36
 text = ">"
 horizontal_alignment = 1
+
+[node name="GameOverMusic" type="AudioStreamPlayer" parent="." unique_id=691240523]
+stream = ExtResource("4_4b3ps")
+
+[node name="KingMusic" type="AudioStreamPlayer" parent="." unique_id=1164684803]
+stream = ExtResource("5_8xpbk")

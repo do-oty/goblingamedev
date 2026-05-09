@@ -1,4 +1,4 @@
-extends "res://scenes/maps/ObjectiveBase.gd"
+extends ObjectiveBase
 
 
 func _ready() -> void:

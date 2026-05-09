@@ -203,6 +203,10 @@ func _apply_royal_slam() -> void:
 	var core_r: float = KING_SLAM_AOE_RADIUS
 	_spawn_hobgoblin_landing_smoke(impact_pos)
 	_push_nearby_enemies(impact_pos, core_r + 28.0, 420.0, 42.0, 0.3)
+	
+	var landing_sfx = get_node_or_null("LandingSFX") as AudioStreamPlayer2D
+	if landing_sfx:
+		landing_sfx.play()
 	if target_player != null and is_instance_valid(target_player):
 		if target_player.has_method("add_screen_shake"):
 			target_player.call("add_screen_shake", 16.0, 0.24)
@@ -212,9 +216,8 @@ func _apply_royal_slam() -> void:
 			_spawn_bleed_burst_at(target_player.global_position)
 		if target_player.global_position.distance_to(impact_pos) <= core_r and target_player.has_method("apply_launch_force"):
 			target_player.call("apply_launch_force", impact_pos, 520.0, 42.0, 0.34)
-	# Reworked follow-up: directional shockwaves instead of delayed ring.
-	_cast_slam_shockwaves(impact_pos)
-	king_cast_lock_timer = max(king_cast_lock_timer, KING_SLAM_SHOCKWAVE_WARN + KING_SLAM_RECOVER_LOCK)
+	# Removed shockwaves (slice thing) to keep attacks as simple AOEs
+	king_cast_lock_timer = max(king_cast_lock_timer, KING_SLAM_RECOVER_LOCK)
 
 
 func _king_crown_ring_damage(center: Vector2, outer_radius: float) -> void:
@@ -883,3 +886,5 @@ func _update_ground_shadow() -> void:
 	ground_shadow.position.y += 76.0
 	ground_shadow.scale *= Vector2(1.95, 1.32)
 	ground_shadow.modulate.a = clamp(ground_shadow.modulate.a + 0.12, 0.2, 0.9)
+
+

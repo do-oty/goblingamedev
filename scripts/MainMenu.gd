@@ -5,7 +5,6 @@ extends Control
 @onready var music_slider: HSlider = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/MusicSlider"
 @onready var sfx_slider: HSlider = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/SfxSlider"
 @onready var vibration_check: CheckButton = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/VibrationCheck"
-@onready var notifications_check: CheckButton = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/NotificationsCheck"
 @onready var settings_summary: Label = $"SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/SettingsSummary"
 
 @onready var sequence_control: Control = $SequenceControl
@@ -24,7 +23,6 @@ func _ready() -> void:
 	menu_screen.visible = false # Hide initially
 	settings_screen.visible = false
 	vibration_check.button_pressed = true
-	notifications_check.button_pressed = false
 	_update_settings_summary()
 	
 	# Button Squish Effect
@@ -185,16 +183,12 @@ func _on_vibration_check_toggled(_toggled_on: bool) -> void:
 	_update_settings_summary()
 
 
-func _on_notifications_check_toggled(_toggled_on: bool) -> void:
-	_update_settings_summary()
-
 
 func _update_settings_summary() -> void:
-	settings_summary.text = "Music: %d%%\nSFX: %d%%\nVibration: %s\nNotifications: %s" % [
+	settings_summary.text = "Music: %d%%\nSFX: %d%%\nVibration: %s" % [
 		int(round(music_slider.value)),
 		int(round(sfx_slider.value)),
-		"On" if vibration_check.button_pressed else "Off",
-		"On" if notifications_check.button_pressed else "Off"
+		"On" if vibration_check.button_pressed else "Off"
 	]
 
 

@@ -66,14 +66,14 @@ const DEBUG_KING_EXTRA_SCALE: float = 1.2
 @onready var stats_label: Label = get_node_or_null("CanvasLayer/HUD/BottomBar/StatsLabel") as Label
 @onready var top_bar: Control = get_node_or_null("CanvasLayer/HUD/TopBar") as Control
 @onready var bottom_bar: Control = get_node_or_null("CanvasLayer/HUD/BottomBar") as Control
-@onready var sprite_hud: Control = $"CanvasLayer/HUD/SpriteHud"
-@onready var sprite_hud_time_label: Label = $"CanvasLayer/HUD/SpriteHud/TopRightFrame/TimeLabel"
-@onready var sprite_hud_hp_label: Label = $"CanvasLayer/HUD/SpriteHud/TopLeftStack/HpFrame/HpLabel"
-@onready var sprite_hud_xp_label: Label = $"CanvasLayer/HUD/SpriteHud/TopLeftStack/XpFrame/XpLabel"
-@onready var sprite_hud_status_label: Label = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatusFrame/StatusLabel") as Label
-@onready var sprite_stats_toggle_button: Button = get_node_or_null("CanvasLayer/HUD/SpriteHud/StatsToggleButton") as Button
+@onready var sprite_hud: Control = get_node_or_null("CanvasLayer/HUD/HudLayer/SpriteHud") as Control
+@onready var sprite_hud_time_label: Label = sprite_hud.get_node_or_null("TopRightFrame/TimeLabel") if sprite_hud != null else null
+@onready var sprite_hud_hp_label: Label = sprite_hud.get_node_or_null("TopLeftStack/HpFrame/HpLabel") if sprite_hud != null else null
+@onready var sprite_hud_xp_label: Label = sprite_hud.get_node_or_null("TopLeftStack/XpFrame/XpLabel") if sprite_hud != null else null
+@onready var sprite_hud_status_label: Label = sprite_hud.get_node_or_null("StatusFrame/StatusLabel") as Label if sprite_hud != null else null
+@onready var sprite_stats_toggle_button: Button = sprite_hud.get_node_or_null("StatsToggleButton") as Button if sprite_hud != null else null
 
-@onready var debug_toggle_button: Button = $"CanvasLayer/HUD/SpriteHud/DebugToggleButtonSprite"
+@onready var debug_toggle_button: Button = sprite_hud.get_node_or_null("DebugToggleButtonSprite") as Button if sprite_hud != null else null
 @onready var debug_panel: PanelContainer = $"CanvasLayer/HUD/DebugPanel"
 @onready var debug_skip_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugSkipButton"
 @onready var debug_horde_button: Button = $"CanvasLayer/HUD/DebugPanel/DebugMargin/DebugVBox/DebugHordeButton"
@@ -194,8 +194,9 @@ func _ready() -> void:
 	debug_panel.visible = false
 	debug_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	debug_panel.move_to_front()
-	debug_toggle_button.visible = true
-	debug_toggle_button.text = "Debug (Open)"
+	if debug_toggle_button != null:
+		debug_toggle_button.visible = true
+		debug_toggle_button.text = "Debug (Open)"
 	_ensure_debug_connections()
 	_ensure_panel_connections()
 	_ensure_debug_king_button()
@@ -301,12 +302,13 @@ func _setup_hud_mode() -> void:
 
 
 func _ensure_debug_connections() -> void:
-	if not debug_toggle_button.pressed.is_connected(_on_debug_toggle_button_pressed):
+	if debug_toggle_button != null and not debug_toggle_button.pressed.is_connected(_on_debug_toggle_button_pressed):
 		debug_toggle_button.pressed.connect(_on_debug_toggle_button_pressed)
 
-	if not debug_skip_button.pressed.is_connected(_on_debug_skip_button_pressed):
+	if debug_skip_button != null and not debug_skip_button.pressed.is_connected(_on_debug_skip_button_pressed):
 		debug_skip_button.pressed.connect(_on_debug_skip_button_pressed)
-	if not debug_horde_button.pressed.is_connected(_on_debug_horde_button_pressed):
+		
+	if debug_horde_button != null and not debug_horde_button.pressed.is_connected(_on_debug_horde_button_pressed):
 		debug_horde_button.pressed.connect(_on_debug_horde_button_pressed)
 	if not debug_elite_button.pressed.is_connected(_on_debug_elite_button_pressed):
 		debug_elite_button.pressed.connect(_on_debug_elite_button_pressed)
@@ -371,47 +373,46 @@ func _ensure_panel_connections() -> void:
 
 
 func _ensure_debug_controls_clickable() -> void:
-	debug_toggle_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_panel.mouse_filter = Control.MOUSE_FILTER_PASS
-	debug_skip_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_horde_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_elite_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_brute_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_blink_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_tank_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_gtank_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_sword_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_elite_sword_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_elite_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_elite_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_elite_hobgoblin_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	if debug_king_button != null:
-		debug_king_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_aoe_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_level_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_heal_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_toggle_button.disabled = false
-	debug_skip_button.disabled = false
-	debug_horde_button.disabled = false
-	debug_elite_button.disabled = false
-	debug_brute_button.disabled = false
-	debug_blink_button.disabled = false
-	debug_tank_button.disabled = false
-	debug_gtank_button.disabled = false
-	debug_sword_button.disabled = false
-	debug_mage_button.disabled = false
-	debug_electric_mage_button.disabled = false
-	debug_elite_sword_button.disabled = false
-	debug_elite_mage_button.disabled = false
-	debug_elite_electric_mage_button.disabled = false
-	debug_elite_hobgoblin_button.disabled = false
-	if debug_king_button != null:
-		debug_king_button.disabled = false
-	debug_aoe_button.disabled = false
-	debug_level_button.disabled = false
-	debug_heal_button.disabled = false
+	if is_instance_valid(debug_toggle_button): debug_toggle_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_panel): debug_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	if is_instance_valid(debug_skip_button): debug_skip_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_horde_button): debug_horde_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_elite_button): debug_elite_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_brute_button): debug_brute_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_blink_button): debug_blink_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_tank_button): debug_tank_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_gtank_button): debug_gtank_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_sword_button): debug_sword_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_mage_button): debug_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_electric_mage_button): debug_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_elite_sword_button): debug_elite_sword_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_elite_mage_button): debug_elite_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_elite_electric_mage_button): debug_elite_electric_mage_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_elite_hobgoblin_button): debug_elite_hobgoblin_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_king_button): debug_king_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_aoe_button): debug_aoe_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_level_button): debug_level_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_instance_valid(debug_heal_button): debug_heal_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	if is_instance_valid(debug_toggle_button): debug_toggle_button.disabled = false
+	if is_instance_valid(debug_skip_button): debug_skip_button.disabled = false
+	if is_instance_valid(debug_horde_button): debug_horde_button.disabled = false
+	if is_instance_valid(debug_elite_button): debug_elite_button.disabled = false
+	if is_instance_valid(debug_brute_button): debug_brute_button.disabled = false
+	if is_instance_valid(debug_blink_button): debug_blink_button.disabled = false
+	if is_instance_valid(debug_tank_button): debug_tank_button.disabled = false
+	if is_instance_valid(debug_gtank_button): debug_gtank_button.disabled = false
+	if is_instance_valid(debug_sword_button): debug_sword_button.disabled = false
+	if is_instance_valid(debug_mage_button): debug_mage_button.disabled = false
+	if is_instance_valid(debug_electric_mage_button): debug_electric_mage_button.disabled = false
+	if is_instance_valid(debug_elite_sword_button): debug_elite_sword_button.disabled = false
+	if is_instance_valid(debug_elite_mage_button): debug_elite_mage_button.disabled = false
+	if is_instance_valid(debug_elite_electric_mage_button): debug_elite_electric_mage_button.disabled = false
+	if is_instance_valid(debug_elite_hobgoblin_button): debug_elite_hobgoblin_button.disabled = false
+	if is_instance_valid(debug_king_button): debug_king_button.disabled = false
+	if is_instance_valid(debug_aoe_button): debug_aoe_button.disabled = false
+	if is_instance_valid(debug_level_button): debug_level_button.disabled = false
+	if is_instance_valid(debug_heal_button): debug_heal_button.disabled = false
 
 
 func _make_debug_panel_overlay() -> void:
@@ -893,6 +894,19 @@ func _try_spawn_king_goblin_boss() -> void:
 	king.defeated.connect(_on_enemy_defeated)
 	king.tree_exiting.connect(_on_king_boss_tree_exiting.bind(king))
 	enemies_root.add_child(king)
+	
+	# Handle music for Boss
+	var desert_music = get_node_or_null("DesertMusic")
+	if desert_music and desert_music.has_method("stop"):
+		desert_music.stop()
+	var snow_music = get_node_or_null("SnowMusic")
+	if snow_music and snow_music.has_method("stop"):
+		snow_music.stop()
+		
+	if global_hud != null and global_hud.has_node("KingMusic"):
+		var km = global_hud.get_node("KingMusic")
+		if km and km.has_method("play"):
+			km.play()
 	king_boss_spawned = true
 	active_boss_unit = king
 	active_boss_max_hp = max(king.elite_max_health, max(king.current_health, 1))
@@ -951,7 +965,7 @@ func _start_ending_sequence() -> void:
 	canvas_layer.add_child(fade_rect)
 	
 	var tween := create_tween()
-	tween.tween_property(fade_rect, "color:a", 1.0, 2.0)
+	tween.tween_property(fade_rect, "color:a", 1.0, 4.0)
 	
 	await tween.finished
 	
@@ -959,44 +973,34 @@ func _start_ending_sequence() -> void:
 	get_tree().paused = true
 	
 	# 1.5 Wire and play ending song
-	var audio_player := AudioStreamPlayer.new()
-	audio_player.name = "EndingSongPlayer"
-	audio_player.process_mode = Node.PROCESS_MODE_ALWAYS
-	var song_path: String = "res://ending_song.mp3" # User can change this path
-	if ResourceLoader.exists(song_path):
-		audio_player.stream = load(song_path)
-		add_child(audio_player)
-		audio_player.play()
-	else:
-		print("Debug: Ending song not found at ", song_path)
-	
-	# 2. Play Video
-	var video_player := VideoStreamPlayer.new()
-	video_player.set_anchors_preset(Control.PRESET_FULL_RECT)
-	video_player.expand = true
-	video_player.z_index = 501
-	canvas_layer.add_child(video_player)
-	
 	# Hide gameplay UI
 	if sprite_hud != null: sprite_hud.visible = false
-	if global_hud != null: global_hud.visible = false
+	if global_hud != null: 
+		global_hud.visible = false
+		var hud_layer = global_hud.get_node_or_null("HudLayer")
+		if hud_layer != null:
+			hud_layer.visible = false
+
+	# Instantiate the cutscene scene (pre-wired by user)
+	var cutscene_scene_res = load("res://scenes/ui/EndingCutscene.tscn")
+	var cutscene_scene = cutscene_scene_res.instantiate()
+	cutscene_scene.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(cutscene_scene)
 	
-	var video_path: String = "res://cutscene.ogv"
-	if ResourceLoader.exists(video_path):
-		video_player.stream = load(video_path)
-		video_player.play()
-		await video_player.finished
-	else:
-		# If file not found, show a message or just wait a bit
-		var missing_label := Label.new()
-		missing_label.text = "Video not found: %s\n(Skipping video)" % video_path
-		missing_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		missing_label.set_anchors_preset(Control.PRESET_CENTER)
-		canvas_layer.add_child(missing_label)
-		await get_tree().create_timer(2.0).timeout
-		missing_label.queue_free()
+	var video_player = cutscene_scene.get_node("VideoStreamPlayer")
+	var audio_player = cutscene_scene.get_node("AudioStreamPlayer")
+	
+	audio_player.play()
+	video_player.play()
+	
+	await video_player.finished
+	
+	# Reparent audio player so it continues playing during credits!
+	if is_instance_valid(audio_player):
+		audio_player.get_parent().remove_child(audio_player)
+		add_child(audio_player)
 		
-	video_player.queue_free()
+	cutscene_scene.queue_free()
 	
 	# 3. Show Credits
 	var credits_panel := PanelContainer.new()
@@ -1287,6 +1291,24 @@ func _finish_run(survived_to_end: bool) -> void:
 	get_tree().paused = true
 	if global_hud:
 		global_hud.show_game_over(survived_to_end)
+		
+		# Stop all map/boss music
+		var desert_music = get_node_or_null("DesertMusic")
+		if desert_music and desert_music.has_method("stop"):
+			desert_music.stop()
+		var snow_music = get_node_or_null("SnowMusic")
+		if snow_music and snow_music.has_method("stop"):
+			snow_music.stop()
+		if global_hud.has_node("KingMusic"):
+			var km = global_hud.get_node("KingMusic")
+			if km and km.has_method("stop"):
+				km.stop()
+				
+		# Play Game Over Music
+		if global_hud.has_node("GameOverMusic"):
+			var gom = global_hud.get_node("GameOverMusic")
+			if gom and gom.has_method("play"):
+				gom.play()
 
 
 

@@ -258,6 +258,10 @@ func _hide_leap_indicator() -> void:
 func _apply_leap_impact_damage() -> void:
 	var impact_center: Vector2 = global_position
 	_spawn_hobgoblin_landing_smoke(impact_center)
+	
+	var landing_sfx = get_node_or_null("LandingSFX") as AudioStreamPlayer2D
+	if landing_sfx:
+		landing_sfx.play()
 	var fx_anchor: Node2D = Node2D.new()
 	fx_anchor.global_position = impact_center
 	fx_anchor.z_index = -2

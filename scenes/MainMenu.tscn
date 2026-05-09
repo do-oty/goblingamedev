@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://ckjttv2dkqvi5" path="res://scripts/MainMenu.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://c71kit5q07scu" path="res://assets/cutscenes/ubihard.png" id="2_0ykhv"]
 [ext_resource type="Texture2D" uid="uid://cy1d3ampk40s" path="res://assets/ui/uisheet.png" id="2_2wh52"]
+[ext_resource type="VideoStream" uid="uid://bj1by82jpuf0u" path="res://assets/cutscenes/gameplay.ogv" id="2_l72w3"]
 [ext_resource type="AudioStream" uid="uid://bjeviegah3l4" path="res://assets/sfx/forest.mp3" id="2_ow34m"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_l72w3"]
@@ -41,8 +42,11 @@ offset_left = 473.0
 offset_top = 195.0
 offset_right = 813.0
 offset_bottom = 231.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 40
-text = "Goblin Game"
+text = "GOBLIN SLASH !"
 horizontal_alignment = 1
 
 [node name="Background" type="ColorRect" parent="MenuScreen" unique_id=103545308]
@@ -62,6 +66,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+stream = ExtResource("2_l72w3")
+volume_db = -80.0
 expand = true
 
 [node name="MenuMusicPlayer" type="AudioStreamPlayer" parent="MenuScreen" unique_id=2028058348]
@@ -81,6 +87,7 @@ custom_minimum_size = Vector2(280, 250)
 layout_mode = 2
 
 [node name="Background2" type="TextureRect" parent="MenuScreen/CenterContainer/Panel" unique_id=108302654]
+visible = false
 texture_filter = 1
 layout_mode = 2
 mouse_filter = 2
@@ -104,6 +111,7 @@ custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 
 [node name="Background" type="TextureRect" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/StartButton" unique_id=1026896802]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -122,6 +130,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Start"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -131,6 +142,7 @@ custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 
 [node name="Background" type="TextureRect" parent="MenuScreen/CenterContainer/Panel/PanelMargin/VBox/SettingsButton" unique_id=872299667]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -149,6 +161,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Settings"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -200,6 +215,9 @@ text = "Back"
 [node name="HeaderTitle" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/HeaderBar" unique_id=1450693619]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 32
 text = "Settings"
 vertical_alignment = 1
@@ -225,13 +243,11 @@ theme_override_constants/margin_bottom = 32
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="SettingsHint" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=1542871364]
-layout_mode = 2
-text = "This replaces the entire screen on mobile, so it feels like a proper page instead of a popup."
-autowrap_mode = 3
-
 [node name="MusicLabel" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=373280678]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Music Volume"
 
 [node name="MusicSlider" type="HSlider" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=558595842]
@@ -240,6 +256,9 @@ value = 70.0
 
 [node name="SfxLabel" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=2066275003]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "SFX Volume"
 
 [node name="SfxSlider" type="HSlider" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=844875454]
@@ -251,12 +270,13 @@ layout_mode = 2
 button_pressed = true
 text = "Vibration"
 
-[node name="NotificationsCheck" type="CheckButton" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=788187638]
-layout_mode = 2
-text = "Daily Notifications"
+
 
 [node name="SettingsSummary" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=682005970]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Settings preview"
 autowrap_mode = 3
 
@@ -319,6 +339,9 @@ offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Press anywhere to skip"
 horizontal_alignment = 2
 

@@ -25,7 +25,17 @@ func _set_portal_locked(portal_root: Node2D, is_locked: bool, label_text: String
 	var label: Label = portal_root.get_node_or_null("PortalLabel") as Label
 	if label != null:
 		label.visible = true
-		label.text = "%s (Locked)" % label_text if is_locked else label_text
+		label.z_index = 5 # Ensure it draws above the road (z_index 1)
+		if is_locked:
+			label.text = "%s (Locked)" % label_text
+		else:
+			var progress = GameState.get_map_progress(label_text)
+			var index = progress.get("index", 0)
+			var count = progress.get("count", 0)
+			if count > 0:
+				label.text = "%s (%d/%d)" % [label_text, index, count]
+			else:
+				label.text = label_text
 		label.modulate = Color(0.68, 0.68, 0.68, 1.0) if is_locked else Color(1.0, 1.0, 1.0, 1.0)
 	var ring: CanvasItem = portal_root.get_node_or_null("PortalRing") as CanvasItem
 	if ring != null:

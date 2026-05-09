@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://ba7djsqfk121o" path="res://scripts/MapDifficultyApplier.gd" id="3_map_difficulty"]
 [ext_resource type="Texture2D" uid="uid://fvbttkq5jotk" path="res://assets/tilesets/SnowyTrees.png" id="3_snyr5"]
 [ext_resource type="Texture2D" uid="uid://c7lx8uuwpr4r5" path="res://assets/tilesets/frozenlake.png" id="4_snyr5"]
+[ext_resource type="AudioStream" uid="uid://d1o017a6a7sft" path="res://assets/sfx/snow.mp3" id="7_b3k1h"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ddgpc"]
 texture = ExtResource("2_qrang")
@@ -1308,5 +1309,6 @@ script = ExtResource("2_snow_objective")
 script = ExtResource("3_map_difficulty")
 map_id = "snow"
 
-[node name="partition" parent="." index="11" unique_id=1405745186]
-visible = false
+[node name="SnowMusic" type="AudioStreamPlayer" parent="." index="18" unique_id=382539811]
+stream = ExtResource("7_b3k1h")
+autoplay = true

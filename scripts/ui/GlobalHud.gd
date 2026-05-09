@@ -96,10 +96,60 @@ func _ready() -> void:
 		stats_text_left_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		stats_text_left_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		stats_text_left_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	if items_toggle_button != null:
-		_apply_squish_to_button(items_toggle_button)
+	# Create a CanvasLayer to ensure HUD draws on top of maps!
+	var hud_layer := CanvasLayer.new()
+	hud_layer.layer = 100
+	hud_layer.name = "HudLayer"
+	add_child(hud_layer)
+	
+	# Reparent SpriteHud to the CanvasLayer
+	if sprite_hud != null:
+		sprite_hud.get_parent().remove_child(sprite_hud)
+		hud_layer.add_child(sprite_hud)
+		
+	# Create a stack for the three buttons
+	var button_stack := HBoxContainer.new()
+	button_stack.name = "ButtonStack"
+	button_stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	button_stack.add_theme_constant_override("separation", 15)
+	hud_layer.add_child(button_stack) # Added to hud_layer!
+	
+	# Position it in the center of the screen dynamically
+	var pos_func := func():
+		await get_tree().process_frame
+		var viewport_size: Vector2 = get_viewport_rect().size
+		button_stack.global_position = Vector2(viewport_size.x / 2.0 - button_stack.size.x / 2.0, viewport_size.y - 60.0)
+	pos_func.call()
+	
+	var objectives_toggle_btn := Button.new()
+	objectives_toggle_btn.text = "Objectives"
+	objectives_toggle_btn.name = "ObjectivesToggleButton"
+	objectives_toggle_btn.focus_mode = Control.FOCUS_NONE
+	
+	# Reparent existing buttons if they exist
 	if stats_toggle_button_left != null:
+		stats_toggle_button_left.get_parent().remove_child(stats_toggle_button_left)
+		button_stack.add_child(stats_toggle_button_left)
+		_style_web_button(stats_toggle_button_left)
 		_apply_squish_to_button(stats_toggle_button_left)
+		stats_toggle_button_left.focus_mode = Control.FOCUS_NONE
+		
+	button_stack.add_child(objectives_toggle_btn)
+	_style_web_button(objectives_toggle_btn)
+	_apply_squish_to_button(objectives_toggle_btn)
+	
+	if items_toggle_button != null:
+		items_toggle_button.get_parent().remove_child(items_toggle_button)
+		button_stack.add_child(items_toggle_button)
+		_style_web_button(items_toggle_button)
+		_apply_squish_to_button(items_toggle_button)
+		items_toggle_button.focus_mode = Control.FOCUS_NONE
+		
+	objectives_toggle_btn.pressed.connect(func():
+		var tracker = get_tree().current_scene.find_child("ObjectiveUI_TrackerBg", true, false)
+		if tracker != null:
+			tracker.visible = !tracker.visible
+	)
 
 		
 
@@ -346,7 +396,7 @@ func _set_items_modal_visible(is_visible: bool) -> void:
 	if items_modal != null:
 		items_modal.visible = is_visible
 	if items_toggle_button != null:
-		items_toggle_button.text = "Items (Hide)" if is_visible else "Items"
+		items_toggle_button.text = "Items"
 	_stack_side_modals()
 
 
@@ -354,7 +404,7 @@ func _set_stats_modal_visible(is_visible: bool) -> void:
 	if stats_modal_left != null:
 		stats_modal_left.visible = is_visible
 	if stats_toggle_button_left != null:
-		stats_toggle_button_left.text = "Stats (Hide)" if is_visible else "Stats"
+		stats_toggle_button_left.text = "Stats"
 	_fit_stats_modal_height()
 	_stack_side_modals()
 
@@ -422,6 +472,8 @@ func _prepare_modal_backgrounds() -> void:
 		if bg == null:
 			continue
 		bg.self_modulate = Color(0.16, 0.2, 0.28, 0.16)
+		
+	# Removed style overrides that were causing black boxes
 
 
 func _fit_stats_modal_height() -> void:
@@ -442,7 +494,7 @@ func _stack_side_modals() -> void:
 	var margin: float = 14.0
 	var gap: float = 28.0
 	var modal_w: float = 300.0
-	var items_top: float = 112.0
+	var items_top: float = 180.0 # Pushed lower to avoid clipping
 	var items_h: float = max(136.0, items_modal.offset_bottom - items_modal.offset_top)
 	var stats_h: float = max(140.0, stats_modal_left.offset_bottom - stats_modal_left.offset_top)
 	var max_h: float = max(120.0, viewport_size.y - (items_top + margin))
@@ -614,24 +666,23 @@ func _spawn_hp_hit_particles() -> void:
 func _style_web_button(btn: Button, is_accent: bool = false) -> void:
 	if btn == null: return
 	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.12, 0.15, 0.22, 0.95) if not is_accent else Color(0.2, 0.4, 0.8, 0.95)
+	normal.bg_color = Color(0, 0, 0, 0) # Blank
 	normal.border_width_left = 1
 	normal.border_width_top = 1
 	normal.border_width_right = 1
 	normal.border_width_bottom = 1
-	normal.border_color = Color(0.4, 0.7, 1.0, 0.3)
-	normal.corner_radius_top_left = 20
-	normal.corner_radius_top_right = 20
-	normal.corner_radius_bottom_left = 20
-	normal.corner_radius_bottom_right = 20
+	normal.border_color = Color(1, 1, 1, 0.2)
 	normal.content_margin_left = 14
 	normal.content_margin_right = 14
 	normal.content_margin_top = 6
 	normal.content_margin_bottom = 6
+	normal.shadow_size = 4
+	normal.shadow_color = Color(0, 0, 0, 0.5)
+	normal.shadow_offset = Vector2(0, 2)
 	
 	var hover := normal.duplicate()
-	hover.bg_color = Color(0.18, 0.22, 0.32, 0.95) if not is_accent else Color(0.3, 0.5, 0.9, 0.95)
-	hover.border_color = Color(0.5, 0.8, 1.0, 0.8)
+	hover.bg_color = Color(1, 1, 1, 0.1) # Slight tint on hover
+	hover.border_color = Color(1, 1, 1, 0.5)
 	
 	btn.add_theme_stylebox_override('normal', normal)
 	btn.add_theme_stylebox_override('hover', hover)
@@ -671,7 +722,11 @@ func show_game_over(survived_to_end: bool) -> void:
 		death_menu = Control.new()
 		death_menu.name = "DeathMenu"
 		death_menu.process_mode = Node.PROCESS_MODE_ALWAYS
-		add_child(death_menu)
+		var hud_layer = get_node_or_null("HudLayer")
+		if hud_layer != null:
+			hud_layer.add_child(death_menu)
+		else:
+			add_child(death_menu)
 		death_menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
 		var bg = TextureRect.new()
@@ -695,6 +750,9 @@ func show_game_over(survived_to_end: bool) -> void:
 		blank_style.content_margin_top = 18
 		blank_style.content_margin_right = 20
 		blank_style.content_margin_bottom = 18
+		blank_style.shadow_size = 15
+		blank_style.shadow_color = Color(0, 0, 0, 0.6)
+		blank_style.shadow_offset = Vector2(0, 4)
 		initial_card.add_theme_stylebox_override("panel", blank_style)
 		var card_bg := TextureRect.new()
 		card_bg.name = "CardTexture"
@@ -784,13 +842,20 @@ func show_game_over(survived_to_end: bool) -> void:
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title.add_theme_font_size_override("font_size", 30)
 		left_panel.add_child(title)
-	var summary = left_panel.get_node_or_null("SummaryText") as Label
+	var scroll = left_panel.get_node_or_null("ScrollContainer") as ScrollContainer
+	if scroll == null:
+		scroll = ScrollContainer.new()
+		scroll.name = "ScrollContainer"
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		left_panel.add_child(scroll)
+		
+	var summary = scroll.get_node_or_null("SummaryText") as Label
 	if summary == null:
 		summary = Label.new()
 		summary.name = "SummaryText"
 		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		summary.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		left_panel.add_child(summary)
+		summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.add_child(summary)
 	var retry_btn = right_panel.get_node_or_null("RetryButton") as Button
 	if retry_btn == null:
 		retry_btn = Button.new()
@@ -853,13 +918,25 @@ func show_game_over(survived_to_end: bool) -> void:
 	if last_summary.is_empty():
 		summary.text = "No recent run summary."
 	else:
-		summary.text = "Result: %s\nLevel: %d\nTime: %s\nRun Coins: %d\nDamage Taken: %d" % [
+		var summary_text = "Result: %s\nLevel: %d\nTime: %s\nRun Coins: %d\nDamage Taken: %d" % [
 			String(last_summary.get("result", "Run")),
 			int(last_summary.get("level", 1)),
 			String(last_summary.get("time_text", "00:00")),
 			int(last_summary.get("run_coins", 0)),
 			int(last_summary.get("damage_taken", 0))
 		]
+		
+		var objectives = last_summary.get("objectives", [])
+		if objectives is Array and not objectives.is_empty():
+			summary_text += "\n\nObjectives:"
+			for obj in objectives:
+				summary_text += "\n- %s" % str(obj)
+		elif objectives is Dictionary and not objectives.is_empty():
+			summary_text += "\n\nObjectives:"
+			for k in objectives.keys():
+				summary_text += "\n- %s" % str(k)
+				
+		summary.text = summary_text
 
 
 
@@ -871,7 +948,11 @@ func show_level_up(upgrades: Array) -> void:
 		lvl_up = Control.new()
 		lvl_up.name = "LevelUpMenu"
 		lvl_up.process_mode = Node.PROCESS_MODE_ALWAYS
-		add_child(lvl_up)
+		var hud_layer = get_node_or_null("HudLayer")
+		if hud_layer != null:
+			hud_layer.add_child(lvl_up)
+		else:
+			add_child(lvl_up)
 		lvl_up.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
 		var bg = TextureRect.new()
@@ -885,24 +966,46 @@ func show_level_up(upgrades: Array) -> void:
 		lvl_up.add_child(initial_center)
 		initial_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
+		var initial_card = PanelContainer.new()
+		initial_card.name = "Card"
+		initial_card.custom_minimum_size = Vector2(400, 250)
+		initial_center.add_child(initial_card)
+		
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.1, 0.1, 0.1, 0.9) # Dark opaque background
+		style.shadow_size = 15
+		style.shadow_color = Color(0, 0, 0, 0.7)
+		style.shadow_offset = Vector2(0, 5)
+		style.content_margin_left = 20
+		style.content_margin_top = 18
+		style.content_margin_right = 20
+		style.content_margin_bottom = 18
+		initial_card.add_theme_stylebox_override("panel", style)
+		
 		var initial_vbox = VBoxContainer.new()
-		initial_center.add_child(initial_vbox)
+		initial_vbox.add_theme_constant_override("separation", 10)
+		initial_card.add_child(initial_vbox)
 		
 		var title = Label.new()
 		title.text = "Level Up!"
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.add_theme_font_size_override("font_size", 28)
 		initial_vbox.add_child(title)
 		
 		for i in range(3):
 			var btn = Button.new()
 			btn.name = "Choice" + str(i+1)
 			initial_vbox.add_child(btn)
+			_style_web_button(btn)
 			_apply_squish_to_button(btn)
+			btn.add_theme_color_override("font_color", Color.WHITE)
+			btn.add_theme_color_override("font_hover_color", Color.YELLOW)
 			
 	lvl_up.visible = true
 	
 	# Update buttons
 	var center = lvl_up.get_child(1)
-	var vbox = center.get_child(0)
+	var vbox = center.get_child(0).get_child(0) # Get VBox inside Card
 	for i in range(3):
 		var btn = vbox.get_node_or_null("Choice" + str(i+1))
 		if btn and i < upgrades.size():
@@ -983,6 +1086,11 @@ func toggle_pause_menu() -> void:
 		blank_style.bg_color = Color(1, 1, 1, 0)
 		blank_style.content_margin_left = 20
 		blank_style.content_margin_top = 18
+		blank_style.content_margin_right = 20
+		blank_style.content_margin_bottom = 18
+		blank_style.shadow_size = 15
+		blank_style.shadow_color = Color(0, 0, 0, 0.6)
+		blank_style.shadow_offset = Vector2(0, 4)
 		blank_style.content_margin_right = 20
 		blank_style.content_margin_bottom = 18
 		card.add_theme_stylebox_override("panel", blank_style)
