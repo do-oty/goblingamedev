@@ -3,10 +3,17 @@ extends Node
 const GOLDEN_KEY_TYPE: String = "golden_key"
 const PICKUP_DROP_SCENE: PackedScene = preload("res://scenes/PickupDrop.tscn")
 const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
+const BRUTE_SCENE: PackedScene = preload("res://assets/characters/bruteChampion.tscn")
 
 @export var kills_required: int = 10
 @export var objective_name: String = "Map"
 @export var unlock_map_id: String = ""
+
+@export_category("SFX Wiring")
+@export var sfx_step_complete: AudioStream
+@export var sfx_all_complete: AudioStream
+@export var sfx_enemy_match: AudioStream
+@export var sfx_boss_spawn: AudioStream
 
 var kill_count: int = 0
 var objective_complete: bool = false
@@ -15,12 +22,21 @@ var key_pickup: Area2D = null
 var completion_panel_open: bool = false
 var player_died: bool = false
 
+# New multi-objective system
+var objectives: Array = [
+	{"type": "kill", "target": "any", "required": 15, "count": 0, "desc": "Defeat any goblins"},
+	{"type": "kill", "target": "brute", "required": 2, "count": 0, "desc": "Defeat Brute Champions"},
+	{"type": "kill", "target": "mage", "required": 3, "count": 0, "desc": "Defeat Goblin Mages"}
+]
+var current_objective_index: int = 0
+
 var enemies_root: Node2D = null
 var drops_root: Node2D = null
 var player: CharacterBody2D = null
 var canvas_layer: CanvasLayer = null
 
 var objective_label: Label = null
+var banner_label: Label = null
 var key_arrow_label: Label = null
 var completion_panel: PanelContainer = null
 var completion_title_label: Label = null
@@ -34,6 +50,11 @@ func _ready() -> void:
 	player = get_node_or_null("../Player") as CharacterBody2D
 	canvas_layer = get_node_or_null("../CanvasLayer") as CanvasLayer
 
+	# Setup SFX Player
+	var sfx_player = AudioStreamPlayer.new()
+	sfx_player.name = "ObjectiveSFXPlayer"
+	add_child(sfx_player)
+
 	_connect_existing_enemies()
 	if enemies_root != null:
 		if not enemies_root.child_entered_tree.is_connected(_on_enemy_added):
@@ -46,6 +67,13 @@ func _ready() -> void:
 			player.died.connect(_on_player_died)
 
 	_create_ui()
+	
+	# Load progress
+	var progress = GameState.get_map_progress(objective_name)
+	current_objective_index = progress.get("index", 0)
+	if current_objective_index < objectives.size():
+		objectives[current_objective_index]["count"] = progress.get("count", 0)
+		
 	_update_objective_label()
 	await get_tree().process_frame
 	_apply_difficulty()
@@ -56,6 +84,11 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Debug skip objective (F2 key)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F2:
+		_cheat_complete_objective()
+		return
+
 	if not completion_panel_open:
 		return
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
@@ -70,7 +103,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_enemy_added(node: Node) -> void:
 	await get_tree().process_frame
-	_try_connect_enemy(node)
+	if is_instance_valid(node):
+		_try_connect_enemy(node)
 
 
 func _connect_existing_enemies() -> void:
@@ -83,18 +117,96 @@ func _connect_existing_enemies() -> void:
 func _try_connect_enemy(enemy: Node) -> void:
 	if enemy == null or not enemy.has_signal("defeated"):
 		return
-	if enemy.defeated.is_connected(_on_enemy_defeated):
-		return
-	enemy.defeated.connect(_on_enemy_defeated)
+	# Use bind to pass the enemy node to the callback
+	if not enemy.defeated.is_connected(_on_enemy_defeated):
+		enemy.defeated.connect(_on_enemy_defeated.bind(enemy))
 
 
-func _on_enemy_defeated(world_position: Vector2, _xp_value: int, _xp_tier: String) -> void:
-	if objective_complete:
+func _on_enemy_defeated(world_position: Vector2, _xp_value: int, _xp_tier: String, enemy: Node) -> void:
+	if objective_complete or current_objective_index >= objectives.size():
 		return
+		
 	kill_count += 1
-	_update_objective_label()
-	if kill_count >= kills_required and not key_spawned:
-		_spawn_golden_key_deferred.call_deferred(world_position)
+	var current_obj = objectives[current_objective_index]
+	var match_found = false
+	
+	if current_obj["target"] == "any":
+		match_found = true
+	elif current_obj["target"] == "brute" and "brute" in enemy.name.to_lower():
+		match_found = true
+	elif current_obj["target"] == "mage" and "mage" in enemy.name.to_lower():
+		match_found = true
+	elif current_obj["target"] == "sword" and "sword" in enemy.name.to_lower():
+		match_found = true
+		
+	if match_found:
+		current_obj["count"] += 1
+		_update_objective_label()
+		# Save progress
+		GameState.save_map_progress(objective_name, current_objective_index, current_obj["count"])
+		_play_sfx(sfx_enemy_match)
+		
+		if current_obj["count"] >= current_obj["required"]:
+			_complete_current_objective(world_position)
+
+func _complete_current_objective(drop_pos: Vector2) -> void:
+	current_objective_index += 1
+	# Save progress
+	GameState.save_map_progress(objective_name, current_objective_index, 0)
+	
+	# Play SFX
+	if current_objective_index >= objectives.size():
+		_play_sfx(sfx_all_complete)
+	else:
+		_play_sfx(sfx_step_complete)
+	
+	# Show banner
+	_show_objective_complete_banner()
+	
+	# Give reward
+	GameState.add_coins(50)
+	
+	if current_objective_index >= objectives.size():
+		objective_complete = true
+		GameState.add_coins(150) # Bonus for full completion
+		if not key_spawned:
+			_spawn_golden_key_deferred.call_deferred(drop_pos)
+			
+		# Trigger boss if Desert map
+		if objective_name == "Desert":
+			var game_root = get_tree().current_scene
+			if game_root != null and game_root.has_method("_try_spawn_king_goblin_boss"):
+				game_root.call_deferred("_try_spawn_king_goblin_boss")
+				_play_sfx(sfx_boss_spawn)
+	else:
+		_update_objective_label()
+		# Spawn mini-boss on step 3 (index 2)
+		if current_objective_index == 2:
+			_spawn_mini_boss(drop_pos)
+
+func _show_objective_complete_banner() -> void:
+	if banner_label == null:
+		return
+	banner_label.modulate.a = 1.0
+	var tween = create_tween()
+	tween.tween_property(banner_label, "modulate:a", 0.0, 2.0).set_delay(1.0)
+
+func _spawn_mini_boss(pos: Vector2) -> void:
+	if BRUTE_SCENE == null or enemies_root == null:
+		return
+	var brute = BRUTE_SCENE.instantiate() as CharacterBody2D
+	brute.global_position = pos
+	enemies_root.add_child(brute)
+	brute.scale = Vector2(1.5, 1.5)
+	brute.name = "MiniBoss_Brute"
+
+func _cheat_complete_objective() -> void:
+	# Skip ALL objectives
+	current_objective_index = objectives.size() - 1
+	var current_obj = objectives[current_objective_index]
+	current_obj["count"] = current_obj["required"]
+	_complete_current_objective(player.global_position if player else Vector2.ZERO)
+	print("Debug: Skipped ALL objectives.")
 
 
 func _spawn_golden_key_deferred(world_position: Vector2) -> void:
@@ -150,11 +262,40 @@ func _unlock_next_map() -> void:
 func _create_ui() -> void:
 	if canvas_layer == null:
 		return
+	# Background Panel for Quest Tracker
+	var tracker_bg = ColorRect.new()
+	tracker_bg.color = Color(0, 0, 0, 0.4) # Semi-transparent black
+	tracker_bg.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	tracker_bg.offset_left = -420
+	tracker_bg.offset_top = 110
+	tracker_bg.offset_right = -4
+	tracker_bg.offset_bottom = 230
+	tracker_bg.z_index = 89
+	canvas_layer.add_child(tracker_bg)
+
 	objective_label = Label.new()
-	objective_label.position = Vector2(14.0, 14.0)
-	objective_label.add_theme_font_size_override("font_size", 22)
+	objective_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	objective_label.offset_left = -400
+	objective_label.offset_top = 120
+	objective_label.offset_right = -14
+	objective_label.offset_bottom = 220
+	objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective_label.add_theme_font_size_override("font_size", 18)
 	objective_label.z_index = 90
 	canvas_layer.add_child(objective_label)
+	
+	# Banner Label for Objective Complete
+	banner_label = Label.new()
+	banner_label.set_anchors_preset(Control.PRESET_CENTER)
+	banner_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	banner_label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner_label.add_theme_font_size_override("font_size", 36)
+	banner_label.text = "OBJECTIVE COMPLETE!"
+	banner_label.modulate.a = 0.0 # Start invisible
+	banner_label.z_index = 100
+	canvas_layer.add_child(banner_label)
 
 	key_arrow_label = Label.new()
 	key_arrow_label.visible = false
@@ -209,11 +350,30 @@ func _update_objective_label() -> void:
 	if objective_label == null:
 		return
 	if objective_complete:
-		objective_label.text = "%s Objective Complete" % objective_name
+		objective_label.text = "%s Objective Complete!" % objective_name
 	elif key_spawned:
 		objective_label.text = "Golden key dropped! Pick it up."
+	elif current_objective_index < objectives.size():
+		var current_obj = objectives[current_objective_index]
+		objective_label.text = "%s Obj (%d/%d): %s (%d/%d)" % [
+			objective_name, 
+			current_objective_index + 1, 
+			objectives.size(),
+			current_obj["desc"],
+			current_obj["count"],
+			current_obj["required"]
+		]
 	else:
 		objective_label.text = "%s Objective: Defeat goblins %d / %d" % [objective_name, kill_count, kills_required]
+
+
+func get_current_objective_desc() -> String:
+	if objective_complete:
+		return "All Objectives Complete!"
+	if current_objective_index < objectives.size():
+		var obj = objectives[current_objective_index]
+		return obj["desc"] + " (" + str(obj["count"]) + "/" + str(obj["required"]) + ")"
+	return "No Objectives"
 
 
 func _update_key_arrow() -> void:
@@ -271,3 +431,12 @@ func _inject_death_progress_text() -> void:
 	var death_summary: Label = get_node_or_null("../CanvasLayer/HUD/DeathMenu/CenterContainer/Card/RootRow/SummaryVBox/SummaryText") as Label
 	if death_summary != null and not death_summary.text.contains(progress_text):
 		death_summary.text = "%s\n%s" % [death_summary.text, progress_text]
+
+
+func _play_sfx(stream: AudioStream) -> void:
+	if stream == null:
+		return
+	var player = get_node_or_null("ObjectiveSFXPlayer") as AudioStreamPlayer
+	if player != null:
+		player.stream = stream
+		player.play()

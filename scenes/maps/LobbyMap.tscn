@@ -20712,6 +20712,9 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
+size = Vector2(200, 160)
+
 [node name="LobbyMap" type="Node2D" unique_id=220049832]
 script = ExtResource("1_xv68m")
 
@@ -20742,7 +20745,7 @@ tile_map_data = PackedByteArray("AAAbAP7/BAASABkAAAAbAP//BAASABoAAAAbAAAABAASABs
 tile_set = SubResource("TileSet_kwfgp")
 
 [node name="Player" parent="." unique_id=109853097 instance=ExtResource("2_f3pxu")]
-position = Vector2(582, 267)
+position = Vector2(183, 554)
 
 [node name="PlayerLight" type="PointLight2D" parent="Player" unique_id=817674808]
 color = Color(1, 0.96, 0.85, 1)
@@ -20898,6 +20901,7 @@ polygon = PackedVector2Array(0, -28, 18, -16, 22, 14, 0, 28, -22, 14, -18, -16)
 shape = SubResource("CircleShape2D_historian")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=740516511]
+visible = false
 
 [node name="HUD" parent="CanvasLayer" unique_id=572741492 instance=ExtResource("3_global_hud")]
 offset_left = 8.0
@@ -20928,3 +20932,11 @@ sprite_frames = SubResource("SpriteFrames_hmn16")
 autoplay = "default"
 frame_progress = 0.704166
 metadata/_edit_lock_ = true
+
+[node name="BuildingTrigger" type="Area2D" parent="." unique_id=1575908878]
+z_index = 7
+position = Vector2(0, -150)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BuildingTrigger" unique_id=1643224262]
+position = Vector2(187, 577)
+shape = SubResource("RectangleShape2D_trigger")
