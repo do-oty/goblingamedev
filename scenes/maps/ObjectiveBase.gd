@@ -92,7 +92,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if not completion_panel_open:
 		return
-	if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
+	if event.is_pressed() and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		completion_panel_open = false
 		if completion_panel != null:
@@ -177,7 +177,7 @@ func _complete_current_objective(drop_pos: Vector2) -> void:
 	if current_objective_index >= objectives.size():
 		objectives_finished = true
 		GameState.add_coins(150) # Bonus for full completion
-		if not key_spawned:
+		if not key_spawned and objective_name != "Desert":
 			_spawn_golden_key_deferred.call_deferred(drop_pos)
 			
 		# Trigger boss if Desert map
@@ -359,7 +359,7 @@ func _create_ui() -> void:
 	completion_hint_label = Label.new()
 	completion_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	completion_hint_label.add_theme_font_size_override("font_size", 24)
-	completion_hint_label.text = "Press Enter or Esc to return to Lobby"
+	completion_hint_label.text = "Tap or press any key to return to Lobby"
 	completion_hint_label.modulate = Color(0.92, 0.92, 0.92, 1.0)
 	text_vbox.add_child(completion_hint_label)
 
