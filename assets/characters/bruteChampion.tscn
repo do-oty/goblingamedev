@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bej2hci6g3dyu"]
 
-[ext_resource type="Script" uid="uid://cms7gcxg5fl82" path="res://scripts/brute_champion.gd" id="1_nbma8"]
+[ext_resource type="Script" path="res://scripts/brute_champion.gd" id="1_nbma8"]
 [ext_resource type="PackedScene" uid="uid://dybuwfdmbjnng" path="res://scenes/vfx/BruteChargeStartSmokeVfx.tscn" id="2_brute_smoke"]
 [ext_resource type="Texture2D" uid="uid://blpnwcugnfu08" path="res://assets/characters/brute.png" id="3_aq8ia"]
 

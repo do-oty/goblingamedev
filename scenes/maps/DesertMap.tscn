@@ -1,6 +1,8 @@
 [gd_scene format=4 uid="uid://vqh4id4lhgat"]
 
 [ext_resource type="PackedScene" uid="uid://dk8gccgvpj6gi" path="res://scenes/maps/ForestMap.tscn" id="1_forest_base"]
+[ext_resource type="Script" path="res://scenes/maps/DesertObjective.gd" id="2_desert_objective"]
+[ext_resource type="Script" path="res://scripts/MapDifficultyApplier.gd" id="3_map_difficulty"]
 [ext_resource type="Texture2D" uid="uid://cbi4d4niylf3i" path="res://assets/tilesets/sand.png" id="2_16dlg"]
 [ext_resource type="Texture2D" uid="uid://cm7xqh4le85dp" path="res://assets/tilesets/cobbled_sandstone.png" id="3_ng27u"]
 [ext_resource type="Texture2D" uid="uid://dm10i5camonxs" path="res://assets/tilesets/decor_remains3.png" id="4_ofagv"]
@@ -674,6 +676,13 @@ sources/4 = SubResource("TileSetAtlasSource_5bgd2")
 sources/5 = SubResource("TileSetAtlasSource_ftdgk")
 
 [node name="DesertMap" unique_id=419677628 instance=ExtResource("1_forest_base")]
+
+[node name="DesertObjective" type="Node" parent="."]
+script = ExtResource("2_desert_objective")
+
+[node name="MapDifficultyApplier" type="Node" parent="."]
+script = ExtResource("3_map_difficulty")
+map_id = "desert"
 
 [node name="trees" parent="." index="6" unique_id=2047506037]
 visible = false
