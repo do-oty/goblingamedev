@@ -1307,3 +1307,6 @@ script = ExtResource("2_snow_objective")
 [node name="MapDifficultyApplier2" type="Node" parent="." index="14" unique_id=2080744671]
 script = ExtResource("3_map_difficulty")
 map_id = "snow"
+
+[node name="partition" parent="." index="11" unique_id=1405745186]
+visible = false
