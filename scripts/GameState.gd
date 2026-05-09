@@ -157,16 +157,23 @@ func get_total_permanent_bonus() -> Dictionary:
 		"max_health": 0,
 		"move_speed": 0.0,
 		"luck": 0.0,
-		"dash_cooldown_reduction": 0.0
+		"dash_cooldown_reduction": 0.0,
+		"crit_chance": 0.0,
+		"health_regen": 0.0
 	}
 	var hp_level: int = get_upgrade_level("max_health")
 	var speed_level: int = get_upgrade_level("move_speed")
 	var luck_level: int = get_upgrade_level("luck")
 	var dash_level: int = get_upgrade_level("dash_mastery")
+	var crit_level: int = get_upgrade_level("crit_chance")
+	var regen_level: int = get_upgrade_level("health_regen")
+	
 	bonus["max_health"] = hp_level * 8
 	bonus["move_speed"] = float(speed_level) * 3.0
 	bonus["luck"] = float(luck_level) * 0.08
 	bonus["dash_cooldown_reduction"] = float(dash_level) * 0.03
+	bonus["crit_chance"] = float(crit_level) * 0.02
+	bonus["health_regen"] = float(regen_level) * 0.5
 	return bonus
 
 

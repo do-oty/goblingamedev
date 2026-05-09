@@ -1,4 +1,5 @@
 extends Node
+class_name ObjectiveBase
 
 const GOLDEN_KEY_TYPE: String = "golden_key"
 const PICKUP_DROP_SCENE: PackedScene = preload("res://scenes/PickupDrop.tscn")
@@ -276,29 +277,37 @@ func _create_ui() -> void:
 		return
 	_clear_stale_objective_ui()
 	# Background Panel for Quest Tracker
-	var tracker_bg = ColorRect.new()
+	var tracker_bg = PanelContainer.new()
 	tracker_bg.name = "ObjectiveUI_TrackerBg"
-	tracker_bg.color = Color(0, 0, 0, 0.4) # Semi-transparent black
-	tracker_bg.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	tracker_bg.offset_left = -420
-	tracker_bg.offset_top = 110
-	tracker_bg.offset_right = -4
-	tracker_bg.offset_bottom = 230
+	
+	var screen_width := get_viewport().get_visible_rect().size.x
+	tracker_bg.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	tracker_bg.offset_left = screen_width - 264
+	tracker_bg.offset_right = screen_width - 4
+	
+	if get_tree().current_scene.name == "Lobby":
+		tracker_bg.offset_top = 500 # Way way lower in lobby!
+		tracker_bg.offset_bottom = 580
+	else:
+		tracker_bg.offset_top = 110
+		tracker_bg.offset_bottom = 190
 	tracker_bg.z_index = 89
+	
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.4) # Semi-transparent black
+	style.shadow_size = 6
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
+	style.shadow_offset = Vector2(0.0, 1.0)
+	tracker_bg.add_theme_stylebox_override("panel", style)
+	
 	canvas_layer.add_child(tracker_bg)
 
 	objective_label = Label.new()
 	objective_label.name = "ObjectiveUI_TrackerLabel"
-	objective_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	objective_label.offset_left = -400
-	objective_label.offset_top = 120
-	objective_label.offset_right = -14
-	objective_label.offset_bottom = 220
 	objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	objective_label.add_theme_font_size_override("font_size", 18)
-	objective_label.z_index = 90
-	canvas_layer.add_child(objective_label)
+	objective_label.add_theme_font_size_override("font_size", 14)
+	tracker_bg.add_child(objective_label)
 	
 	# Banner Label for Objective Complete
 	banner_label = Label.new()
@@ -331,7 +340,7 @@ func _create_ui() -> void:
 	completion_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	completion_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	completion_panel.z_index = 200
-	var style := StyleBoxFlat.new()
+	style = StyleBoxFlat.new()
 	style.bg_color = Color(0.0, 0.0, 0.0, 0.86)
 	completion_panel.add_theme_stylebox_override("panel", style)
 	canvas_layer.add_child(completion_panel)

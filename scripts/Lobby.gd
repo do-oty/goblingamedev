@@ -24,6 +24,8 @@ const SNOW_SCENE_PATH: String = "res://scenes/maps/SnowMap.tscn"
 var player_in_npc_range: bool = false
 var button_damage: Button
 var button_atk_speed: Button
+var button_crit: Button
+var button_regen: Button
 var stats_label: Label
 
 
@@ -41,13 +43,55 @@ func _ready() -> void:
 		global_hud.call("set_lobby_last_run_text", GameState.get_last_run_summary_text())
 	if player != null and player.has_method("set_lobby_mode"):
 		player.call("set_lobby_mode", true)
-	panel.visible = false
-	hint_label.visible = false
+	if panel != null: panel.visible = false
+	if hint_label != null: hint_label.visible = false
+	
+	# Connect manual trigger if it exists
+	var manual_trigger = get_node_or_null("BuildingTrigger")
+	if manual_trigger and not manual_trigger.body_entered.is_connected(_on_building_trigger_body_entered):
+		manual_trigger.body_entered.connect(_on_building_trigger_body_entered)
+	
+	# Ensure CanvasLayer is visible in lobby
+	var cl: CanvasLayer = get_node_or_null("CanvasLayer") as CanvasLayer
+	if cl != null:
+		cl.visible = true
+		
+	# Add objectives label
+	var obj_label := Label.new()
+	obj_label.name = "LobbyObjectivesLabel"
+	cl.add_child(obj_label)
+	obj_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	obj_label.offset_left = -300
+	obj_label.offset_right = -20
+	obj_label.offset_top = 100
+	obj_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	obj_label.add_theme_font_size_override("font_size", 18)
+	obj_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	obj_label.add_theme_constant_override("shadow_offset_x", 1)
+	obj_label.add_theme_constant_override("shadow_offset_y", 1)
+	obj_label.add_theme_constant_override("shadow_outline_size", 1)
+	
+	_update_lobby_objectives(obj_label)
+	
+	# Add NPC hint label
+	var npc_hint := Label.new()
+	npc_hint.name = "NpcHint"
+	npc_hint.text = "Press E to talk"
+	npc_hint.visible = false
+	$UpgradeNpc.add_child(npc_hint)
+	npc_hint.position = Vector2(102 - 50, -83 - 40)
+	npc_hint.add_theme_font_size_override("font_size", 14)
+	npc_hint.add_theme_color_override("font_shadow_color", Color(0,0,0,1))
+	npc_hint.add_theme_constant_override("shadow_offset_x", 1)
+	npc_hint.add_theme_constant_override("shadow_offset_y", 1)
+	
 	forest_portal_area.body_entered.connect(_on_portal_body_entered.bind(FOREST_SCENE_PATH))
 	desert_portal_area.body_entered.connect(_on_portal_body_entered.bind(DESERT_SCENE_PATH))
 	snow_portal_area.body_entered.connect(_on_portal_body_entered.bind(SNOW_SCENE_PATH))
 	npc_area.body_entered.connect(_on_npc_body_entered)
 	npc_area.body_exited.connect(_on_npc_body_exited)
+	
+	# Removed collisions that were blocking the player
 	
 	button_hp.pressed.connect(_on_hp_upgrade_pressed)
 	button_speed.pressed.connect(_on_speed_upgrade_pressed)
@@ -62,8 +106,8 @@ func _ready() -> void:
 	
 	# Create a GridContainer for upgrades
 	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 40)
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 20)
 	grid.add_theme_constant_override("v_separation", 40)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -91,19 +135,32 @@ func _ready() -> void:
 	_style_web_button(button_atk_speed)
 	button_atk_speed.pressed.connect(func(): _try_buy_upgrade("attack_speed", 28, 10))
 	
+	button_crit = Button.new()
+	button_crit.name = "CritButton"
+	grid.add_child(button_crit)
+	_style_web_button(button_crit)
+	button_crit.pressed.connect(func(): _try_buy_upgrade("crit_chance", 35, 5))
+	
+	button_regen = Button.new()
+	button_regen.name = "RegenButton"
+	grid.add_child(button_regen)
+	_style_web_button(button_regen)
+	button_regen.pressed.connect(func(): _try_buy_upgrade("health_regen", 40, 5))
+	
 	var button_close := Button.new()
 	button_close.text = "Close"
 	vbox.add_child(button_close)
 	_style_web_button(button_close)
 	button_close.pressed.connect(func(): _set_upgrade_panel_visible(false))
 	
-	for btn in [button_hp, button_speed, button_luck, button_dash, button_damage, button_atk_speed]:
+	for btn in [button_hp, button_speed, button_luck, button_dash, button_damage, button_atk_speed, button_crit, button_regen]:
 		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.custom_minimum_size = Vector2(300, 100) # Card size
 		
 	_refresh_ui()
 	
-	if building_trigger:
+	if building_trigger and not building_trigger.body_entered.is_connected(_on_building_trigger_body_entered):
 		building_trigger.body_entered.connect(_on_building_trigger_body_entered)
 		print("Using scene BuildingTrigger at: ", building_trigger.global_position)
 		
@@ -123,23 +180,21 @@ func _ready() -> void:
 			building_trigger.add_child(collision)
 			print("Added fallback collision shape to scene BuildingTrigger.")
 			
-		# Add visual helper
-		var visual = ColorRect.new()
-		visual.color = Color(0, 0.8, 0.2, 0.6) # Bright green
-		visual.size = shape_size
-		visual.position = -shape_size / 2
-		building_trigger.add_child(visual)
-		print("Added green visual helper to scene BuildingTrigger.")
+		# Removed visual helper
+		print("Removed green visual helper from scene BuildingTrigger.")
 	else:
-		_setup_building_trigger()
+		print("Skipping coded building trigger. Using manual one if it exists.")
 
 
 func _process(_delta: float) -> void:
+	var npc_hint = $UpgradeNpc.get_node_or_null("NpcHint")
 	if player_in_npc_range and not panel.visible:
-		hint_label.visible = true
-		hint_label.text = "Press E to talk"
+		if npc_hint:
+			npc_hint.visible = true
+			npc_hint.z_index = 10
+			npc_hint.position = Vector2(0, -50) # Position it above the NPC
 	else:
-		hint_label.visible = false
+		if npc_hint: npc_hint.visible = false
 	_refresh_coins()
 	_refresh_lobby_dash_ui()
 
@@ -189,12 +244,8 @@ func _setup_building_trigger() -> void:
 	# Position it in the lobby (closer to spawn)
 	bldg_area.position = Vector2(0, -150) 
 	
-	# Visual helper
-	var visual = ColorRect.new()
-	visual.color = Color(1, 0, 0, 0.7) # Brighter
-	visual.size = shape.size
-	visual.position = -shape.size / 2
-	bldg_area.add_child(visual)
+	# Removed visual helper
+	print("Removed fallback visual helper.")
 	
 	print("Fallback BuildingTrigger created at: ", bldg_area.position)
 	
@@ -219,7 +270,8 @@ func _on_building_trigger_body_entered(body: Node) -> void:
 		
 		# Show message
 		hint_label.visible = true
-		hint_label.text = "Dont come back until the hob's done!"
+		hint_label.text = "Don't come back until the job's done!"
+			
 		# Hide after delay
 		get_tree().create_timer(2.0).timeout.connect(func():
 			hint_label.visible = false
@@ -278,6 +330,10 @@ func _refresh_ui() -> void:
 		_refresh_upgrade_button(button_damage, "damage", "Strength", "Increases your attack damage.", 30, 10)
 	if button_atk_speed:
 		_refresh_upgrade_button(button_atk_speed, "attack_speed", "Haste", "Increases attack speed.", 28, 10)
+	if button_crit:
+		_refresh_upgrade_button(button_crit, "crit_chance", "Critical", "Increases critical strike chance.", 35, 5)
+	if button_regen:
+		_refresh_upgrade_button(button_regen, "health_regen", "Regeneration", "Passive health regeneration.", 40, 5)
 		
 	_refresh_stats_label()
 
@@ -315,14 +371,42 @@ func _refresh_lobby_dash_ui() -> void:
 
 
 func _set_upgrade_panel_visible(is_open: bool) -> void:
+	if panel == null:
+		return
 	panel.visible = is_open
 	if is_open:
-		panel.move_to_front()
+		var shop_layer = get_node_or_null("ShopLayer")
+		if shop_layer == null:
+			shop_layer = CanvasLayer.new()
+			shop_layer.layer = 105 # Higher than HUD (100)
+			shop_layer.name = "ShopLayer"
+			add_child(shop_layer)
+			panel.get_parent().remove_child(panel)
+			shop_layer.add_child(panel)
+			
 		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
-		var black_style := StyleBoxFlat.new()
-		black_style.bg_color = Color(0, 0, 0, 1)
-		panel.add_theme_stylebox_override("panel", black_style)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.05, 0.05, 0.05, 0.9) # Barely translucent black
+		style.corner_radius_top_left = 12
+		style.corner_radius_top_right = 12
+		style.corner_radius_bottom_left = 12
+		style.corner_radius_bottom_right = 12
+		style.border_width_left = 1
+		style.border_width_top = 1
+		style.border_width_right = 1
+		style.border_width_bottom = 1
+		style.border_color = Color(0.2, 0.2, 0.2, 1)
+		style.shadow_size = 15
+		style.shadow_color = Color(0, 0, 0, 0.7)
+		style.shadow_offset = Vector2(0, 5)
+		panel.add_theme_stylebox_override("panel", style)
+		
+	var cl = get_node_or_null("CanvasLayer")
+	if cl:
+		var obj_label = cl.get_node_or_null("LobbyObjectivesLabel")
+		if obj_label:
+			obj_label.visible = not is_open
 		
 	if player != null:
 		player.set_physics_process(not is_open)
@@ -335,25 +419,30 @@ func _deferred_change_scene(destination_scene: String) -> void:
 func _style_web_button(btn: Button, is_accent: bool = false) -> void:
 	if btn == null: return
 	var normal := StyleBoxFlat.new()
-	# Dark gray button so it stands out on black background
-	normal.bg_color = Color(0.1, 0.1, 0.1, 1)
-	normal.border_width_left = 1
-	normal.border_width_top = 1
-	normal.border_width_right = 1
-	normal.border_width_bottom = 1
-	normal.border_color = Color(0.3, 0.3, 0.3, 1)
-	normal.corner_radius_top_left = 10
-	normal.corner_radius_top_right = 10
-	normal.corner_radius_bottom_left = 10
-	normal.corner_radius_bottom_right = 10
-	normal.content_margin_left = 18
-	normal.content_margin_right = 18
-	normal.content_margin_top = 8
-	normal.content_margin_bottom = 8
+	# Bare button: transparent background
+	normal.bg_color = Color(0, 0, 0, 0)
+	normal.border_width_left = 0
+	normal.border_width_top = 0
+	normal.border_width_right = 0
+	normal.border_width_bottom = 0
+	normal.content_margin_left = 12
+	normal.content_margin_right = 12
+	normal.content_margin_top = 6
+	normal.content_margin_bottom = 6
+	normal.shadow_size = 2
+	normal.shadow_color = Color(0, 0, 0, 0.3)
+	normal.shadow_offset = Vector2(0, 1)
 	
-	var hover := normal.duplicate()
-	hover.bg_color = Color(0.2, 0.2, 0.2, 1)
-	hover.border_color = Color(0.5, 0.5, 0.5, 1)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color(0.2, 0.2, 0.2, 0.3) # Subtle hover background
+	hover.corner_radius_top_left = 6
+	hover.corner_radius_top_right = 6
+	hover.corner_radius_bottom_left = 6
+	hover.corner_radius_bottom_right = 6
+	hover.content_margin_left = 12
+	hover.content_margin_right = 12
+	hover.content_margin_top = 6
+	hover.content_margin_bottom = 6
 	
 	btn.add_theme_stylebox_override("normal", normal)
 	btn.add_theme_stylebox_override("hover", hover)
@@ -374,3 +463,62 @@ func _style_web_button(btn: Button, is_accent: bool = false) -> void:
 		var t = btn.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 		t.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.05)
 	)
+
+
+func _update_lobby_objectives(label: Label) -> void:
+	if label == null:
+		return
+	var text: String = "Objectives:\n"
+	
+	# Forest
+	var forest_prog: Dictionary = GameState.get_map_progress("Forest")
+	var forest_idx: int = forest_prog.get("index", 0)
+	var forest_objectives: Array[String] = [
+		"Defeat any goblins",
+		"Defeat Goblin Swordsmen",
+		"Defeat more goblins",
+		"Defeat a Brute Champion",
+		"Defeat Goblin Mages"
+	]
+	if forest_idx < forest_objectives.size():
+		text += "Forest: %s\n" % forest_objectives[forest_idx]
+	else:
+		text += "Forest: Complete!\n"
+		
+	# Snow
+	if GameState.is_snow_map_unlocked():
+		var snow_prog: Dictionary = GameState.get_map_progress("Snow")
+		var snow_idx: int = snow_prog.get("index", 0)
+		var snow_objectives: Array[String] = [
+			"Defeat any goblins",
+			"Defeat Goblin Mages",
+			"Defeat Goblin Swordsmen",
+			"Defeat more goblins",
+			"Defeat Brute Champions",
+			"Defeat Goblin Mages"
+		]
+		if snow_idx < snow_objectives.size():
+			text += "Snow: %s\n" % snow_objectives[snow_idx]
+		else:
+			text += "Snow: Complete!\n"
+			
+	# Desert
+	if GameState.is_desert_map_unlocked():
+		var desert_prog: Dictionary = GameState.get_map_progress("Desert")
+		var desert_idx: int = desert_prog.get("index", 0)
+		var desert_objectives: Array[String] = [
+			"Defeat any goblins",
+			"Defeat Goblin Swordsmen",
+			"Defeat Goblin Mages",
+			"Defeat Brute Champions",
+			"Defeat more goblins",
+			"Defeat Goblin Swordsmen",
+			"Defeat Goblin Mages",
+			"Prepare for the Boss!"
+		]
+		if desert_idx < desert_objectives.size():
+			text += "Desert: %s\n" % desert_objectives[desert_idx]
+		else:
+			text += "Desert: Complete!\n"
+			
+	label.text = text

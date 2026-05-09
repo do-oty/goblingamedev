@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://din4278qki2a1"]
+
+[ext_resource type="VideoStream" uid="uid://dbn14dmommtku" path="res://assets/cutscenes/endingcutscene.ogv" id="1_gnbup"]
+[ext_resource type="AudioStream" uid="uid://yxvfyhtoj3a8" path="res://assets/sfx/victory.mp3" id="2_3o2tj"]
+
+[node name="EndingCutscene" type="CanvasLayer" unique_id=792324030]
+layer = 101
+
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="." unique_id=1495735086]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stream = ExtResource("1_gnbup")
+expand = true
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1496843209]
+stream = ExtResource("2_3o2tj")
+volume_db = -10.0

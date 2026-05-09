@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://dk35ekbwyayli" path="res://assets/characters/frogger_sleep.png" id="10_8dend"]
 [ext_resource type="Texture2D" uid="uid://c037teemnishu" path="res://assets/tilesets/sprite-sheet.png" id="10_xgb3a"]
 [ext_resource type="Texture2D" uid="uid://b3ktkpsqev53u" path="res://assets/tilesets/altar 224x288 - standing on grass.png" id="15_rwiho"]
+[ext_resource type="AudioStream" uid="uid://btudql3ktbua6" path="res://assets/sfx/lobbynew.mp3" id="17_b2csl"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jd0dp"]
 texture = ExtResource("3_h31fa")
@@ -20756,12 +20757,6 @@ texture_scale = 1.9
 z_index = 2
 position = Vector2(1028, 96)
 
-[node name="PortalRing" type="Polygon2D" parent="PortalForest" unique_id=726972656]
-visible = false
-z_index = 2
-color = Color(0.38, 0.58, 1, 0.88)
-polygon = PackedVector2Array(0, -44, 30, -32, 42, 0, 30, 32, 0, 44, -30, 32, -42, 0, -30, -32)
-
 [node name="PortalSprite" type="AnimatedSprite2D" parent="PortalForest" unique_id=681347903]
 self_modulate = Color(0.16470589, 1, 0, 1)
 z_index = 2
@@ -20779,6 +20774,9 @@ offset_left = -36.0
 offset_top = 43.0
 offset_right = 40.0
 offset_bottom = 67.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Forest"
 horizontal_alignment = 1
 metadata/_edit_use_anchors_ = true
@@ -20815,6 +20813,9 @@ offset_left = -38.0
 offset_top = 52.0
 offset_right = 38.0
 offset_bottom = 76.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Desert"
 horizontal_alignment = 1
 
@@ -20847,6 +20848,9 @@ offset_left = -38.0
 offset_top = 52.0
 offset_right = 38.0
 offset_bottom = 76.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Snow"
 horizontal_alignment = 1
 metadata/_edit_use_anchors_ = true
@@ -20938,5 +20942,11 @@ z_index = 7
 position = Vector2(0, -150)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="BuildingTrigger" unique_id=1643224262]
+visible = false
 position = Vector2(187, 577)
 shape = SubResource("RectangleShape2D_trigger")
+
+[node name="LobbyMusic" type="AudioStreamPlayer" parent="." unique_id=1828569295]
+stream = ExtResource("17_b2csl")
+autoplay = true
+parameters/looping = true
