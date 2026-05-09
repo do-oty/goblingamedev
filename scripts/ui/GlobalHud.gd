@@ -108,7 +108,7 @@ func _ready() -> void:
 	set_ui_mode(MODE_COMBAT)
 
 
-func show_dialogue(text: String, portrait_sprite: Texture2D = null) -> void:
+func show_dialogue(_text: String, _portrait_sprite: Texture2D = null) -> void:
 	pass
 
 
@@ -146,7 +146,7 @@ func update_combat_bars(
 	dash_max: int,
 	dash_cooldown_left: float,
 	dash_cooldown_total: float,
-	quick_stats_text: String = ""
+	_quick_stats_text: String = ""
 ) -> void:
 	if current_hp < hp_previous:
 		hp_hit_flash_until = (float(Time.get_ticks_msec()) / 1000.0) + HP_HIT_FLASH_SECONDS
@@ -181,10 +181,10 @@ func update_combat_meta(
 	_item_stacks_text: String,
 	stats_modal_text: String,
 	item_entries: Array[Dictionary],
-	talent_entries: Array[Dictionary],
+	_talent_entries: Array[Dictionary],
 	run_timer_text: String,
 	level_chip_text: String,
-	run_damage_taken: int
+	_run_damage_taken: int
 ) -> void:
 	if coin_label != null:
 		coin_label.text = "Run Coins: %d" % coins
@@ -223,7 +223,7 @@ func _draw() -> void:
 	# Check for low HP flash
 	var hp_ratio: float = float(hp_current) / float(hp_max)
 	var is_low_hp: bool = hp_ratio < 0.3
-	var low_hp_flash: bool = is_low_hp and (int(Time.get_ticks_msec() / 250) % 2 == 0)
+	var low_hp_flash: bool = is_low_hp and (int(Time.get_ticks_msec() / 250.0) % 2 == 0)
 	
 	# Draw HP Bar (Red)
 	var hp_color = Color(1, 1, 1) if flash_active else (Color(1, 0.3, 0.3) if low_hp_flash else Color(0.85, 0.15, 0.15))
@@ -250,27 +250,27 @@ func _draw() -> void:
 		120
 	)
 
-func _draw_segmented_bar(pos: Vector2, size: Vector2, ratio: float, fill_color: Color, fill_color_dark: Color, bg_color: Color, segments: int) -> void:
+func _draw_segmented_bar(pos: Vector2, bar_size: Vector2, ratio: float, fill_color: Color, fill_color_dark: Color, bg_color: Color, segments: int) -> void:
 	# Draw black outline
-	draw_rect(Rect2(pos - Vector2(1,1), size + Vector2(2,2)), Color(0,0,0))
+	draw_rect(Rect2(pos - Vector2(1,1), bar_size + Vector2(2,2)), Color(0,0,0))
 	
 	# Draw background
-	draw_rect(Rect2(pos, size), bg_color)
+	draw_rect(Rect2(pos, bar_size), bg_color)
 	
 	# Draw fill with a lighter left-to-right gradient.
-	var fill_width: float = size.x * ratio
+	var fill_width: float = bar_size.x * ratio
 	if fill_width > 0:
 		var x_steps: int = max(int(fill_width), 1)
 		for x in range(x_steps):
 			var t: float = float(x) / float(x_steps)
 			var c = fill_color.lerp(fill_color_dark, t * 0.45)
-			draw_line(Vector2(pos.x + x, pos.y), Vector2(pos.x + x, pos.y + size.y), c)
+			draw_line(Vector2(pos.x + x, pos.y), Vector2(pos.x + x, pos.y + bar_size.y), c)
 		
 	# Draw segment separators
-	var seg_w: float = size.x / float(segments)
+	var seg_w: float = bar_size.x / float(segments)
 	for i in range(1, segments):
 		var sep_x: float = pos.x + (i * seg_w)
-		draw_line(Vector2(sep_x, pos.y), Vector2(sep_x, pos.y + size.y), Color(0, 0, 0, 0.55), 2.0)
+		draw_line(Vector2(sep_x, pos.y), Vector2(sep_x, pos.y + bar_size.y), Color(0, 0, 0, 0.55), 2.0)
 
 
 func _process(_delta: float) -> void:
@@ -307,19 +307,19 @@ func _ensure_modal_toggle_connections() -> void:
 		stats_modal_left.visible = false
 
 
-func _set_items_modal_visible(visible: bool) -> void:
+func _set_items_modal_visible(is_visible: bool) -> void:
 	if items_modal != null:
-		items_modal.visible = visible
+		items_modal.visible = is_visible
 	if items_toggle_button != null:
-		items_toggle_button.text = "Items (Hide)" if visible else "Items"
+		items_toggle_button.text = "Items (Hide)" if is_visible else "Items"
 	_stack_side_modals()
 
 
-func _set_stats_modal_visible(visible: bool) -> void:
+func _set_stats_modal_visible(is_visible: bool) -> void:
 	if stats_modal_left != null:
-		stats_modal_left.visible = visible
+		stats_modal_left.visible = is_visible
 	if stats_toggle_button_left != null:
-		stats_toggle_button_left.text = "Stats (Hide)" if visible else "Stats"
+		stats_toggle_button_left.text = "Stats (Hide)" if is_visible else "Stats"
 	_fit_stats_modal_height()
 	_stack_side_modals()
 
@@ -516,7 +516,7 @@ func _update_xp_wrap_anim(delta: float) -> void:
 
 
 
-func set_lobby_last_run_text(text: String) -> void:
+func set_lobby_last_run_text(_text: String) -> void:
 	pass
 
 
@@ -646,21 +646,21 @@ func show_game_over(survived_to_end: bool) -> void:
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg.modulate = Color(0.0, 0.0, 0.0, 0.55)
 
-		var center = CenterContainer.new()
-		center.name = "CenterContainer"
-		death_menu.add_child(center)
-		center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		var card = PanelContainer.new()
-		card.name = "Card"
-		card.custom_minimum_size = Vector2(460, 250)
-		center.add_child(card)
+		var initial_center = CenterContainer.new()
+		initial_center.name = "CenterContainer"
+		death_menu.add_child(initial_center)
+		initial_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var initial_card = PanelContainer.new()
+		initial_card.name = "Card"
+		initial_card.custom_minimum_size = Vector2(460, 250)
+		initial_center.add_child(initial_card)
 		var blank_style := StyleBoxFlat.new()
 		blank_style.bg_color = Color(1, 1, 1, 0)
 		blank_style.content_margin_left = 20
 		blank_style.content_margin_top = 18
 		blank_style.content_margin_right = 20
 		blank_style.content_margin_bottom = 18
-		card.add_theme_stylebox_override("panel", blank_style)
+		initial_card.add_theme_stylebox_override("panel", blank_style)
 		var card_bg := TextureRect.new()
 		card_bg.name = "CardTexture"
 		card_bg.texture = death_card_texture
@@ -668,40 +668,40 @@ func show_game_over(survived_to_end: bool) -> void:
 		card_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		card_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		card_bg.stretch_mode = TextureRect.STRETCH_SCALE
-		card.add_child(card_bg)
-		card.move_child(card_bg, 0)
-		var vbox = VBoxContainer.new()
-		vbox.name = "VBox"
-		vbox.add_theme_constant_override("separation", 10)
-		card.add_child(vbox)
-		var title = Label.new()
-		title.name = "Title"
-		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		title.add_theme_font_size_override("font_size", 30)
-		vbox.add_child(title)
+		initial_card.add_child(card_bg)
+		initial_card.move_child(card_bg, 0)
+		var initial_vbox = VBoxContainer.new()
+		initial_vbox.name = "VBox"
+		initial_vbox.add_theme_constant_override("separation", 10)
+		initial_card.add_child(initial_vbox)
+		var initial_title = Label.new()
+		initial_title.name = "Title"
+		initial_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		initial_title.add_theme_font_size_override("font_size", 30)
+		initial_vbox.add_child(initial_title)
 
-		var retry_btn = Button.new()
-		retry_btn.text = "Retry"
-		retry_btn.custom_minimum_size = Vector2(0, 46)
-		vbox.add_child(retry_btn)
-		retry_btn.pressed.connect(func():
+		var initial_retry_btn = Button.new()
+		initial_retry_btn.text = "Retry"
+		initial_retry_btn.custom_minimum_size = Vector2(0, 46)
+		initial_vbox.add_child(initial_retry_btn)
+		initial_retry_btn.pressed.connect(func():
 			get_tree().paused = false
 			death_menu.visible = false
 			var gameroot = get_tree().current_scene
 			if gameroot: gameroot._on_retry_button_pressed()
 		)
-		_apply_squish_to_button(retry_btn)
+		_apply_squish_to_button(initial_retry_btn)
 
-		var menu_btn = Button.new()
-		menu_btn.text = "Return to Menu"
-		menu_btn.custom_minimum_size = Vector2(0, 46)
-		vbox.add_child(menu_btn)
-		menu_btn.pressed.connect(func():
+		var initial_menu_btn = Button.new()
+		initial_menu_btn.text = "Return to Menu"
+		initial_menu_btn.custom_minimum_size = Vector2(0, 46)
+		initial_vbox.add_child(initial_menu_btn)
+		initial_menu_btn.pressed.connect(func():
 			get_tree().paused = false
 			death_menu.visible = false
 			GameState.go_to_main_menu()
 		)
-		_apply_squish_to_button(menu_btn)
+		_apply_squish_to_button(initial_menu_btn)
 
 	death_menu.visible = true
 	var center = death_menu.get_node_or_null("CenterContainer") as CenterContainer
@@ -832,21 +832,21 @@ func show_level_up(upgrades: Array) -> void:
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		# bg.texture = load("res://path/to/your/texture.png") # Add your texture here!
 		
-		var center = CenterContainer.new()
-		lvl_up.add_child(center)
-		center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var initial_center = CenterContainer.new()
+		lvl_up.add_child(initial_center)
+		initial_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
-		var vbox = VBoxContainer.new()
-		center.add_child(vbox)
+		var initial_vbox = VBoxContainer.new()
+		initial_center.add_child(initial_vbox)
 		
 		var title = Label.new()
 		title.text = "Level Up!"
-		vbox.add_child(title)
+		initial_vbox.add_child(title)
 		
 		for i in range(3):
 			var btn = Button.new()
 			btn.name = "Choice" + str(i+1)
-			vbox.add_child(btn)
+			initial_vbox.add_child(btn)
 			_apply_squish_to_button(btn)
 			
 	lvl_up.visible = true
@@ -894,7 +894,9 @@ func update_hud_data(data: Dictionary) -> void:
 		hp_bar.max_value = data.get("hp_max", 100)
 		hp_bar.value = data.get("hp_current", 100)
 
+@warning_ignore("unused_signal")
 signal return_to_lobby_requested
+@warning_ignore("unused_signal")
 signal return_to_menu_requested
 
 var pause_menu_panel: PanelContainer = null

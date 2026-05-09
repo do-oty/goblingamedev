@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cjjmop2kcjoeh" path="res://scripts/Lobby.gd" id="1_xv68m"]
 [ext_resource type="PackedScene" uid="uid://m8d1e3t1dw60" path="res://assets/characters/player.tscn" id="2_f3pxu"]
+[ext_resource type="Script" uid="uid://biwegjtptvfy6" path="res://scripts/LobbyManager.gd" id="2_lobby_manager"]
 [ext_resource type="Texture2D" uid="uid://dm8fjv7su3leq" path="res://assets/tilesets/dungeontileset.png" id="2_n764p"]
 [ext_resource type="PackedScene" uid="uid://buf3cr0tftoq0" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
 [ext_resource type="Texture2D" uid="uid://bxd3t3m14wjjd" path="res://assets/tilesets/dungeontileset-extended.png" id="3_h31fa"]
@@ -20713,6 +20714,9 @@ animations = [{
 
 [node name="LobbyMap" type="Node2D" unique_id=220049832]
 script = ExtResource("1_xv68m")
+
+[node name="LobbyManager" type="Node" parent="." unique_id=1812373665]
+script = ExtResource("2_lobby_manager")
 
 [node name="props" type="TileMapLayer" parent="." unique_id=5143345]
 z_index = 3

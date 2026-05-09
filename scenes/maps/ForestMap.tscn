@@ -1,7 +1,9 @@
 [gd_scene format=4 uid="uid://dk8gccgvpj6gi"]
 
 [ext_resource type="Script" uid="uid://cas23h4uysrk0" path="res://scripts/GameRoot.gd" id="1_root_script"]
+[ext_resource type="Script" path="res://scenes/maps/ForestObjective.gd" id="2_forest_objective"]
 [ext_resource type="PackedScene" uid="uid://m8d1e3t1dw60" path="res://assets/characters/player.tscn" id="2_player_scene"]
+[ext_resource type="Script" path="res://scripts/MapDifficultyApplier.gd" id="3_map_difficulty"]
 [ext_resource type="PackedScene" uid="uid://buf3cr0tftoq0" path="res://scenes/ui/GlobalHud.tscn" id="3_global_hud"]
 [ext_resource type="Texture2D" uid="uid://cub1thtcv0i7c" path="res://assets/tilesets/terrain.png" id="4_aea4l"]
 [ext_resource type="Texture2D" uid="uid://dy62ujbd2544d" path="res://assets/tilesets/plant repack (1).png" id="4_scukt"]
@@ -1898,6 +1900,13 @@ sources/0 = SubResource("TileSetAtlasSource_scukt")
 
 [node name="ForestMap" type="Node2D" unique_id=2036808203]
 script = ExtResource("1_root_script")
+
+[node name="ForestObjective" type="Node" parent="."]
+script = ExtResource("2_forest_objective")
+
+[node name="MapDifficultyApplier" type="Node" parent="."]
+script = ExtResource("3_map_difficulty")
+map_id = "forest"
 
 [node name="WorldFloor" type="ColorRect" parent="." unique_id=320534016]
 offset_left = -2200.0
