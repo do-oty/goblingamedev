@@ -3,6 +3,13 @@ extends CharacterBody2D
 signal health_changed(current: int, max_health: int)
 signal died
 
+@export_category("SFX Wiring")
+@export var sfx_attack: AudioStream
+@export var sfx_hurt: AudioStream
+@export var sfx_dash: AudioStream
+@export var sfx_level_up: AudioStream
+@export var sfx_pickup: AudioStream
+
 const ATTACK_RANGE: float = 160.0
 const INVULNERABILITY_SECONDS: float = 0.45
 const AIM_DEADZONE: float = 8.0
@@ -78,6 +85,11 @@ var sword_slash_sprite_vfx_scene: PackedScene = preload("res://scenes/vfx/SwordS
 
 func _ready() -> void:
 	add_to_group("player")
+	
+	# Setup SFX Player
+	var sfx_player = AudioStreamPlayer.new()
+	sfx_player.name = "PlayerSFXPlayer"
+	add_child(sfx_player)
 	_load_character_stats("knight")
 	sword_item_data = ItemCatalog.get_item_by_id("sword_slash")
 	sword_max_level = sword_item_data.get("max_level", 8)
@@ -202,6 +214,7 @@ func play_idle_animation():
 
 func start_attack():
 	is_attacking = true
+	_play_sfx(sfx_attack)
 	dash_uses_directional_anim = false
 	if abs(last_direction.x) > abs(last_direction.y):
 		if last_direction.x > 0:
@@ -240,6 +253,7 @@ func receive_damage(amount: int) -> void:
 		dash_buffer_remaining = max(dash_buffer_remaining, DASH_INPUT_BUFFER_WINDOW)
 
 	current_health = max(current_health - amount, 0)
+	_play_sfx(sfx_hurt)
 	invulnerability_cooldown = INVULNERABILITY_SECONDS
 	_show_player_hit_feedback()
 	GameState.hit_stop(0.12, 0.01)
@@ -539,6 +553,7 @@ func _try_start_dash(move_input_direction: Vector2) -> bool:
 	if is_attacking:
 		is_attacking = false
 	is_dashing = true
+	_play_sfx(sfx_dash)
 	dash_duration_remaining = DASH_BASE_DURATION
 	dash_iframe_remaining = max(0.01, DASH_IFRAME_BASE + dash_iframe_bonus)
 	dash_blur_timer = 0.0
@@ -865,3 +880,12 @@ func _fire_bow() -> void:
 		get_parent().add_child(arrow)
 	
 	bow_cooldown_timer = level_stats.get("cooldown", 1.0) * (1.0 / max(talent_attack_speed_multiplier, 0.01))
+
+
+func _play_sfx(stream: AudioStream) -> void:
+	if stream == null:
+		return
+	var player = get_node_or_null("PlayerSFXPlayer") as AudioStreamPlayer
+	if player != null:
+		player.stream = stream
+		player.play()
