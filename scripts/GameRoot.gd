@@ -877,6 +877,13 @@ func _style_modal_panel(panel: PanelContainer) -> void:
 func _try_spawn_king_goblin_boss() -> void:
 	if king_boss_spawned or run_is_over:
 		return
+		
+	_show_debug_status("Boss appearing in 5 seconds...")
+	await get_tree().create_timer(5.0).timeout
+	
+	if run_is_over:
+		return
+		
 	var king: CharacterBody2D = enemy_scene_king_goblin.instantiate() as CharacterBody2D
 	if king == null:
 		return
@@ -926,6 +933,139 @@ func _on_king_boss_tree_exiting(king_node: Node) -> void:
 	active_boss_unit = null
 	if boss_bar_host != null:
 		boss_bar_host.visible = false
+	
+	_start_ending_sequence()
+
+
+func _start_ending_sequence() -> void:
+	# 1. Smooth transition (fade to black)
+	var canvas_layer: CanvasLayer = $CanvasLayer as CanvasLayer
+	if canvas_layer == null:
+		get_tree().change_scene_to_file(LOBBY_SCENE_PATH)
+		return
+		
+	var fade_rect := ColorRect.new()
+	fade_rect.color = Color(0, 0, 0, 0)
+	fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade_rect.z_index = 500
+	canvas_layer.add_child(fade_rect)
+	
+	var tween := create_tween()
+	tween.tween_property(fade_rect, "color:a", 1.0, 2.0)
+	
+	await tween.finished
+	
+	# Pause game processing but keep UI/Video working
+	get_tree().paused = true
+	
+	# 1.5 Wire and play ending song
+	var audio_player := AudioStreamPlayer.new()
+	audio_player.name = "EndingSongPlayer"
+	audio_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	var song_path: String = "res://ending_song.mp3" # User can change this path
+	if ResourceLoader.exists(song_path):
+		audio_player.stream = load(song_path)
+		add_child(audio_player)
+		audio_player.play()
+	else:
+		print("Debug: Ending song not found at ", song_path)
+	
+	# 2. Play Video
+	var video_player := VideoStreamPlayer.new()
+	video_player.set_anchors_preset(Control.PRESET_FULL_RECT)
+	video_player.expand = true
+	video_player.z_index = 501
+	canvas_layer.add_child(video_player)
+	
+	# Hide gameplay UI
+	if sprite_hud != null: sprite_hud.visible = false
+	if global_hud != null: global_hud.visible = false
+	
+	var video_path: String = "res://cutscene.ogv"
+	if ResourceLoader.exists(video_path):
+		video_player.stream = load(video_path)
+		video_player.play()
+		await video_player.finished
+	else:
+		# If file not found, show a message or just wait a bit
+		var missing_label := Label.new()
+		missing_label.text = "Video not found: %s\n(Skipping video)" % video_path
+		missing_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		missing_label.set_anchors_preset(Control.PRESET_CENTER)
+		canvas_layer.add_child(missing_label)
+		await get_tree().create_timer(2.0).timeout
+		missing_label.queue_free()
+		
+	video_player.queue_free()
+	
+	# 3. Show Credits
+	var credits_panel := PanelContainer.new()
+	credits_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	credits_panel.z_index = 502
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.05, 0.08, 1.0)
+	credits_panel.add_theme_stylebox_override("panel", style)
+	canvas_layer.add_child(credits_panel)
+	
+	var center := CenterContainer.new()
+	credits_panel.add_child(center)
+	
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 15)
+	center.add_child(vbox)
+	
+	var title := Label.new()
+	title.text = "CREATORS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 36)
+	title.modulate = Color(1.0, 0.85, 0.2)
+	vbox.add_child(title)
+	
+	var names := Label.new()
+	names.text = "Kyle Christian A. Zenarosa\nKyle Jayverson Bagiuo\nZach Sabayton"
+	names.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	names.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(names)
+	
+	# Ed's Credit (Bigger as requested)
+	var ed_title := Label.new()
+	ed_title.text = "\nAsset Creator & Special Thanks:"
+	ed_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ed_title.add_theme_font_size_override("font_size", 32)
+	ed_title.modulate = Color(0.4, 0.8, 1.0)
+	vbox.add_child(ed_title)
+	
+	var ed_name := Label.new()
+	ed_name.text = "Edlawrence Zenarosa"
+	ed_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ed_name.add_theme_font_size_override("font_size", 36)
+	ed_name.modulate = Color(1.0, 1.0, 1.0)
+	vbox.add_child(ed_name)
+	
+	var ed_note := Label.new()
+	ed_note.text = "(Made most of the assets used!)"
+	ed_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ed_note.add_theme_font_size_override("font_size", 18)
+	ed_note.modulate = Color(0.8, 0.8, 0.8)
+	vbox.add_child(ed_note)
+	
+	var note := Label.new()
+	note.text = "\n(School Project - College)"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.add_theme_font_size_override("font_size", 16)
+	note.modulate = Color(0.6, 0.6, 0.6)
+	vbox.add_child(note)
+	
+	var btn := Button.new()
+	btn.text = "Return to Lobby"
+	btn.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(btn)
+	
+	btn.pressed.connect(func():
+		get_tree().paused = false
+		get_tree().change_scene_to_file(LOBBY_SCENE_PATH)
+	)
 
 
 func _update_boss_bar() -> void:
