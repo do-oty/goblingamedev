@@ -6,6 +6,8 @@ const DEFAULT_SAVE_DATA := {
 	"progress": "new_game",
 	"created_at_unix": 0,
 	"coins": 0,
+	"is_snow_map_unlocked": false,
+	"is_desert_map_unlocked": false,
 	"permanent_upgrades": {},
 	"last_run_summary": {},
 	"run_history": []
@@ -50,6 +52,11 @@ func continue_game() -> void:
 func go_to_main_menu() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+
+
+func go_to_lobby() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/maps/LobbyMap.tscn")
 
 
 func load_save() -> Dictionary:
@@ -98,6 +105,20 @@ func add_coins(amount: int) -> void:
 	var save_data: Dictionary = _ensure_save_loaded()
 	save_data["coins"] = int(save_data.get("coins", 0)) + amount
 	save_game(save_data)
+
+
+func save_map_progress(map_name: String, index: int, count: int) -> void:
+	var s_data = _ensure_save_loaded()
+	var progress = s_data.get("map_progress", {})
+	progress[map_name] = {"index": index, "count": count}
+	s_data["map_progress"] = progress
+	save_game(s_data)
+
+
+func get_map_progress(map_name: String) -> Dictionary:
+	var s_data = _ensure_save_loaded()
+	var progress = s_data.get("map_progress", {})
+	return progress.get(map_name, {"index": 0, "count": 0})
 
 
 func try_spend_coins(amount: int) -> bool:
@@ -161,6 +182,66 @@ func record_last_run_summary(summary: Dictionary) -> void:
 		run_history.pop_back()
 	save_data["run_history"] = run_history
 	save_game(save_data)
+
+
+func is_snow_map_unlocked() -> bool:
+	var save_data: Dictionary = _ensure_save_loaded()
+	return bool(save_data.get("is_snow_map_unlocked", false))
+
+
+func is_desert_map_unlocked() -> bool:
+	var save_data: Dictionary = _ensure_save_loaded()
+	return bool(save_data.get("is_desert_map_unlocked", false))
+
+
+func unlock_snow_map() -> void:
+	var save_data: Dictionary = _ensure_save_loaded()
+	if bool(save_data.get("is_snow_map_unlocked", false)):
+		return
+	save_data["is_snow_map_unlocked"] = true
+	save_game(save_data)
+
+
+func unlock_desert_map() -> void:
+	var save_data: Dictionary = _ensure_save_loaded()
+	if bool(save_data.get("is_desert_map_unlocked", false)):
+		return
+	save_data["is_desert_map_unlocked"] = true
+	save_game(save_data)
+
+
+func set_snow_map_unlocked(value: bool) -> void:
+	var save_data: Dictionary = _ensure_save_loaded()
+	save_data["is_snow_map_unlocked"] = value
+	save_game(save_data)
+
+
+func set_desert_map_unlocked(value: bool) -> void:
+	var save_data: Dictionary = _ensure_save_loaded()
+	save_data["is_desert_map_unlocked"] = value
+	save_game(save_data)
+
+
+func unlock_map(map_id: String) -> void:
+	match map_id.to_lower():
+		"snow":
+			unlock_snow_map()
+		"desert":
+			unlock_desert_map()
+		_:
+			pass
+
+
+func is_map_unlocked(map_id: String) -> bool:
+	match map_id.to_lower():
+		"forest":
+			return true
+		"snow":
+			return is_snow_map_unlocked()
+		"desert":
+			return is_desert_map_unlocked()
+		_:
+			return false
 
 
 func get_last_run_summary() -> Dictionary:

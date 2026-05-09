@@ -1,12 +1,12 @@
 extends Node2D
 
-const RUN_DURATION_SECONDS: float = 15.0 * 60.0
-const START_SPAWN_INTERVAL: float = 1.35
-const END_SPAWN_INTERVAL: float = 0.07
-const START_MAX_ENEMIES: int = 55
-const END_MAX_ENEMIES: int = 300
-const START_MIN_ENEMIES_ALIVE: int = 6
-const END_MIN_ENEMIES_ALIVE: int = 180
+const RUN_DURATION_SECONDS: float = 10.0 * 60.0
+const START_SPAWN_INTERVAL: float = 3.0
+const END_SPAWN_INTERVAL: float = 0.5
+const START_MAX_ENEMIES: int = 15
+const END_MAX_ENEMIES: int = 80
+const START_MIN_ENEMIES_ALIVE: int = 5
+const END_MIN_ENEMIES_ALIVE: int = 80
 const START_SPAWN_BURST: int = 2
 const END_SPAWN_BURST: int = 8
 const SPAWN_DISTANCE_MIN: float = 360.0
@@ -26,9 +26,9 @@ const ELITE_BASE_SPAWN_CHANCE: float = 0.04
 const ELITE_MAX_SPAWN_CHANCE: float = 0.28
 const ELITE_EVENT_MIN_INTERVAL: float = 10.0
 const ELITE_EVENT_MAX_INTERVAL: float = 28.0
-const SWORD_UNLOCK_SECONDS: float = 75.0
-const FIRE_MAGE_UNLOCK_SECONDS: float = 240.0
-const ELECTRIC_MAGE_UNLOCK_SECONDS: float = 420.0
+const SWORD_UNLOCK_SECONDS: float = 60.0
+const FIRE_MAGE_UNLOCK_SECONDS: float = 360.0
+const ELECTRIC_MAGE_UNLOCK_SECONDS: float = 480.0
 const TANK_ENEMY_UNLOCK_SECONDS: float = 120.0
 const COIN_DROP_CHANCE: float = 0.18
 const HEALTH_DROP_CHANCE: float = 0.012
@@ -36,8 +36,8 @@ const HEALTH_DROP_HEAL: int = 22
 const LOBBY_SCENE_PATH: String = "res://scenes/maps/LobbyMap.tscn"
 const FLOOR_FILL_INTERVAL: float = 0.18
 const EARLY_GAME_EASY_SECONDS: float = 120.0
-const BRUTE_CHAMPION_UNLOCK_SECONDS: float = 95.0
-const BLINK_STALKER_UNLOCK_SECONDS: float = 155.0
+const BRUTE_CHAMPION_UNLOCK_SECONDS: float = 180.0
+const BLINK_STALKER_UNLOCK_SECONDS: float = 240.0
 const PICKUP_MERGE_INTERVAL: float = 0.42
 const XP_ORB_MERGE_COUNT_PRESSURE: int = 40
 const XP_ORB_MERGE_IDLE_SECONDS: float = 15.0
@@ -46,7 +46,7 @@ const HAZARD_SPAWN_INTERVAL: float = 24.0
 const DROP_MERGE_COUNT_PRESSURE: int = 36
 const PICKUP_MERGE_DISTANCE: float = 76.0
 const MAX_PICKUP_MERGES_PER_TICK: int = 18
-const KING_GOBLIN_SPAWN_SECONDS: float = 240.0
+const KING_GOBLIN_SPAWN_SECONDS: float = 500.0
 const DEBUG_KING_EXTRA_SCALE: float = 1.2
 
 @onready var tree_layer = $trees
@@ -453,12 +453,11 @@ func _process(delta: float) -> void:
 		pickup_merge_accum = 0.0
 		_try_merge_world_pickups()
 
-	if hazard_spawn_cooldown <= 0.0:
-		_spawn_random_hazard()
-		hazard_spawn_cooldown = HAZARD_SPAWN_INTERVAL
+#	if hazard_spawn_cooldown <= 0.0:
+#		_spawn_random_hazard()
+#		hazard_spawn_cooldown = HAZARD_SPAWN_INTERVAL
 
-	if not king_boss_spawned and run_time_seconds >= KING_GOBLIN_SPAWN_SECONDS:
-		_try_spawn_king_goblin_boss()
+	# Boss is now triggered via objectives in Desert map!
 
 	_update_hud()
 
@@ -1116,12 +1115,30 @@ func _finish_run(survived_to_end: bool) -> void:
 	active_boss_unit = null
 
 	var elapsed_text: String = _format_time(run_time_seconds)
+	
+	if not survived_to_end:
+		var penalty = int(run_coins * 0.5)
+		if penalty > 0:
+			GameState.add_coins(-penalty)
+			run_coins -= penalty
+			
+	var objective_status = "None"
+	var obj_node = get_node_or_null("DesertObjective")
+	if obj_node == null:
+		obj_node = get_node_or_null("ForestObjective")
+	if obj_node == null:
+		obj_node = get_node_or_null("SnowObjective")
+		
+	if obj_node != null and obj_node.has_method("get_current_objective_desc"):
+		objective_status = obj_node.get_current_objective_desc()
+		
 	var summary_data: Dictionary = {
 		"result": "Complete" if survived_to_end else "Defeat",
 		"level": current_level,
 		"time_text": elapsed_text,
 		"run_coins": run_coins,
-		"damage_taken": run_damage_taken
+		"damage_taken": run_damage_taken,
+		"objectives": objective_status
 	}
 	GameState.record_last_run_summary(summary_data)
 
@@ -1199,6 +1216,8 @@ func _on_enemy_defeated_deferred(world_position: Vector2, xp_value: int, xp_tier
 
 func _on_xp_orb_collected(xp_value: int) -> void:
 	current_xp += xp_value
+	if player != null and player.has_method("_play_sfx"):
+		player._play_sfx(player.sfx_pickup)
 	while current_xp >= xp_to_next_level:
 		current_xp -= xp_to_next_level
 		current_level += 1
@@ -1241,6 +1260,9 @@ func _spawn_pickup_drop(world_position: Vector2, pickup_type: String, value: int
 
 
 func _on_pickup_collected(pickup_type: String, value: int) -> void:
+	if player != null and player.has_method("_play_sfx"):
+		player._play_sfx(player.sfx_pickup)
+		
 	match pickup_type:
 		"health":
 			if player.has_method("heal"):
@@ -1268,6 +1290,9 @@ func _show_level_up_panel() -> void:
 	queued_upgrades = _build_upgrade_choices()
 	if global_hud != null:
 		global_hud.show_level_up(queued_upgrades)
+		
+	if player != null and player.has_method("_play_sfx"):
+		player._play_sfx(player.sfx_level_up)
 
 
 			

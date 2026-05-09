@@ -6,10 +6,10 @@ const KING_EXTRA_VISUAL_SCALE: float = 1.38
 const KING_HP_MULT: float = 1.4
 const KING_COLLIDER_SCALE: float = 1.42
 const KING_COLLIDER_Y_OFFSET: float = 8.0
-const KING_SLAM_COOLDOWN_MIN: float = 4.2
-const KING_SLAM_COOLDOWN_MAX: float = 6.0
+const KING_SLAM_COOLDOWN_MIN: float = 2.0
+const KING_SLAM_COOLDOWN_MAX: float = 3.0
 const KING_SLAM_WINDUP: float = 1.15
-const KING_SLAM_AOE_RADIUS: float = 220.0
+const KING_SLAM_AOE_RADIUS: float = 350.0
 const KING_RING_DELAY: float = 1.05
 const KING_RING_RADIUS_MULT: float = 1.62
 const KING_DASH_SPEED: float = 440.0
@@ -193,9 +193,9 @@ func _update_archetype_behavior(delta: float, direction: Vector2, distance: floa
 	if king_slam_cooldown <= 0.0 and distance < 270.0:
 		_begin_slam_windup()
 		return
-	if king_dash_burst_cd <= 0.0 and distance > 110.0 and distance < 560.0:
-		_begin_dash_windup(direction)
-		return
+#	if king_dash_burst_cd <= 0.0 and distance > 110.0 and distance < 560.0:
+#		_begin_dash_windup(direction)
+#		return
 
 
 func _apply_royal_slam() -> void:
