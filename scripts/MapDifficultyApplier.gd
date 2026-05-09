@@ -9,6 +9,7 @@ var _extra_spawn_accum: float = 0.0
 var _elite_accum: float = 0.0
 var _variant_accum: float = 0.0
 var _spawn_cooldown_applied: bool = false
+var _variant_cycle: int = 0
 
 
 func _ready() -> void:
@@ -123,7 +124,7 @@ func _apply_variant_pressure(delta: float) -> void:
 	if not force_variants and not all_types_now:
 		return
 	_variant_accum += delta
-	var interval: float = 15.0 if all_types_now else 28.0
+	var interval: float = float(_preset.get("variant_interval_seconds", 15.0 if all_types_now else 28.0))
 	if _variant_accum < interval:
 		return
 	_variant_accum = 0.0
@@ -131,7 +132,14 @@ func _apply_variant_pressure(delta: float) -> void:
 		return
 	if all_types_now:
 		_game_root.call("_spawn_debug_enemy_variant", "basic")
-		_game_root.call("_spawn_debug_enemy_variant", "brute")
-		_game_root.call("_spawn_debug_enemy_variant", "blink")
+		_game_root.call("_spawn_debug_enemy_variant", "brute_champion")
+		_game_root.call("_spawn_debug_enemy_variant", "blink_stalker")
+		_game_root.call("_spawn_debug_enemy_variant", "sword")
+		_game_root.call("_spawn_debug_enemy_variant", "mage")
+		_game_root.call("_spawn_debug_enemy_variant", "electric_mage")
+		_game_root.call("_spawn_debug_enemy_variant", "hobgoblin")
 	else:
-		_game_root.call("_spawn_debug_enemy_variant", "brute")
+		var snow_cycle: Array[String] = ["sword", "mage", "brute_champion", "blink_stalker", "electric_mage", "hobgoblin"]
+		var archetype: String = snow_cycle[_variant_cycle % snow_cycle.size()]
+		_variant_cycle += 1
+		_game_root.call("_spawn_debug_enemy_variant", archetype)

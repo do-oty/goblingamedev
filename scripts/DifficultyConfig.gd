@@ -8,17 +8,19 @@ const PRESETS := {
 		"enemy_speed_multiplier": 1.0,
 		"elite_start_seconds": 120.0,
 		"elite_spawn_multiplier": 1.0,
+		"variant_interval_seconds": 999.0,
 		"horde_cooldown_multiplier": 1.0,
 		"force_all_enemy_types": false,
 		"force_early_variants": false
 	},
 	"snow": {
-		"spawn_multiplier": 0.75,
-		"max_enemy_multiplier": 1.3,
-		"enemy_speed_multiplier": 1.15,
+		"spawn_multiplier": 0.62,
+		"max_enemy_multiplier": 1.55,
+		"enemy_speed_multiplier": 1.22,
 		"elite_start_seconds": 60.0,
-		"elite_spawn_multiplier": 1.25,
-		"horde_cooldown_multiplier": 0.8,
+		"elite_spawn_multiplier": 1.8,
+		"variant_interval_seconds": 9.0,
+		"horde_cooldown_multiplier": 0.65,
 		"force_all_enemy_types": false,
 		"force_early_variants": true
 	},
@@ -28,6 +30,7 @@ const PRESETS := {
 		"enemy_speed_multiplier": 1.3,
 		"elite_start_seconds": 0.0,
 		"elite_spawn_multiplier": 2.0,
+		"variant_interval_seconds": 6.0,
 		"horde_cooldown_multiplier": 0.65,
 		"force_all_enemy_types": true,
 		"force_early_variants": true

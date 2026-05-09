@@ -17,6 +17,7 @@ const BRUTE_SCENE: PackedScene = preload("res://assets/characters/bruteChampion.
 
 var kill_count: int = 0
 var objective_complete: bool = false
+var objectives_finished: bool = false
 var key_spawned: bool = false
 var key_pickup: Area2D = null
 var completion_panel_open: bool = false
@@ -117,30 +118,37 @@ func _connect_existing_enemies() -> void:
 func _try_connect_enemy(enemy: Node) -> void:
 	if enemy == null or not enemy.has_signal("defeated"):
 		return
-	# Use bind to pass the enemy node to the callback
-	if not enemy.defeated.is_connected(_on_enemy_defeated):
-		enemy.defeated.connect(_on_enemy_defeated.bind(enemy))
+	# Use bound callable and check against the same callable to avoid duplicate connects.
+	var callback: Callable = Callable(self, "_on_enemy_defeated").bind(enemy)
+	if not enemy.defeated.is_connected(callback):
+		enemy.defeated.connect(callback)
 
 
 func _on_enemy_defeated(world_position: Vector2, _xp_value: int, _xp_tier: String, enemy: Node) -> void:
-	if objective_complete or current_objective_index >= objectives.size():
+	if objective_complete or objectives_finished or current_objective_index >= objectives.size():
 		return
 		
 	kill_count += 1
 	var current_obj = objectives[current_objective_index]
 	var match_found = false
+	var target: String = str(current_obj.get("target", "")).to_lower()
+	var archetype: String = ""
+	if enemy != null and enemy.has_method("get_enemy_archetype"):
+		archetype = str(enemy.call("get_enemy_archetype")).to_lower()
+	var enemy_name: String = enemy.name.to_lower() if enemy != null else ""
 	
-	if current_obj["target"] == "any":
+	if target == "any":
 		match_found = true
-	elif current_obj["target"] == "brute" and "brute" in enemy.name.to_lower():
+	elif target == "brute" and ("brute" in archetype or "brute" in enemy_name):
 		match_found = true
-	elif current_obj["target"] == "mage" and "mage" in enemy.name.to_lower():
+	elif target == "mage" and ("mage" in archetype or "mage" in enemy_name):
 		match_found = true
-	elif current_obj["target"] == "sword" and "sword" in enemy.name.to_lower():
+	elif target == "sword" and ("sword" in archetype or "sword" in enemy_name):
 		match_found = true
 		
 	if match_found:
 		current_obj["count"] += 1
+		objectives[current_objective_index] = current_obj
 		_update_objective_label()
 		# Save progress
 		GameState.save_map_progress(objective_name, current_objective_index, current_obj["count"])
@@ -167,7 +175,7 @@ func _complete_current_objective(drop_pos: Vector2) -> void:
 	GameState.add_coins(50)
 	
 	if current_objective_index >= objectives.size():
-		objective_complete = true
+		objectives_finished = true
 		GameState.add_coins(150) # Bonus for full completion
 		if not key_spawned:
 			_spawn_golden_key_deferred.call_deferred(drop_pos)
@@ -237,13 +245,17 @@ func _on_drop_added(node: Node) -> void:
 
 
 func _on_pickup_collected(pickup_type: String, _value: int) -> void:
-	if objective_complete or pickup_type != GOLDEN_KEY_TYPE:
+	if objective_complete or not objectives_finished or pickup_type != GOLDEN_KEY_TYPE:
 		return
 	objective_complete = true
 	_unlock_next_map()
 	_update_objective_label()
 	_update_key_arrow()
-	_show_completion_panel("Map Complete!", "Goblins Defeated: %d / %d" % [kill_count, kills_required])
+	var objectives_cleared: int = objectives.size()
+	_show_completion_panel(
+		"Map Complete!",
+		"Total Kills: %d\nObjectives Cleared: %d" % [kill_count, objectives_cleared]
+	)
 
 
 func _unlock_next_map() -> void:
@@ -262,8 +274,10 @@ func _unlock_next_map() -> void:
 func _create_ui() -> void:
 	if canvas_layer == null:
 		return
+	_clear_stale_objective_ui()
 	# Background Panel for Quest Tracker
 	var tracker_bg = ColorRect.new()
+	tracker_bg.name = "ObjectiveUI_TrackerBg"
 	tracker_bg.color = Color(0, 0, 0, 0.4) # Semi-transparent black
 	tracker_bg.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	tracker_bg.offset_left = -420
@@ -274,6 +288,7 @@ func _create_ui() -> void:
 	canvas_layer.add_child(tracker_bg)
 
 	objective_label = Label.new()
+	objective_label.name = "ObjectiveUI_TrackerLabel"
 	objective_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	objective_label.offset_left = -400
 	objective_label.offset_top = 120
@@ -287,6 +302,7 @@ func _create_ui() -> void:
 	
 	# Banner Label for Objective Complete
 	banner_label = Label.new()
+	banner_label.name = "ObjectiveUI_BannerLabel"
 	banner_label.set_anchors_preset(Control.PRESET_CENTER)
 	banner_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	banner_label.grow_vertical = Control.GROW_DIRECTION_BOTH
@@ -298,6 +314,7 @@ func _create_ui() -> void:
 	canvas_layer.add_child(banner_label)
 
 	key_arrow_label = Label.new()
+	key_arrow_label.name = "ObjectiveUI_KeyArrow"
 	key_arrow_label.visible = false
 	key_arrow_label.text = ">"
 	key_arrow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -309,6 +326,7 @@ func _create_ui() -> void:
 	canvas_layer.add_child(key_arrow_label)
 
 	completion_panel = PanelContainer.new()
+	completion_panel.name = "ObjectiveUI_CompletionPanel"
 	completion_panel.visible = false
 	completion_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	completion_panel.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -344,6 +362,27 @@ func _create_ui() -> void:
 	completion_hint_label.text = "Press Enter or Esc to return to Lobby"
 	completion_hint_label.modulate = Color(0.92, 0.92, 0.92, 1.0)
 	text_vbox.add_child(completion_hint_label)
+
+
+func _clear_stale_objective_ui() -> void:
+	if canvas_layer == null:
+		return
+	for child in canvas_layer.get_children():
+		if child == null:
+			continue
+		if String(child.name).begins_with("ObjectiveUI_"):
+			child.queue_free()
+			continue
+		# Cleanup legacy leaked nodes created before naming was added.
+		if child is Label:
+			var label := child as Label
+			var text_value: String = label.text
+			if "Objective Complete!" in text_value or "Obj (" in text_value or text_value == ">":
+				label.queue_free()
+		elif child is ColorRect:
+			var rect := child as ColorRect
+			if abs(rect.offset_left + 420.0) < 0.1 and abs(rect.offset_top - 110.0) < 0.1 and abs(rect.offset_bottom - 230.0) < 0.1:
+				rect.queue_free()
 
 
 func _update_objective_label() -> void:

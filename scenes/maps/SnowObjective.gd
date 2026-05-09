@@ -28,4 +28,4 @@ func _apply_difficulty() -> void:
 		return
 	if map_root.get("spawn_cooldown") != null:
 		var spawn_cd: float = float(map_root.get("spawn_cooldown"))
-		map_root.set("spawn_cooldown", spawn_cd * 0.75)
+		map_root.set("spawn_cooldown", spawn_cd * 0.62)
