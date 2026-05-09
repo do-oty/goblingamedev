@@ -2,6 +2,11 @@ extends CharacterBody2D
 
 signal defeated(world_position: Vector2, xp_value: int, xp_tier: String)
 
+@export_category("SFX Wiring")
+@export var sfx_enemy_attack: AudioStream
+@export var sfx_enemy_hurt: AudioStream
+@export var sfx_enemy_die: AudioStream
+
 const BASE_SPEED: float = 34.0
 const MAX_HEALTH: int = 30
 const CONTACT_DAMAGE: int = 9
@@ -97,6 +102,11 @@ var death_vfx_scene: PackedScene = preload("res://scenes/vfx/DashStartSmokeVfx.t
 
 func _ready() -> void:
 	add_to_group("enemies")
+	
+	# Setup SFX Player
+	var sfx_player = AudioStreamPlayer.new()
+	sfx_player.name = "EnemySFXPlayer"
+	add_child(sfx_player)
 	add_to_group("enemy")
 	target_player = get_tree().get_first_node_in_group("player") as Node2D
 	# Avoid atlas bleed/line artifacts at sprite edges.
@@ -259,6 +269,7 @@ func take_damage(amount: int, source_position: Vector2 = Vector2.ZERO, knockback
 		amount = int(round(float(amount) * BRUTE_RECOVER_DAMAGE_TAKEN_MULTIPLIER))
 	current_health = max(current_health - amount, 0)
 	_show_hit_feedback(amount)
+	_play_sfx(sfx_enemy_hurt)
 	if amount >= 15:
 		GameState.hit_stop(0.06, 0.02)
 	elif amount >= 5:
@@ -274,6 +285,7 @@ func take_damage(amount: int, source_position: Vector2 = Vector2.ZERO, knockback
 		if is_elite:
 			_spawn_elite_death_effect()
 		_spawn_death_vfx()
+		_play_sfx(sfx_enemy_die)
 		defeated.emit(global_position, xp_reward, xp_tier)
 		queue_free()
 
@@ -364,6 +376,7 @@ func _show_hit_feedback(damage: int) -> void:
 
 func _play_attack_animation(direction: Vector2) -> void:
 	attack_anim_timer = ATTACK_ANIM_DURATION
+	_play_sfx(sfx_enemy_attack)
 	if abs(direction.x) > abs(direction.y):
 		if direction.x >= 0.0:
 			$AnimatedSprite2D.play("right_attack")
@@ -1026,3 +1039,12 @@ func _spawn_world_vfx_scene(scene: PackedScene, world_pos: Vector2, vfx_z: int =
 	if vfx is AnimatedSprite2D:
 		(vfx as AnimatedSprite2D).play()
 	return vfx
+
+
+func _play_sfx(stream: AudioStream) -> void:
+	if stream == null:
+		return
+	var player = get_node_or_null("EnemySFXPlayer") as AudioStreamPlayer
+	if player != null:
+		player.stream = stream
+		player.play()
