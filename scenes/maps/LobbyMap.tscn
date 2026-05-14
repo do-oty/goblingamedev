@@ -20948,5 +20948,6 @@ shape = SubResource("RectangleShape2D_trigger")
 
 [node name="LobbyMusic" type="AudioStreamPlayer" parent="." unique_id=1828569295]
 stream = ExtResource("17_b2csl")
+volume_db = -15.0
 autoplay = true
 parameters/looping = true
