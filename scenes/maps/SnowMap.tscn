@@ -1,15 +1,11 @@
 [gd_scene format=4 uid="uid://u6l06lbb5bht"]
 
 [ext_resource type="PackedScene" uid="uid://dk8gccgvpj6gi" path="res://scenes/maps/ForestMap.tscn" id="1_forest_base"]
-[ext_resource type="AudioStream" uid="uid://c3sjshu31luth" path="res://assets/sfx/step_complete.mp3" id="2_mwv7b"]
 [ext_resource type="Texture2D" uid="uid://v1byqamf4uuf" path="res://assets/tilesets/snow_on_stones.png" id="2_qrang"]
 [ext_resource type="Script" uid="uid://c4nq7jrjhd426" path="res://scenes/maps/SnowObjective.gd" id="2_snow_objective"]
 [ext_resource type="Script" uid="uid://ba7djsqfk121o" path="res://scripts/MapDifficultyApplier.gd" id="3_map_difficulty"]
 [ext_resource type="Texture2D" uid="uid://fvbttkq5jotk" path="res://assets/tilesets/SnowyTrees.png" id="3_snyr5"]
-[ext_resource type="AudioStream" uid="uid://0sf3cvmbg852" path="res://assets/sfx/all_complete.mp3" id="3_tkgua"]
-[ext_resource type="AudioStream" uid="uid://vw2pb8unnwrx" path="res://assets/sfx/enemy_match.mp3" id="4_nfgjo"]
 [ext_resource type="Texture2D" uid="uid://c7lx8uuwpr4r5" path="res://assets/tilesets/frozenlake.png" id="4_snyr5"]
-[ext_resource type="AudioStream" uid="uid://c6d8tp677rkit" path="res://assets/sfx/boss_spawn.mp3" id="5_y08pp"]
 [ext_resource type="AudioStream" uid="uid://d1o017a6a7sft" path="res://assets/sfx/snow.mp3" id="7_b3k1h"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ddgpc"]
@@ -1267,12 +1263,6 @@ sources/0 = SubResource("TileSetAtlasSource_3w2vo")
 
 [node name="SnowMap" unique_id=1398212195 instance=ExtResource("1_forest_base")]
 
-[node name="ForestObjective" parent="." index="0" unique_id=975125963]
-sfx_step_complete = ExtResource("2_mwv7b")
-sfx_all_complete = ExtResource("3_tkgua")
-sfx_enemy_match = ExtResource("4_nfgjo")
-sfx_boss_spawn = ExtResource("5_y08pp")
-
 [node name="WorldFloor" parent="." index="2" unique_id=320534016]
 color = Color(1, 1, 1, 1)
 
@@ -1319,6 +1309,16 @@ script = ExtResource("2_snow_objective")
 script = ExtResource("3_map_difficulty")
 map_id = "snow"
 
+[node name="partition" parent="." index="15" unique_id=1405745186]
+visible = false
+
+[node name="wall" parent="." index="16" unique_id=952151859]
+visible = false
+
 [node name="SnowMusic" type="AudioStreamPlayer" parent="." index="18" unique_id=382539811]
 stream = ExtResource("7_b3k1h")
+volume_db = -12.0
 autoplay = true
+
+[node name="ForestMusic" parent="." index="19" unique_id=681376716]
+volume_db = -15.0
