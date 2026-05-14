@@ -72,6 +72,7 @@ expand = true
 
 [node name="MenuMusicPlayer" type="AudioStreamPlayer" parent="MenuScreen" unique_id=2028058348]
 stream = ExtResource("2_ow34m")
+volume_db = -20.0
 parameters/looping = true
 
 [node name="CenterContainer" type="CenterContainer" parent="MenuScreen" unique_id=870464353]
@@ -270,8 +271,6 @@ layout_mode = 2
 button_pressed = true
 text = "Vibration"
 
-
-
 [node name="SettingsSummary" type="Label" parent="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox" unique_id=682005970]
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
@@ -359,4 +358,3 @@ grow_vertical = 2
 [connection signal="value_changed" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/MusicSlider" to="." method="_on_music_slider_value_changed"]
 [connection signal="value_changed" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/SfxSlider" to="." method="_on_sfx_slider_value_changed"]
 [connection signal="toggled" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/VibrationCheck" to="." method="_on_vibration_check_toggled"]
-[connection signal="toggled" from="SettingsScreen/MarginContainer/ContentVBox/SettingsCard/SettingsMargin/SettingsVBox/NotificationsCheck" to="." method="_on_notifications_check_toggled"]

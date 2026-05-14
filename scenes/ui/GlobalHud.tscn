@@ -876,6 +876,8 @@ horizontal_alignment = 1
 
 [node name="GameOverMusic" type="AudioStreamPlayer" parent="." unique_id=691240523]
 stream = ExtResource("4_4b3ps")
+volume_db = -15.0
 
 [node name="KingMusic" type="AudioStreamPlayer" parent="." unique_id=1164684803]
 stream = ExtResource("5_8xpbk")
+volume_db = -15.0

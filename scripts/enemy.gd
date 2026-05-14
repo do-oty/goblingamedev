@@ -1047,4 +1047,5 @@ func _play_sfx(stream: AudioStream) -> void:
 	var player = get_node_or_null("EnemySFXPlayer") as AudioStreamPlayer
 	if player != null:
 		player.stream = stream
+		player.volume_db = -15.0
 		player.play()
