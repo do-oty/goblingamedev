@@ -70,10 +70,21 @@ func _ready() -> void:
 
 	_create_ui()
 	
+	# Stop inherited map music if we are not the forest map
+	if objective_name != "Forest" and objective_name != "Map":
+		var fm = get_node_or_null("../ForestMusic")
+		if fm != null:
+			fm.stop()
+			fm.queue_free()
+
 	# Load progress
 	var progress = GameState.get_map_progress(objective_name)
 	current_objective_index = progress.get("index", 0)
-	if current_objective_index < objectives.size():
+	
+	if current_objective_index >= objectives.size():
+		objectives_finished = true
+		objective_complete = true
+	else:
 		objectives[current_objective_index]["count"] = progress.get("count", 0)
 		
 	_update_objective_label()
@@ -210,12 +221,12 @@ func _spawn_mini_boss(pos: Vector2) -> void:
 	brute.name = "MiniBoss_Brute"
 
 func _cheat_complete_objective() -> void:
-	# Skip ALL objectives
-	current_objective_index = objectives.size() - 1
+	if objective_complete or objectives_finished or current_objective_index >= objectives.size():
+		return
 	var current_obj = objectives[current_objective_index]
 	current_obj["count"] = current_obj["required"]
 	_complete_current_objective(player.global_position if player else Vector2.ZERO)
-	print("Debug: Skipped ALL objectives.")
+	print("Debug: Skipped current objective step.")
 
 
 func _spawn_golden_key_deferred(world_position: Vector2) -> void:
@@ -485,6 +496,12 @@ func _play_sfx(stream: AudioStream) -> void:
 	if stream == null:
 		return
 	var player = get_node_or_null("ObjectiveSFXPlayer") as AudioStreamPlayer
+	if player == null:
+		player = AudioStreamPlayer.new()
+		player.name = "ObjectiveSFXPlayer"
+		add_child(player)
+		
 	if player != null:
 		player.stream = stream
+		player.volume_db = -6.0
 		player.play()

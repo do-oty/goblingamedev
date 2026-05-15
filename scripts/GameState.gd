@@ -18,6 +18,12 @@ var is_hit_stopping: bool = false
 var played_intro: bool = false
 
 
+func _notification(what: int) -> void:
+	# Save progress when player tabs out or closes the app (Crucial for mobile)
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT or what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		save_game(_ensure_save_loaded())
+
+
 func hit_stop(duration: float = 0.08, timescale: float = 0.02) -> void:
 	if is_hit_stopping:
 		return

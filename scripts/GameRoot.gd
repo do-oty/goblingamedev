@@ -135,6 +135,8 @@ var active_boss_max_hp: int = 1
 var boss_bar_host: MarginContainer = null
 var boss_bar_fill: Control = null
 var boss_bar_title: Label = null
+var boss_countdown: float = 0.0
+
 
 
 
@@ -197,6 +199,15 @@ func _ready() -> void:
 	if debug_toggle_button != null:
 		debug_toggle_button.visible = true
 		debug_toggle_button.text = "Debug (Open)"
+	
+	# Lower music volume for other maps
+	var forest_music = get_node_or_null("ForestMusic")
+	if forest_music: forest_music.volume_db = -18.0
+	var desert_music = get_node_or_null("DesertMusic")
+	if desert_music: desert_music.volume_db = -18.0
+	var snow_music = get_node_or_null("SnowMusic")
+	if snow_music: snow_music.volume_db = -18.0
+	
 	_ensure_debug_connections()
 	_ensure_panel_connections()
 	_ensure_debug_king_button()
@@ -433,6 +444,13 @@ func _process(delta: float) -> void:
 	horde_event_cooldown = max(horde_event_cooldown - delta, 0.0)
 	elite_event_cooldown = max(elite_event_cooldown - delta, 0.0)
 	hazard_spawn_cooldown = max(hazard_spawn_cooldown - delta, 0.0)
+
+	if boss_countdown > 0:
+		boss_countdown -= delta
+		if boss_countdown <= 0:
+			_spawn_king_goblin_now()
+		else:
+			_update_boss_countdown_objective()
 
 	if spawn_cooldown <= 0.0:
 		_try_spawn_enemy(_get_spawn_burst_count())
@@ -796,7 +814,8 @@ func _update_sprite_hud(
 			talent_entries,
 			run_timer_text,
 			level_chip_text,
-			run_damage_taken
+			run_damage_taken,
+			status_text
 		)
 
 	_update_boss_bar()
@@ -876,13 +895,14 @@ func _style_modal_panel(panel: PanelContainer) -> void:
 
 
 func _try_spawn_king_goblin_boss() -> void:
-	if king_boss_spawned or run_is_over:
+	if king_boss_spawned or run_is_over or boss_countdown > 0:
 		return
 		
-	_show_debug_status("Boss appearing in 5 seconds...")
-	await get_tree().create_timer(5.0).timeout
-	
-	if run_is_over:
+	boss_countdown = 15.0 # Start 15s preparation
+	_show_debug_status("Prepare for the Boss! (15s)")
+
+func _spawn_king_goblin_now() -> void:
+	if run_is_over or king_boss_spawned:
 		return
 		
 	var king: CharacterBody2D = enemy_scene_king_goblin.instantiate() as CharacterBody2D
@@ -895,7 +915,18 @@ func _try_spawn_king_goblin_boss() -> void:
 	king.tree_exiting.connect(_on_king_boss_tree_exiting.bind(king))
 	enemies_root.add_child(king)
 	
+	# Camera zoom to Boss
+	var camera: Camera2D = player.get_node_or_null("Camera2D") as Camera2D
+	if camera:
+		camera.make_current()
+		var t = create_tween()
+		t.tween_property(camera, "zoom", Vector2(1.8, 1.8), 1.2).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
+		t.tween_property(camera, "zoom", Vector2(1.0, 1.0), 1.0).set_delay(3.0).set_ease(Tween.EASE_IN_OUT)
+	
 	# Handle music for Boss
+	var forest_music = get_node_or_null("ForestMusic")
+	if forest_music and forest_music.has_method("stop"):
+		forest_music.stop()
 	var desert_music = get_node_or_null("DesertMusic")
 	if desert_music and desert_music.has_method("stop"):
 		desert_music.stop()
@@ -906,6 +937,7 @@ func _try_spawn_king_goblin_boss() -> void:
 	if global_hud != null and global_hud.has_node("KingMusic"):
 		var km = global_hud.get_node("KingMusic")
 		if km and km.has_method("play"):
+			km.volume_db = -5.0
 			km.play()
 	king_boss_spawned = true
 	active_boss_unit = king
@@ -914,6 +946,14 @@ func _try_spawn_king_goblin_boss() -> void:
 	boss_bar_host.visible = true
 	_show_debug_status("King Goblin!")
 	_boss_spawn_intro()
+
+func _update_boss_countdown_objective() -> void:
+	var map = get_node_or_null("MapRoot") # Assuming map root holds objectives
+	if map and map.has_method("_update_objective_display"):
+		# We'll just use debug status for now if objective base isn't easily accessible
+		pass
+	_show_debug_status("BOSS SPAWNING IN: %d" % int(boss_countdown))
+
 
 
 func _boss_spawn_intro() -> void:
@@ -1293,6 +1333,9 @@ func _finish_run(survived_to_end: bool) -> void:
 		global_hud.show_game_over(survived_to_end)
 		
 		# Stop all map/boss music
+		var forest_music = get_node_or_null("ForestMusic")
+		if forest_music and forest_music.has_method("stop"):
+			forest_music.stop()
 		var desert_music = get_node_or_null("DesertMusic")
 		if desert_music and desert_music.has_method("stop"):
 			desert_music.stop()

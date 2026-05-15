@@ -3,6 +3,8 @@ extends Node2D
 const FOREST_SCENE_PATH: String = "res://scenes/maps/ForestMap.tscn"
 const DESERT_SCENE_PATH: String = "res://scenes/maps/DesertMap.tscn"
 const SNOW_SCENE_PATH: String = "res://scenes/maps/SnowMap.tscn"
+const INTERACTABLE_MESSAGE_SCENE = preload("res://scenes/InteractableMessage.tscn")
+
 
 @onready var player: CharacterBody2D = $Player
 @onready var global_hud: Control = $"CanvasLayer/HUD"
@@ -37,6 +39,8 @@ func _ready() -> void:
 	if historian:
 		historian.queue_free()
 		
+	_setup_building_trigger()
+		
 	if global_hud != null and global_hud.has_method("set_ui_mode"):
 		global_hud.call("set_ui_mode", "lobby")
 	if global_hud != null and global_hud.has_method("set_lobby_last_run_text"):
@@ -45,11 +49,6 @@ func _ready() -> void:
 		player.call("set_lobby_mode", true)
 	if panel != null: panel.visible = false
 	if hint_label != null: hint_label.visible = false
-	
-	# Connect manual trigger if it exists
-	var manual_trigger = get_node_or_null("BuildingTrigger")
-	if manual_trigger and not manual_trigger.body_entered.is_connected(_on_building_trigger_body_entered):
-		manual_trigger.body_entered.connect(_on_building_trigger_body_entered)
 	
 	# Ensure CanvasLayer is visible in lobby
 	var cl: CanvasLayer = get_node_or_null("CanvasLayer") as CanvasLayer
@@ -91,7 +90,11 @@ func _ready() -> void:
 	npc_area.body_entered.connect(_on_npc_body_entered)
 	npc_area.body_exited.connect(_on_npc_body_exited)
 	
-	# Removed collisions that were blocking the player
+	# Add solid collisions for NPCs so player doesn't walk through them
+	_add_solid_collision($UpgradeNpc, Vector2(0, 10), 30)
+	var frog = get_node_or_null("frog")
+	if frog:
+		_add_solid_collision(frog, Vector2(0, 10), 40)
 	
 	button_hp.pressed.connect(_on_hp_upgrade_pressed)
 	button_speed.pressed.connect(_on_speed_upgrade_pressed)
@@ -159,31 +162,7 @@ func _ready() -> void:
 		btn.custom_minimum_size = Vector2(300, 100) # Card size
 		
 	_refresh_ui()
-	
-	if building_trigger and not building_trigger.body_entered.is_connected(_on_building_trigger_body_entered):
-		building_trigger.body_entered.connect(_on_building_trigger_body_entered)
-		print("Using scene BuildingTrigger at: ", building_trigger.global_position)
-		
-		# Ensure it has a collision shape
-		var has_shape := false
-		for child in building_trigger.get_children():
-			if child is CollisionShape2D:
-				has_shape = true
-				break
-				
-		var shape_size := Vector2(200, 200)
-		if not has_shape:
-			var collision = CollisionShape2D.new()
-			var shape = RectangleShape2D.new()
-			shape.size = shape_size
-			collision.shape = shape
-			building_trigger.add_child(collision)
-			print("Added fallback collision shape to scene BuildingTrigger.")
-			
-		# Removed visual helper
-		print("Removed green visual helper from scene BuildingTrigger.")
-	else:
-		print("Skipping coded building trigger. Using manual one if it exists.")
+
 
 
 func _process(_delta: float) -> void:
@@ -231,51 +210,78 @@ func _on_npc_body_exited(body: Node) -> void:
 
 
 func _setup_building_trigger() -> void:
-	var bldg_area = Area2D.new()
-	bldg_area.name = "BuildingTrigger"
-	add_child(bldg_area)
-	
-	var collision = CollisionShape2D.new()
-	var shape = RectangleShape2D.new()
-	shape.size = Vector2(200, 200) # Bigger
-	collision.shape = shape
-	bldg_area.add_child(collision)
-	
-	# Position it in the lobby (closer to spawn)
-	bldg_area.position = Vector2(0, -150) 
-	
-	# Removed visual helper
-	print("Removed fallback visual helper.")
-	
-	print("Fallback BuildingTrigger created at: ", bldg_area.position)
-	
-	bldg_area.body_entered.connect(_on_building_trigger_body_entered)
+	# If it's already in the scene, make sure it has the InteractableMessage script
+	if building_trigger != null:
+		print("BuildingTrigger found in scene. Ensuring InteractableMessage script...")
+		var script = load("res://scripts/InteractableMessage.gd")
+		if building_trigger.get_script() != script:
+			building_trigger.set_script(script)
+			# Manually trigger ready if we just set the script
+			if building_trigger.has_method("_ready"):
+				building_trigger._ready()
+		
+		# Now we can safely set properties
+		if "message_text" in building_trigger:
+			building_trigger.message_text = "Don't come back until the job's done!"
+		return
+
+	if INTERACTABLE_MESSAGE_SCENE:
+		var msg = INTERACTABLE_MESSAGE_SCENE.instantiate()
+		msg.name = "BuildingTrigger"
+		msg.message_text = "Don't come back until the job's done!"
+		msg.position = Vector2(0, -150)
+		add_child(msg)
+		building_trigger = msg
+		print("InteractableMessage BuildingTrigger created at: ", msg.position)
+	else:
+		# Fallback to old logic if scene not found
+		var bldg_area = Area2D.new()
+		bldg_area.name = "BuildingTrigger"
+		add_child(bldg_area)
+		
+		var collision = CollisionShape2D.new()
+		var shape = RectangleShape2D.new()
+		shape.size = Vector2(200, 200)
+		collision.shape = shape
+		bldg_area.add_child(collision)
+		bldg_area.position = Vector2(0, -150) 
+		# If it's the fallback, we need to handle the signal manually
+		if not bldg_area.body_entered.is_connected(_on_building_trigger_body_entered):
+			bldg_area.body_entered.connect(_on_building_trigger_body_entered)
+		building_trigger = bldg_area
+		print("Fallback BuildingTrigger created at: ", bldg_area.position)
 
 
 func _on_building_trigger_body_entered(body: Node) -> void:
 	if body == player:
-		# Push player (real knockback)
-		var trigger_node = get_node_or_null("BuildingTrigger")
-		var trigger_pos = trigger_node.global_position if trigger_node else Vector2.ZERO
-		
+		if hint_label:
+			hint_label.visible = true
+			hint_label.text = "Don't come back until the job's done!"
+			var t = create_tween()
+			t.tween_property(hint_label, "modulate:a", 1.0, 0.2).from(0.0)
+			t.tween_property(hint_label, "modulate:a", 0.0, 2.0).set_delay(1.0)
+			t.tween_callback(func(): hint_label.visible = false)
 		if player.has_method("apply_launch_force"):
-			# Push with strength 350, height 30, duration 0.3
-			player.call("apply_launch_force", trigger_pos, 350.0, 30.0, 0.3)
-		else:
-			# Fallback if method doesn't exist
-			var push_dir = (player.global_position - trigger_pos).normalized()
-			if push_dir == Vector2.ZERO:
-				push_dir = Vector2(0, 1)
-			player.global_position += push_dir * 80.0
+			player.call("apply_launch_force", building_trigger.global_position, 350.0, 30.0, 0.3)
+
+
+func _add_solid_collision(parent: Node2D, offset: Vector2, radius: float) -> void:
+	if parent == null: return
+	
+	# Check if a StaticBody2D already exists
+	var body = parent.get_node_or_null("SolidBody") as StaticBody2D
+	if body == null:
+		body = StaticBody2D.new()
+		body.name = "SolidBody"
+		parent.add_child(body)
 		
-		# Show message
-		hint_label.visible = true
-		hint_label.text = "Don't come back until the job's done!"
-			
-		# Hide after delay
-		get_tree().create_timer(2.0).timeout.connect(func():
-			hint_label.visible = false
-		)
+		var collision = CollisionShape2D.new()
+		var shape = CircleShape2D.new()
+		shape.radius = radius
+		collision.shape = shape
+		body.add_child(collision)
+		body.position = offset
+		print("Added solid collision to: ", parent.name)
 
 
 func _refresh_stats_label() -> void:
