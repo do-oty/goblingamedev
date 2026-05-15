@@ -31,18 +31,18 @@ signal sword_level_changed(level: int, max_level: int)
 
 var last_direction := Vector2.DOWN
 var is_attacking := false
-var current_health: int = 100
+var current_health: int = 150
 var attack_cooldown: float = 0.0
 var invulnerability_cooldown: float = 0.0
-var move_speed: float = 150.0
-var max_health: int = 100
+var move_speed: float = 175.0
+var max_health: int = 150
 var pickup_radius: float = 24.0
 var magnet_range: float = 90.0
 var magnet_strength: float = 220.0
 var luck: float = 0.0
 var character_data: Dictionary = {}
 var sword_level: int = 1
-var sword_damage: int = 12
+var sword_damage: int = 18
 var sword_aoe_radius: float = 80.0
 var sword_cooldown: float = 0.65
 var sword_max_level: int = 8
@@ -95,6 +95,16 @@ func _ready() -> void:
 	sword_max_level = sword_item_data.get("max_level", 8)
 	_apply_sword_level_stats(sword_level)
 	_ensure_ground_shadow()
+	_apply_permanent_upgrades()
+	
+func _apply_permanent_upgrades() -> void:
+	var bonus = GameState.get_total_permanent_bonus()
+	max_health += int(bonus.get("max_health", 0))
+	current_health = max_health
+	move_speed += float(bonus.get("move_speed", 0.0))
+	luck += float(bonus.get("luck", 0.0))
+	dash_cooldown_multiplier -= float(bonus.get("dash_cooldown_reduction", 0.0))
+	# Add health regen if logic exists
 	
 func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
@@ -888,5 +898,8 @@ func _play_sfx(stream: AudioStream) -> void:
 	var player = get_node_or_null("PlayerSFXPlayer") as AudioStreamPlayer
 	if player != null:
 		player.stream = stream
-		player.volume_db = -15.0
+		if stream == sfx_pickup:
+			player.volume_db = -32.0
+		else:
+			player.volume_db = -15.0
 		player.play()

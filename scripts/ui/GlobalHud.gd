@@ -22,6 +22,8 @@ const HP_HIT_FLASH_SECONDS: float = 0.1
 @onready var mobile_dash_button: Button = $SpriteHud/MobileDashButton
 @onready var run_timer_label: Label = $SpriteHud/RunTimerLabel
 @onready var level_chip_label: Label = get_node_or_null("SpriteHud/LevelChipLabel") as Label
+@onready var hp_chip_label: Label = get_node_or_null("SpriteHud/TopLeftStack/HpFrame/HpLabel") as Label
+@onready var xp_chip_label: Label = get_node_or_null("SpriteHud/TopLeftStack/XpFrame/XpLabel") as Label
 @onready var items_toggle_button: Button = get_node_or_null("SpriteHud/ItemsToggleButton") as Button
 @onready var stats_toggle_button_left: Button = get_node_or_null("SpriteHud/StatsToggleButtonLeft") as Button
 @onready var items_modal: PanelContainer = get_node_or_null("SpriteHud/ItemsModal") as PanelContainer
@@ -35,6 +37,8 @@ const HP_HIT_FLASH_SECONDS: float = 0.1
 
 @onready var time_label: Label = get_node_or_null("TopBar/TimeLabel") as Label
 @onready var enemy_count_label: Label = get_node_or_null("TopBar/EnemyCountLabel") as Label
+@onready var sprite_hud_status_label: Label = get_node_or_null("SpriteHud/StatusFrame/StatusLabel") as Label
+
 
 
 var combat_mode_active: bool = false
@@ -77,9 +81,11 @@ func _ready() -> void:
 			)
 
 	if hp_sprite_bar != null:
-		hp_sprite_bar.visible = false
+		hp_sprite_bar.visible = true
 	if xp_sprite_bar != null:
-		xp_sprite_bar.visible = false
+		xp_sprite_bar.visible = true
+	if level_chip_label != null:
+		level_chip_label.visible = true
 
 	if mobile_dash_button != null:
 		if not mobile_dash_button.button_down.is_connected(_on_mobile_dash_button_down):
@@ -174,12 +180,28 @@ func set_ui_mode(mode: String) -> void:
 		top_bar.visible = true # Keep top bar for timer and enemy count
 	if debug_panel != null:
 		debug_panel.visible = combat_visible
-	if xp_bar != null:
-		xp_bar.visible = true
 	if hp_bar != null:
-		hp_bar.visible = true
+		hp_bar.visible = false
+	if xp_bar != null:
+		xp_bar.visible = false
+	if hp_sprite_bar != null:
+		hp_sprite_bar.visible = false
+	if xp_sprite_bar != null:
+		xp_sprite_bar.visible = false
 	if coin_label != null:
 		coin_label.visible = true
+	if level_chip_label != null:
+		level_chip_label.visible = true
+		level_chip_label.modulate.a = 1.0
+	if hp_chip_label != null:
+		hp_chip_label.visible = true
+		hp_chip_label.modulate.a = 1.0
+	if xp_chip_label != null:
+		xp_chip_label.visible = true
+		xp_chip_label.modulate.a = 1.0
+	if sprite_hud != null:
+		sprite_hud.visible = true
+		sprite_hud.modulate.a = 1.0
 
 
 	if dash_panel != null:
@@ -216,6 +238,10 @@ func update_combat_bars(
 	if hp_bar != null:
 		hp_bar.max_value = hp_max
 		hp_bar.value = hp_current
+	if hp_chip_label != null:
+		hp_chip_label.text = "HP %d / %d" % [hp_current, hp_max]
+	if xp_chip_label != null:
+		xp_chip_label.text = "XP %d / %d" % [xp_current, xp_max]
 	if xp_bar != null:
 		xp_bar.max_value = xp_max
 		xp_bar.value = xp_current
@@ -239,7 +265,8 @@ func update_combat_meta(
 	_talent_entries: Array[Dictionary],
 	run_timer_text: String,
 	level_chip_text: String,
-	_run_damage_taken: int
+	_run_damage_taken: int,
+	status_text: String = ""
 ) -> void:
 	if coin_label != null:
 		coin_label.text = "Run Coins: %d" % coins
@@ -251,6 +278,12 @@ func update_combat_meta(
 	if stats_text_left_label != null:
 		stats_text_left_label.text = stats_modal_text.replace(" | ", "\n")
 		_fit_stats_modal_height()
+	if sprite_hud_status_label != null:
+		sprite_hud_status_label.text = status_text
+		sprite_hud_status_label.visible = not status_text.is_empty()
+		var frame = sprite_hud.get_node_or_null("StatusFrame")
+		if frame: frame.visible = not status_text.is_empty()
+		
 	_update_item_modal_entries(item_entries)
 
 
@@ -518,6 +551,12 @@ func _stack_side_modals() -> void:
 	stats_modal_left.offset_right = margin + modal_w
 	stats_modal_left.offset_top = stats_top
 	stats_modal_left.offset_bottom = stats_top + stats_h
+
+
+func hit_stop(duration: float = 0.08, timescale: float = 0.02) -> void:
+	Engine.time_scale = timescale
+	await get_tree().create_timer(duration * 0.01, true, false, true).timeout
+	Engine.time_scale = 1.0
 
 
 func _update_xp_wrap_anim(delta: float) -> void:
@@ -1120,6 +1159,16 @@ func toggle_pause_menu() -> void:
 			menu.visible = false
 		)
 		_apply_squish_to_button(resume_btn)
+
+		var lobby_btn = Button.new()
+		lobby_btn.text = "Return to Lobby"
+		lobby_btn.custom_minimum_size = Vector2(0, 46)
+		vbox.add_child(lobby_btn)
+		lobby_btn.pressed.connect(func():
+			get_tree().paused = false
+			GameState.go_to_lobby()
+		)
+		_apply_squish_to_button(lobby_btn)
 
 		var menu_btn = Button.new()
 		menu_btn.text = "Return to Menu"

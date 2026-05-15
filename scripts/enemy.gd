@@ -9,7 +9,7 @@ signal defeated(world_position: Vector2, xp_value: int, xp_tier: String)
 
 const BASE_SPEED: float = 34.0
 const MAX_HEALTH: int = 30
-const CONTACT_DAMAGE: int = 9
+const CONTACT_DAMAGE: int = 6
 const CONTACT_COOLDOWN_SECONDS: float = 0.75
 const CONTACT_RANGE: float = 40.0
 const XP_REWARD: int = 1
