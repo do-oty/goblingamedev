@@ -96,6 +96,9 @@ func _ready() -> void:
 	if frog:
 		_add_solid_collision(frog, Vector2(0, 10), 40)
 	
+	if global_hud != null and global_hud.has_signal("interact_pressed"):
+		global_hud.interact_pressed.connect(_on_mobile_interact_pressed)
+	
 	button_hp.pressed.connect(_on_hp_upgrade_pressed)
 	button_speed.pressed.connect(_on_speed_upgrade_pressed)
 	button_luck.pressed.connect(_on_luck_upgrade_pressed)
@@ -200,13 +203,27 @@ func _on_npc_body_entered(body: Node) -> void:
 	if body != player:
 		return
 	player_in_npc_range = true
+	var npc_hint = $UpgradeNpc.get_node_or_null("NpcHint")
+	if npc_hint: npc_hint.visible = true
+	
+	if global_hud != null and global_hud.has_method("set_mobile_interact_visible"):
+		global_hud.call("set_mobile_interact_visible", true)
 
 
 func _on_npc_body_exited(body: Node) -> void:
 	if body != player:
 		return
 	player_in_npc_range = false
+	var npc_hint = $UpgradeNpc.get_node_or_null("NpcHint")
+	if npc_hint: npc_hint.visible = false
 	_set_upgrade_panel_visible(false)
+	
+	if global_hud != null and global_hud.has_method("set_mobile_interact_visible"):
+		global_hud.call("set_mobile_interact_visible", false)
+
+func _on_mobile_interact_pressed() -> void:
+	if player_in_npc_range:
+		_set_upgrade_panel_visible(not panel.visible)
 
 
 func _setup_building_trigger() -> void:

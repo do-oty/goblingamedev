@@ -36,9 +36,12 @@ const HP_HIT_FLASH_SECONDS: float = 0.1
 @onready var stats_modal_left_bg: TextureRect = get_node_or_null("SpriteHud/StatsModalLeft/Background") as TextureRect
 @onready var stats_modal_bg: TextureRect = get_node_or_null("SpriteHud/StatsModal/Background") as TextureRect
 
+@onready var sprite_hud_status_label: Label = get_node_or_null("SpriteHud/StatusFrame/StatusLabel") as Label
 @onready var time_label: Label = get_node_or_null("TopBar/TimeLabel") as Label
 @onready var enemy_count_label: Label = get_node_or_null("TopBar/EnemyCountLabel") as Label
-@onready var sprite_hud_status_label: Label = get_node_or_null("SpriteHud/StatusFrame/StatusLabel") as Label
+@onready var mobile_interact_button: Button = _create_mobile_interact_button()
+
+signal interact_pressed
 
 
 
@@ -67,9 +70,6 @@ func _ready() -> void:
 	_disable_focus_recursively(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
-
-
-			
 	# Button Squish Effect
 	for btn in [mobile_dash_button]:
 		if btn:
@@ -89,12 +89,15 @@ func _ready() -> void:
 		level_chip_label.visible = true
 
 	if mobile_dash_button != null:
-		if not mobile_dash_button.button_down.is_connected(_on_mobile_dash_button_down):
-			mobile_dash_button.button_down.connect(_on_mobile_dash_button_down)
-		if not mobile_dash_button.button_up.is_connected(_on_mobile_dash_button_up):
-			mobile_dash_button.button_up.connect(_on_mobile_dash_button_up)
-		_style_mobile_dash_button()
-		mobile_dash_button.mouse_filter = Control.MOUSE_FILTER_PASS
+		if OS.get_name() in ["Android", "iOS"]:
+			_convert_to_touch_screen_button(mobile_dash_button)
+		else:
+			if not mobile_dash_button.button_down.is_connected(_on_mobile_dash_button_down):
+				mobile_dash_button.button_down.connect(_on_mobile_dash_button_down)
+			if not mobile_dash_button.button_up.is_connected(_on_mobile_dash_button_up):
+				mobile_dash_button.button_up.connect(_on_mobile_dash_button_up)
+			_style_mobile_dash_button()
+			mobile_dash_button.mouse_filter = Control.MOUSE_FILTER_PASS
 	
 	if virtual_joystick != null:
 		virtual_joystick.modulate.a = 0.6
@@ -136,8 +139,9 @@ func _ready() -> void:
 	objectives_toggle_btn.text = "Objectives"
 	objectives_toggle_btn.name = "ObjectivesToggleButton"
 	objectives_toggle_btn.focus_mode = Control.FOCUS_NONE
-	
+
 	# Reparent existing buttons if they exist
+
 	if stats_toggle_button_left != null:
 		stats_toggle_button_left.get_parent().remove_child(stats_toggle_button_left)
 		button_stack.add_child(stats_toggle_button_left)
@@ -170,6 +174,10 @@ func _ready() -> void:
 
 	
 	set_ui_mode(MODE_COMBAT)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		toggle_pause_menu()
 
 
 func show_dialogue(_text: String, _portrait_sprite: Texture2D = null) -> void:
@@ -646,6 +654,64 @@ func _update_xp_wrap_anim(delta: float) -> void:
 
 
 
+
+func _convert_to_touch_screen_button(btn: Button) -> void:
+	if btn == null: return
+	var ts_btn = TouchScreenButton.new()
+	ts_btn.action = "dash"
+	ts_btn.name = "TouchDashButton"
+	var size = btn.custom_minimum_size if btn.custom_minimum_size.x > 0 else Vector2(80, 80)
+	var img = Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
+	var center = size / 2
+	var radius = min(size.x, size.y) / 2
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			if Vector2(x, y).distance_to(center) <= radius:
+				img.set_pixel(x, y, Color(1, 1, 1, 1))
+			else:
+				img.set_pixel(x, y, Color(1, 1, 1, 0))
+	ts_btn.texture_normal = ImageTexture.create_from_image(img)
+	ts_btn.modulate = Color(0.2, 0.2, 0.2, 0.7)
+	btn.add_child(ts_btn)
+	ts_btn.position = Vector2.ZERO
+	btn.flat = true
+	btn.text = ""
+	btn.mouse_filter = Control.MOUSE_FILTER_PASS
+
+func _create_mobile_interact_button() -> Button:
+	var btn = Button.new()
+	btn.name = "MobileInteractButton"
+	btn.text = "TALK"
+	btn.visible = false
+	btn.custom_minimum_size = Vector2(100, 100)
+	btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.4, 0.1, 0.7)
+	style.corner_radius_top_left = 50
+	style.corner_radius_top_right = 50
+	style.corner_radius_bottom_left = 50
+	style.corner_radius_bottom_right = 50
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = Color(1, 1, 1, 0.8)
+	btn.add_theme_stylebox_override("normal", style)
+	btn.add_theme_stylebox_override("hover", style)
+	btn.add_theme_stylebox_override("pressed", style)
+	add_child(btn)
+	btn.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	btn.offset_left = -280
+	btn.offset_top = -280
+	btn.offset_right = -180
+	btn.offset_bottom = -180
+	btn.pressed.connect(func(): interact_pressed.emit())
+	btn.mouse_filter = Control.MOUSE_FILTER_PASS
+	return btn
+
+func set_mobile_interact_visible(v: bool) -> void:
+	if mobile_interact_button:
+		mobile_interact_button.visible = v and OS.get_name() in ["Android", "iOS", "Windows"]
 
 func set_lobby_last_run_text(_text: String) -> void:
 	pass
