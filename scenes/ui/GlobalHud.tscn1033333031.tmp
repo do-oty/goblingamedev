@@ -894,7 +894,6 @@ offset_left = 15.0
 offset_top = -305.0
 offset_right = 307.0
 offset_bottom = -14.0
-pressed_color = Color(0.25459233, 0.76625645, 0.77495, 1)
 action_left = "walk_left"
 action_right = "walk_right"
 action_up = "walk_up"
