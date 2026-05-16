@@ -2390,6 +2390,16 @@ script = ExtResource("2_snow_objective")
 script = ExtResource("3_map_difficulty")
 map_id = "snow"
 
+[node name="partition" parent="." index="15" unique_id=1405745186]
+visible = false
+
+[node name="wall" parent="." index="16" unique_id=952151859]
+visible = false
+
+[node name="grass" parent="." index="17" unique_id=56395491]
+visible = false
+
 [node name="SnowMusic" type="AudioStreamPlayer" parent="." index="18" unique_id=382539811]
 stream = ExtResource("7_b3k1h")
+volume_db = -15.0
 autoplay = true
