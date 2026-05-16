@@ -21,6 +21,7 @@ const HP_HIT_FLASH_SECONDS: float = 0.1
 @onready var dash_cooldown_bar: TextureProgressBar = $SpriteHud/DashPanel/DashCooldownBar
 @onready var mobile_dash_button: Button = $SpriteHud/MobileDashButton
 @onready var run_timer_label: Label = $SpriteHud/RunTimerLabel
+@onready var virtual_joystick: Control = get_node_or_null("Virtual Joystick") as Control
 @onready var level_chip_label: Label = get_node_or_null("SpriteHud/LevelChipLabel") as Label
 @onready var hp_chip_label: Label = get_node_or_null("SpriteHud/TopLeftStack/HpFrame/HpLabel") as Label
 @onready var xp_chip_label: Label = get_node_or_null("SpriteHud/TopLeftStack/XpFrame/XpLabel") as Label
@@ -93,6 +94,10 @@ func _ready() -> void:
 		if not mobile_dash_button.button_up.is_connected(_on_mobile_dash_button_up):
 			mobile_dash_button.button_up.connect(_on_mobile_dash_button_up)
 		_style_mobile_dash_button()
+		mobile_dash_button.mouse_filter = Control.MOUSE_FILTER_PASS
+	
+	if virtual_joystick != null:
+		virtual_joystick.modulate.a = 0.6
 	_ensure_modal_toggle_connections()
 	_set_items_modal_visible(false)
 	_set_stats_modal_visible(false)

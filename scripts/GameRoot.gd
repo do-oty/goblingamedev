@@ -1795,10 +1795,12 @@ func _show_debug_status(text: String) -> void:
 func _get_offscreen_spawn_distance() -> float:
 	var camera: Camera2D = player.get_node_or_null("Camera2D") as Camera2D
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	var zoom_value: float = camera.zoom.x if camera != null else 1.0
-	var half_diagonal: float = viewport_size.length() * 0.5 * zoom_value
-	var offscreen_min: float = max(SPAWN_DISTANCE_MIN, half_diagonal + 85.0)
-	var offscreen_max: float = max(offscreen_min + 40.0, SPAWN_DISTANCE_MAX)
+	var zoom_value: float = camera.zoom.x if camera != null and camera.zoom.x > 0 else 1.0
+	# The distance from center to corner of the screen in world coordinates
+	var half_diagonal: float = (viewport_size.length() * 0.5) / zoom_value
+	
+	var offscreen_min: float = max(SPAWN_DISTANCE_MIN, half_diagonal + 80.0)
+	var offscreen_max: float = max(offscreen_min + 50.0, SPAWN_DISTANCE_MAX)
 	return randf_range(offscreen_min, offscreen_max)
 
 

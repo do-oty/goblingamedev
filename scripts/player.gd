@@ -305,6 +305,15 @@ func _try_auto_attack() -> void:
 
 
 func _update_aim_from_cursor() -> void:
+	if OS.get_name() in ["Android", "iOS"]:
+		var enemies = get_tree().get_nodes_in_group("enemy")
+		var nearest = _get_nearest_enemy(enemies)
+		if nearest:
+			var aim_vector = nearest.global_position - global_position
+			if aim_vector.length() >= AIM_DEADZONE:
+				last_direction = aim_vector.normalized()
+		return
+
 	var mouse_world_position: Vector2 = get_global_mouse_position()
 	var aim_vector: Vector2 = mouse_world_position - global_position
 	if aim_vector.length() >= AIM_DEADZONE:
