@@ -39,7 +39,7 @@ const HP_HIT_FLASH_SECONDS: float = 0.1
 @onready var sprite_hud_status_label: Label = get_node_or_null("SpriteHud/StatusFrame/StatusLabel") as Label
 @onready var time_label: Label = get_node_or_null("TopBar/TimeLabel") as Label
 @onready var enemy_count_label: Label = get_node_or_null("TopBar/EnemyCountLabel") as Label
-@onready var mobile_interact_button: Button = _create_mobile_interact_button()
+@onready var mobile_interact_button: TouchScreenButton = _create_mobile_interact_ts_button()
 
 signal interact_pressed
 
@@ -678,36 +678,39 @@ func _convert_to_touch_screen_button(btn: Button) -> void:
 	btn.text = ""
 	btn.mouse_filter = Control.MOUSE_FILTER_PASS
 
-func _create_mobile_interact_button() -> Button:
-	var btn = Button.new()
-	btn.name = "MobileInteractButton"
-	btn.text = "TALK"
-	btn.visible = false
-	btn.custom_minimum_size = Vector2(100, 100)
-	btn.process_mode = Node.PROCESS_MODE_ALWAYS
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.4, 0.1, 0.7)
-	style.corner_radius_top_left = 50
-	style.corner_radius_top_right = 50
-	style.corner_radius_bottom_left = 50
-	style.corner_radius_bottom_right = 50
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.border_color = Color(1, 1, 1, 0.8)
-	btn.add_theme_stylebox_override("normal", style)
-	btn.add_theme_stylebox_override("hover", style)
-	btn.add_theme_stylebox_override("pressed", style)
-	add_child(btn)
-	btn.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	btn.offset_left = -280
-	btn.offset_top = -280
-	btn.offset_right = -180
-	btn.offset_bottom = -180
-	btn.pressed.connect(func(): interact_pressed.emit())
-	btn.mouse_filter = Control.MOUSE_FILTER_PASS
-	return btn
+func _create_mobile_interact_ts_button() -> TouchScreenButton:
+	var ts_btn = TouchScreenButton.new()
+	ts_btn.name = "MobileInteractTSButton"
+	ts_btn.visible = false
+	
+	# Create a circle texture for the talk button
+	var size = Vector2(120, 120)
+	var img = Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
+	var center = size / 2
+	var radius = size.x / 2
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			if Vector2(x, y).distance_to(center) <= radius:
+				img.set_pixel(x, y, Color(0.2, 0.6, 0.2, 0.9)) # Green circle
+			else:
+				img.set_pixel(x, y, Color(0,0,0,0))
+	
+	ts_btn.texture_normal = ImageTexture.create_from_image(img)
+	
+	# Add a label to it
+	var label = Label.new()
+	label.text = "TALK"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	label.add_theme_font_size_override("font_size", 22)
+	ts_btn.add_child(label)
+	
+	add_child(ts_btn)
+	ts_btn.position = Vector2(get_viewport_rect().size.x - 260, get_viewport_rect().size.y - 280)
+	
+	ts_btn.pressed.connect(func(): interact_pressed.emit())
+	return ts_btn
 
 func set_mobile_interact_visible(v: bool) -> void:
 	if mobile_interact_button:

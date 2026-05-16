@@ -17,6 +17,18 @@ var latest_save_data: Dictionary = {}
 var is_hit_stopping: bool = false
 var played_intro: bool = false
 
+func _ready() -> void:
+	# On mobile, the SFX can be very loud compared to music. 
+	# Let's balance it by lowering the Master bus slightly and boosting Music.
+	if OS.get_name() in ["Android", "iOS"]:
+		AudioServer.set_bus_volume_db(0, -2.0) # Lower Master slightly to prevent clipping
+		var music_bus = AudioServer.get_bus_index("Music")
+		if music_bus != -1:
+			AudioServer.set_bus_volume_db(music_bus, 4.0) # Boost music
+		var sfx_bus = AudioServer.get_bus_index("SFX")
+		if sfx_bus != -1:
+			AudioServer.set_bus_volume_db(sfx_bus, -2.0) # Lower SFX slightly
+
 
 func _notification(what: int) -> void:
 	# Save progress when player tabs out or closes the app (Crucial for mobile)
